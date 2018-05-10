@@ -1,0 +1,24 @@
+{
+  "name": "bridge-node",
+  "version": "0.0.1",
+  "description": "Server middleware for the Bridge project",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jasujm/bridge-node.git"
+  },
+  "author": "Jaakko Moisio",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "underscore": "^1.8.3",
+    "uuid": "^3.2.1",
+    "zeromq": "^4.6.0"
+  },
+  "scripts": {
+      "client-server": "node scripts/test-client-server.js",
+      "peers": "node scripts/test-peers.js"
+  }
+}
