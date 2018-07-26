@@ -11,8 +11,15 @@ function eventEndpointFromControlEndpoint(controlEndpoint) {
 }
 
 async function initGame(endpoint, gameUuid, create) {
+    const curve_serverkey = Buffer.from("rq:rM>}U?@Lns47E1%kR.o@n%FcmmsL/@{H8]yf7\0");
+    const curve_publickey = Buffer.from("Yne@$w-vo<fVvi]a<NY6T1ed:M$fCG*[IaLV{hID\0");
+    const curve_secretkey = Buffer.from("D:)Q[IlAW!ahhC2ac:9*A}h:p?([4%wOTJ%JR%cs\0");
     const controlSocket = zmq.socket("req");
-    controlSocket.connect(endpoint);
+    controlSocket.
+        setsockopt(zmq.options.curve_serverkey, curve_serverkey).
+        setsockopt(zmq.options.curve_publickey, curve_publickey).
+        setsockopt(zmq.options.curve_secretkey, curve_secretkey).
+        connect(endpoint);
     await command(controlSocket, "bridgehlo", { version: [0], role: "client" });
     var game = gameUuid;
     if (create) {
@@ -20,8 +27,12 @@ async function initGame(endpoint, gameUuid, create) {
     }
     game = (await command(controlSocket, "join", { game })).args.game;
     const eventSocket = zmq.socket("sub");
-    eventSocket.subscribe(game);
-    eventSocket.connect(eventEndpointFromControlEndpoint(endpoint));
+    eventSocket.
+        setsockopt(zmq.options.curve_serverkey, curve_serverkey).
+        setsockopt(zmq.options.curve_publickey, curve_publickey).
+        setsockopt(zmq.options.curve_secretkey, curve_secretkey).
+        subscribe(game).
+        connect(eventEndpointFromControlEndpoint(endpoint));
     const position = (await command(
         controlSocket, "get", { game, keys: ["position"]})).args.position;
     return { controlSocket, eventSocket, game, position };
