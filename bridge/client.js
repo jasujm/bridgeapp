@@ -1,13 +1,13 @@
 const _ = require("underscore");
 const zmq = require("zeromq");
-const command = require('./messaging/command');
-const { parseEvent } = require('./messaging/utils.js');
+const command = require("./messaging/command");
+const { parseEvent } = require("./messaging/utils.js");
 
 function eventEndpointFromControlEndpoint(controlEndpoint) {
-    const idx = controlEndpoint.lastIndexOf(':');
+    const idx = controlEndpoint.lastIndexOf(":");
     const prefix = controlEndpoint.substr(0, idx);
     const port = parseInt(controlEndpoint.substr(idx+1));
-    return prefix + ':' + (port+1);
+    return prefix + ":" + (port+1);
 }
 
 async function initGame(endpoint, gameUuid, create) {
@@ -31,7 +31,7 @@ function TurnPromise(eventSocket, position) {
     return new Promise(function (resolve, reject) {
         eventSocket.on("message", function _listener () {
             const event = parseEvent(arguments);
-            console.log('event:', event);
+            console.log("event:", event);
             if (event.event == "turn" && event.args.position == position) {
                 eventSocket.removeListener("message", _listener);
                 resolve();

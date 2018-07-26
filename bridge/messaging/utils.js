@@ -23,7 +23,7 @@ module.exports = {
         return reply;
     },
     parseEvent: function(parts) {
-        const [game, event] = parts[0].toString().split(':');
+        const [game, event] = parts[0].toString().split(":");
         var reply = {
             game: game,
             event: event,
