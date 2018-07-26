@@ -1,13 +1,14 @@
-# Bridge HTTP server
+# Bridge webapp
 
-This Node.js package is supposed to grow into HTTP server for playing Bridge,
-using my [Bridge project](https://github.com/jasujm/bridge) as backend.
+This package is supposed to grow into HTTP server and web frontend for playing
+contract bridge, using my [Bridge project](https://github.com/jasujm/bridge) as
+backend.
 
-Also it’s a project for me to learn about Node.js and some event driven
+It’s also a project for me to learn about Node.js and some event driven
 programming.
 
-Currently it’s mostly a test suite for stress testing the bridge backend. Run
-either:
+Currently it’s mostly a test suite for stress testing the bridge backend,
+though. Run either:
 
     npm run client-server
 
