@@ -4,7 +4,8 @@ const { spawn } = require("child_process");
 
 const server = spawn("bridge", ["tcp://127.0.0.1:5555"]);
 
-for (let n = 0; n < 10; ++n) {
+const n_clients = parseInt(process.argv[2]) || 1;
+for (let n = 0; n < n_clients; ++n) {
     const gameUuid = uuid();
     for (let i = 0; i < 4; ++i) {
         setTimeout(
