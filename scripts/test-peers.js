@@ -19,7 +19,7 @@ game {
   },
   card_server = {
     control_endpoint = "${cscntl}",
-    base_peer_endpoint = "${cspeer}",
+    peer_endpoint = "${cspeer}",
   },
 }
 `;
