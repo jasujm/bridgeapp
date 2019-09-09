@@ -15,8 +15,8 @@
     "author": "Jaakko Moisio",
     "license": "GPL-3.0",
     "dependencies": {
-        "underscore": "^1.9.0",
-        "uuid": "^3.2.1",
-        "zeromq": "^4.6.0"
+        "underscore": "^1.9.1",
+        "uuid": "^3.3.3",
+        "zeromq": "^5.1.0"
     }
 }
