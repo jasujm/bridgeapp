@@ -18,7 +18,7 @@ or
 
 ## Copyright
 
-Copyright © 2018 Jaakko Moisio <jaakko@moisio.fi>
+Copyright © 2018–2019 Jaakko Moisio <jaakko@moisio.fi>
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
