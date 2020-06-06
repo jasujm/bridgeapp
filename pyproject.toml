@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "bridgeapp"
+version = "0.1.dev0"
+description = "A lightweight web application for playing contract bridge"
+authors = ["Jaakko Moisio <jaakko@moisio.fi>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+pyzmq = "^19.0.1"
+more-itertools = "^8.3.0"
+pydantic = "^1.5.1"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+pytest-asyncio = "^0.12.0"
+black = "^19.10b0"
+pylint = "^2.5.2"
+sphinx = "^3.0.4"
+sphinx-rtd-theme = "^0.4.3"
+click = "^7.1.2"
+coverage = "^5.1"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
