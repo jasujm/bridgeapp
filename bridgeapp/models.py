@@ -145,15 +145,29 @@ class Vulnerability(pydantic.BaseModel):
     eastWest: bool = False
 
 
+class PositionCallPair(pydantic.BaseModel):
+    """Position-call pair"""
+
+    position: Position
+    call: Call
+
+
+class PositionCardPair(pydantic.BaseModel):
+    """Position-card pair"""
+
+    position: Position
+    card: CardType
+
+
 class DealState(pydantic.BaseModel):
     """Bridge deal state"""
 
     positionInTurn: typing.Optional[Position]
-    calls: typing.List[typing.Tuple[Position, Call]] = []
+    calls: typing.List[PositionCallPair] = []
     declarer: typing.Optional[Position]
     contract: typing.Optional[Contract]
     cards: Cards = Cards()
-    trick: typing.List[typing.Tuple[Position, CardType]] = []
+    trick: typing.List[PositionCardPair] = []
     tricksWon: TricksWon = TricksWon()
     vulnerability: Vulnerability = Vulnerability()
 

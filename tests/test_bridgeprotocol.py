@@ -362,18 +362,24 @@ async def test_bridge_client_play_command(server, client, card):
         models.DealState(
             positionInTurn=_any_position(),
             calls=[
-                (
-                    _any_position(),
-                    models.Call(type=models.CallType.bid, bid=_any_bid()),
+                models.PositionCallPair(
+                    position=_any_position(),
+                    call=models.Call(type=models.CallType.bid, bid=_any_bid()),
                 ),
-                (_any_position(), models.Call(type=models.CallType.pass_)),
+                models.PositionCallPair(
+                    position=_any_position(),
+                    call=models.Call(type=models.CallType.pass_),
+                ),
             ],
             declarer=_any_position(),
             contract=models.Contract(
                 bid=_any_bid(), doubling=models.Doubling.redoubled
             ),
             cards=models.Cards(north=[_any_card(), _any_card()], east=[None, None],),
-            tricks=[(_any_position(), _any_card()), (_any_position(), _any_card()),],
+            tricks=[
+                models.PositionCardPair(position=_any_position(), card=_any_card(),)
+                for i in range(3)
+            ],
             tricksWon=models.TricksWon(
                 northSouth=random.randint(1, 6), eastWest=random.randint(1, 6),
             ),
