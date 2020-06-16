@@ -521,44 +521,39 @@ class TestBridgeClientGetPlayerCommand:
 
 
 @pytest.mark.asyncio
-async def test_event_receiver_base(server, raw_event_generator):
-    events = [
-        (b"hello", {}),
-        (b"world", {b"arg": b"value"}),
-    ]
-    for event in events:
-        await server.send_event(*event)
-    for event in events:
-        assert await raw_event_generator.__anext__() == event
+@pytest.mark.parametrize("event_tag", [b"hello", b"world"])
+@pytest.mark.parametrize("event_arguments", [{}, {b"arg": b"value"}])
+async def test_event_receiver_base(server, event_receiver, event_tag, event_arguments):
+    await server.send_event(event_tag, event_arguments)
+    assert await event_receiver._get_raw_event() == (event_tag, event_arguments)
 
 
 @pytest.mark.asyncio
-async def test_event_with_odd_number_of_argument_frames_should_be_ignored_with_warning(
-    server, raw_event_generator, caplog
+async def test_event_with_odd_number_of_argument_frames_should_raise_error(
+    server, event_receiver
 ):
     server._event_socket.send_multipart([b"tag", b"key"])
-    server._event_socket.send_multipart([b"hello"])
-    assert await raw_event_generator.__anext__() == (b"hello", {})
-    assert [r.levelname for r in caplog.records] == ["WARNING"]
+    with pytest.raises(bridgeprotocol.InvalidMessage):
+        await event_receiver._get_raw_event()
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("event_type", ["event1", "event2"])
 @pytest.mark.parametrize("event_arguments", [{}, {"key": "value", "pi": 3.14}])
 class TestEventReceiver:
-    async def test_bridge_event_receiver(
-        self, server, client, event_generator, event_type, event_arguments
+    async def test_bridge_event_receiver_get_event(
+        self, server, client, event_receiver, event_type, event_arguments
     ):
         game_uuid = uuid.uuid4()
         await server.send_event(
             f"{str(game_uuid)}:{event_type}".encode(),
             client._serialize_all(event_arguments),
         )
-        assert await event_generator.__anext__() == bridgeprotocol.BridgeEvent(
+        assert await event_receiver.get_event() == bridgeprotocol.BridgeEvent(
             game=game_uuid, type=event_type, **event_arguments
         )
 
-    async def test_invalid_event_should_be_ignored_with_warning(
+    async def test_invalid_event_from_generator_should_be_ignored_with_warning(
         self, server, client, event_generator, event_type, event_arguments, caplog
     ):
         game_uuid = uuid.uuid4()

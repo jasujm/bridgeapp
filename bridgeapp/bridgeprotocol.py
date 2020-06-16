@@ -341,6 +341,10 @@ class EventReceiverBase(SocketBase):
     async def events(self):
         """Receive structured events from the server
 
+        Instead of raising an exception like :meth:`_get_event()`, the
+        generator returned by this method simply drops invalid
+        messages with warning.
+
         Returns:
             An asynchronous generator that yields tuples containing
             the events received from the server. The raw event
@@ -348,40 +352,48 @@ class EventReceiverBase(SocketBase):
             :meth:`_deserialize()` and then constructed using
             :meth:`_create_event()`.
         """
-        async for (raw_tag, raw_event_arguments) in self._raw_events():
+        while not self._socket.closed:
             try:
-                tag = raw_tag.decode()
-                event_arguments = self._deserialize_all(raw_event_arguments)
-                yield self._create_event(tag, **event_arguments)
+                yield await self.get_event()
             except Exception:
-                logger.warning(
-                    "Discarded event %r when failing to handle arguments",
-                    tag,
-                    exc_info=True,
-                )
+                logger.warning("Discarding event", exc_info=True)
 
-    async def _raw_events(self) -> typing.Tuple[bytes, RawArgumentsOutput]:
-        """Receive events from the server
-
-        This is a low-level method similar to :meth:`events()` except
-        that instead of dealing with Python objects it deals with
-        objects that are already in wire format.
+    async def get_event(self):
+        """Receive an event from the server
 
         Returns:
-            An asynchronous generator that yields tuples containing
-            the event frame and event arguments, respectively
+            A tuple containing the events received from the
+            server. The raw event arguments are first deserialized
+            using :meth:`_deserialize()` and then constructed using
+            :meth:`_create_event()`.
         """
-        while not self._socket.closed:
-            tag, *event_arguments = await self._socket.recv_multipart()
-            logger.debug("Received event: %r, %r", tag, event_arguments)
-            if len(event_arguments) % 2 == 0:
-                yield tag, _group_arguments(event_arguments)
-            else:
-                logger.warning(
-                    "Discarding event %r containing odd number of arguments: %r",
-                    tag,
-                    event_arguments,
-                )
+        raw_tag, raw_event_arguments = await self._get_raw_event()
+        tag = raw_tag.decode()
+        event_arguments = self._deserialize_all(raw_event_arguments)
+        return self._create_event(tag, **event_arguments)
+
+    async def _get_raw_event(self) -> typing.Tuple[bytes, RawArgumentsOutput]:
+        """Receive an event from the server
+
+        This is a low-level method similar to :meth:`get_event()`
+        except that instead of dealing with Python objects it deals
+        with objects that are already in wire format.
+
+        Returns:
+            A tuple containing the event frame and event arguments,
+            respectively
+
+        Raises:
+            :exc:`InvalidMessage` if the event message is invalid
+        """
+        tag, *event_arguments = await self._socket.recv_multipart()
+        logger.debug("Received event: %r, %r", tag, event_arguments)
+        if len(event_arguments) % 2 == 0:
+            return tag, _group_arguments(event_arguments)
+        else:
+            raise InvalidMessage(
+                f"Odd number of argument frames in event {tag!r}: {event_arguments!r}"
+            )
 
     @abc.abstractmethod
     def _create_event(self, tag: str, **kwargs):
