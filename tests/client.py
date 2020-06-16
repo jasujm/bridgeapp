@@ -6,9 +6,12 @@ import random
 import uuid
 
 import click
+import click_log
 import zmq.asyncio
 
 from bridgeapp import bridgeprotocol, models
+
+click_log.basic_config()
 
 
 async def _play_bridge_game(
@@ -49,6 +52,7 @@ async def _async_main(control_endpoint, event_endpoint):
 
 
 @click.command()
+@click_log.simple_verbosity_option()
 @click.argument("control_endpoint")
 @click.argument("event_endpoint")
 def main(control_endpoint, event_endpoint):
