@@ -1,6 +1,4 @@
-"""
-Mock classes to be used in unit tests
-"""
+"""Mock classes to be used in unit tests"""
 
 import contextlib
 import typing
@@ -43,7 +41,7 @@ class MockBridgeServer(contextlib.AbstractContextManager):
 
     async def get_command(
         self,
-    ) -> typing.Tuple[bytes, bytes, bridgeprotocol.RawArgumentsOutput]:
+    ) -> typing.Tuple[bytes, bytes, typing.Dict[bytes, bytes]]:
         """Retrieve and return the latest command sent to the server
 
         Returns:
@@ -60,16 +58,13 @@ class MockBridgeServer(contextlib.AbstractContextManager):
         assert self._router_id is None or self._router_id == router_id
         self._router_id = router_id
         assert len(command_arguments) % 2 == 0
-        return tag, command, bridgeprotocol._group_arguments(command_arguments)
+        return tag, command, bridgeprotocol.utils.group_arguments(command_arguments)
 
     async def reply(
-        self,
-        tag: bytes,
-        status: bytes,
-        reply_arguments: bridgeprotocol.RawArgumentsInput,
+        self, tag: bytes, status: bytes, reply_arguments: typing.Mapping[bytes, bytes]
     ):
         await self.send(
-            tag, status, *bridgeprotocol._flatten_arguments(reply_arguments)
+            tag, status, *bridgeprotocol.utils.flatten_arguments(reply_arguments)
         )
 
     async def send(self, *frames: bytes):
@@ -77,10 +72,10 @@ class MockBridgeServer(contextlib.AbstractContextManager):
         await self._socket.send_multipart(msg)
 
     async def send_event(
-        self, tag: bytes, event_arguments: bridgeprotocol.RawArgumentsInput
+        self, tag: bytes, event_arguments: typing.Mapping[bytes, bytes]
     ):
         await self._event_socket.send_multipart(
-            [tag, *bridgeprotocol._flatten_arguments(event_arguments)]
+            [tag, *bridgeprotocol.utils.flatten_arguments(event_arguments)]
         )
 
     @property

@@ -1,9 +1,11 @@
 """
-General utilities
------------------
+Utilities
+.........
 """
 
 import collections.abc as cabc
+
+import more_itertools as mi
 
 
 def merge_patch(target: cabc.MutableMapping, patch):
@@ -30,3 +32,18 @@ def merge_patch(target: cabc.MutableMapping, patch):
                 target[key] = merge_patch(target.get(key, {}), value)
         return target
     return patch
+
+
+def group_arguments(args):
+    """Group flat key-value pairs into dictionary"""
+    return dict(mi.grouper(args, 2))
+
+
+def flatten_arguments(args):
+    """Flatten dictionary into key-value pairs"""
+    return mi.flatten(args.items())
+
+
+def is_status_successful(status):
+    """Determine if a status frame indicates successful reply"""
+    return status.startswith(b"OK")

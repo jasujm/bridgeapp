@@ -29,10 +29,17 @@ Module reference
 ================
 
 .. automodule:: bridgeapp.bridgeprotocol
+
+.. autoclass:: bridgeapp.bridgeprotocol.BridgeClient
+   :members:
+   :inherited-members:
+
+.. autoclass:: bridgeapp.bridgeprotocol.BridgeEventReceiver
+   :members:
+   :inherited-members:
+
+.. automodule:: bridgeapp.bridgeprotocol.exceptions
    :members:
 
-.. automodule:: bridgeapp.models
-   :members:
-
-.. automodule:: bridgeapp.utils
+.. automodule:: bridgeapp.bridgeprotocol.utils
    :members:
