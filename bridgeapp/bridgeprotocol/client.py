@@ -30,8 +30,7 @@ class BridgeClient(_base.ClientBase):
     """Client for a bridge backend server"""
 
     _encoder = _BridgeEncoder()
-    GameUuid = typing.Optional[uuid.UUID]
-    PlayerUuid = typing.Optional[uuid.UUID]
+    OptionalUuid = typing.Optional[uuid.UUID]
 
     @classmethod
     async def create(cls, ctx: zmq.asyncio.Context, endpoint: str) -> "BridgeClient":
@@ -62,7 +61,7 @@ class BridgeClient(_base.ClientBase):
         await self.command("bridgehlo", version="0.1", role="client")
 
     async def game(
-        self, *, game: GameUuid = None, args: typing.Optional[typing.Mapping] = None
+        self, *, game: OptionalUuid = None, args: typing.Optional[typing.Mapping] = None
     ) -> uuid.UUID:
         """Send game command to the server"""
         reply = await self.command("game", game=game, args=args)
@@ -71,15 +70,15 @@ class BridgeClient(_base.ClientBase):
     async def join(
         self,
         *,
-        game: GameUuid = None,
-        player: PlayerUuid = None,
+        game: OptionalUuid = None,
+        player: OptionalUuid = None,
         position: typing.Optional[models.Position] = None,
     ) -> uuid.UUID:
         """Send join command to the server"""
         reply = await self.command("join", game=game, player=player, position=position)
         return self._convert_reply_safe(uuid.UUID, reply, "game", command="join")
 
-    async def get_deal(self, *, game: GameUuid = None, player: PlayerUuid = None):
+    async def get_deal(self, *, game: uuid.UUID, player: OptionalUuid = None):
         """Get the deal state from the server"""
         reply = await self.command(
             "get", game=game, player=player, get=["pubstate", "privstate"]
@@ -88,7 +87,7 @@ class BridgeClient(_base.ClientBase):
             self._create_deal_state, reply, "get", command="get"
         )
 
-    async def get_player(self, *, game: GameUuid = None, player: PlayerUuid = None):
+    async def get_player(self, *, game: uuid.UUID, player: OptionalUuid = None):
         """Get the player state from the server"""
         reply = await self.command("get", game=game, player=player, get=["self"])
         return self._convert_reply_safe(
@@ -96,13 +95,13 @@ class BridgeClient(_base.ClientBase):
         )
 
     async def call(
-        self, *, game: GameUuid = None, player: PlayerUuid = None, call: models.Call
+        self, *, game: uuid.UUID, player: OptionalUuid = None, call: models.Call
     ):
         """Send call command to the server"""
         await self.command("call", game=game, player=player, call=call)
 
     async def play(
-        self, *, game: GameUuid = None, player: PlayerUuid = None, card: models.CardType
+        self, *, game: uuid.UUID, player: OptionalUuid = None, card: models.CardType
     ):
         """Send play command to the server"""
         await self.command("play", game=game, player=player, card=card)
