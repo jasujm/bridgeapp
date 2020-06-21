@@ -9,6 +9,7 @@ python = "^3.8"
 pyzmq = "^19.0.1"
 more-itertools = "^8.3.0"
 pydantic = "^1.5.1"
+orjson = "^3.1.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

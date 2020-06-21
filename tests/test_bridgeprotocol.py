@@ -5,7 +5,6 @@ Tests for the :mod:`bridgeapp.bridgeprotocol` module
 import asyncio
 import copy
 import itertools
-import json
 import random
 import uuid
 

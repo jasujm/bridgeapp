@@ -1,11 +1,9 @@
 """Bridge client"""
 
-import enum
-import json
 import typing
 import uuid
 
-import pydantic
+import orjson
 import zmq.asyncio
 
 from .. import models
@@ -13,23 +11,9 @@ from .. import models
 from . import _base, utils
 
 
-class _BridgeEncoder(json.JSONEncoder):
-    """JSON encoder that handles types in the bridge protocol"""
-
-    def default(self, o):
-        if isinstance(o, uuid.UUID):
-            return str(o)
-        if isinstance(o, enum.Enum):
-            return o.value
-        if isinstance(o, pydantic.BaseModel):
-            return o.dict()
-        return json.JSONEncoder.default(self, o)
-
-
 class BridgeClient(_base.ClientBase):
     """Client for a bridge backend server"""
 
-    _encoder = _BridgeEncoder()
     OptionalUuid = typing.Optional[uuid.UUID]
 
     @classmethod
@@ -107,12 +91,12 @@ class BridgeClient(_base.ClientBase):
         await self.command("play", game=game, player=player, card=card)
 
     @classmethod
-    def _serialize(cls, arg):
-        return cls._encoder.encode(arg).encode()
+    def _serialize(cls, obj):
+        return orjson.dumps(obj, default=dict)
 
     @staticmethod
-    def _deserialize(arg):
-        return json.loads(arg)
+    def _deserialize(obj):
+        return orjson.loads(obj)
 
     @staticmethod
     def _create_deal_state(get):

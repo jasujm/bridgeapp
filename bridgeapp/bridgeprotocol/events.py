@@ -1,8 +1,8 @@
 """Bridge event receiver"""
 
-import json
 import uuid
 
+import orjson
 import pydantic
 
 from . import _base
@@ -23,7 +23,7 @@ class BridgeEventReceiver(_base.EventReceiverBase):
 
     @staticmethod
     def _deserialize(arg):
-        return json.loads(arg)
+        return orjson.loads(arg)
 
     @staticmethod
     def _create_event(tag: str, **kwargs) -> BridgeEvent:

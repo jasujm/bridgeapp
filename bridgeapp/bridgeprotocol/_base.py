@@ -44,11 +44,11 @@ class SocketBase(contextlib.AbstractContextManager, abc.ABC):
         self.close()
 
     @abc.abstractmethod
-    def _deserialize(self, arg: bytes):
-        """Deserialize ``arg``"""
+    def _deserialize(self, obj: bytes):
+        """Deserialize ``obj``"""
 
-    def _deserialize_all(self, args):
-        return {k.decode(): self._deserialize(v) for (k, v) in args.items()}
+    def _deserialize_all(self, kwargs):
+        return {k.decode(): self._deserialize(v) for (k, v) in kwargs.items()}
 
 
 class ClientBase(SocketBase):
@@ -121,12 +121,12 @@ class ClientBase(SocketBase):
         return await reply_future
 
     @abc.abstractmethod
-    def _serialize(self, arg) -> bytes:
-        """Serialize ``arg``"""
+    def _serialize(self, obj) -> bytes:
+        """Serialize ``obj``"""
 
-    def _serialize_all(self, args):
+    def _serialize_all(self, kwargs):
         return {
-            k.encode(): self._serialize(v) for (k, v) in args.items() if v is not None
+            k.encode(): self._serialize(v) for (k, v) in kwargs.items() if v is not None
         }
 
     async def _receive_replies(self):
