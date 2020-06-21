@@ -11,10 +11,11 @@ from .. import models
 from . import _base, utils
 
 
+OptionalUuid = typing.Optional[uuid.UUID]
+
+
 class BridgeClient(_base.ClientBase):
     """Client for a bridge backend server"""
-
-    OptionalUuid = typing.Optional[uuid.UUID]
 
     @classmethod
     async def create(cls, ctx: zmq.asyncio.Context, endpoint: str) -> "BridgeClient":
