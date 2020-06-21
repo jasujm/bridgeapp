@@ -252,13 +252,16 @@ async def test_bridge_client_game_command_should_fail_if_reply_has_invalid_type(
 
 @pytest.mark.asyncio
 async def test_bridge_client_join_command(server, client, join_kwargs):
-    assert await _command_helper(
-        server,
-        client,
-        client.join(**join_kwargs),
-        expected_command=b"join",
-        expected_command_args=join_kwargs,
-        reply_args={"game": join_kwargs["game"]},
+    assert (
+        await _command_helper(
+            server,
+            client,
+            client.join(**join_kwargs),
+            expected_command=b"join",
+            expected_command_args=join_kwargs,
+            reply_args={"game": join_kwargs["game"]},
+        )
+        == join_kwargs["game"]
     )
 
 
