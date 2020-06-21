@@ -8,6 +8,7 @@ the application.
 
 import enum
 import typing
+import uuid
 
 import pydantic
 
@@ -178,3 +179,15 @@ class PlayerState(pydantic.BaseModel):
     position: typing.Optional[Position]
     allowedCalls: typing.List[Call] = []
     allowedCards: typing.List[CardType] = []
+
+
+class Game(pydantic.BaseModel):
+    """Bridge game"""
+
+    uuid: uuid.UUID
+
+
+class Player(pydantic.BaseModel):
+    """Player taking part in a bridge game"""
+
+    uuid: uuid.UUID

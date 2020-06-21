@@ -1,4 +1,12 @@
-"""A lightweight contract bridge webapp"""
+"""
+A lightweight web application for playing contract bridge
+---------------------------------------------------------
+"""
 
-__version__ = "0.1.dev0"
-__author__ = "Jaakko Moisio"
+from fastapi import FastAPI
+
+from . import api
+
+app = FastAPI()
+
+app.include_router(api.router, prefix="/api/v1")
