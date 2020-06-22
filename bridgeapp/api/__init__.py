@@ -5,13 +5,13 @@ Bridge API definition
 
 import uuid
 
-from fastapi import APIRouter, Header, Depends, Response, status
+import fastapi
 
 from .. import models
 
 from . import _bridgeprotocol
 
-router = APIRouter()
+router = fastapi.APIRouter()
 
 
 @router.on_event("startup")
@@ -24,7 +24,7 @@ def _shutdown_event():
     _bridgeprotocol.shutdown()
 
 
-@router.post("/games", status_code=status.HTTP_201_CREATED)
+@router.post("/games", status_code=fastapi.status.HTTP_201_CREATED)
 async def create_game() -> models.Game:
     """Create a new game"""
     client = _bridgeprotocol.get_client()
@@ -32,11 +32,10 @@ async def create_game() -> models.Game:
     return models.Game(uuid=game_uuid)
 
 
-@router.post("/games/{game_uuid}/players", status_code=status.HTTP_204_NO_CONTENT)
-async def add_player(
-    game_uuid: uuid.UUID, player: models.Player
-):
+@router.post(
+    "/games/{game_uuid}/players", status_code=fastapi.status.HTTP_204_NO_CONTENT
+)
+async def add_player(game_uuid: uuid.UUID, player: models.Player):
     """Add a player to an existing game"""
     client = _bridgeprotocol.get_client()
-    await client.join(game=game_uuid, player=player.uuid
-)
+    await client.join(game=game_uuid, player=player.uuid)

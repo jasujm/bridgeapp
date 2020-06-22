@@ -3,10 +3,10 @@ A lightweight web application for playing contract bridge
 ---------------------------------------------------------
 """
 
-from fastapi import FastAPI
+import fastapi
 
 from . import api
 
-app = FastAPI()
+app = fastapi.FastAPI()
 
 app.include_router(api.router, prefix="/api/v1")
