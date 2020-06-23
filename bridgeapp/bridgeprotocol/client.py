@@ -63,6 +63,13 @@ class BridgeClient(_base.ClientBase):
         reply = await self.command("join", game=game, player=player, position=position)
         return self._convert_reply_safe(uuid.UUID, reply, "game", command="join")
 
+    async def get(
+        self, *, game: uuid.UUID, player: OptionalUuid = None, get: typing.List[str]
+    ):
+        """Send get command to the server"""
+        reply = await self.command("get", game=game, player=player, get=get)
+        return self._convert_reply_safe(lambda r: r, reply, "get", command="get")
+
     async def get_deal(self, *, game: uuid.UUID, player: OptionalUuid = None):
         """Get the deal state from the server"""
         reply = await self.command(

@@ -347,6 +347,41 @@ async def test_bridge_client_play_command(server, client, card):
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("keys", [[], ["key1", "key2"]])
+@pytest.mark.parametrize("response", [{}, {"key1": "value1", "key2": "value2"}])
+async def test_bridge_client_get_command(
+    server, client, game_and_player, keys, response
+):
+    kwargs = dict(get=keys, **game_and_player)
+    assert (
+        await _command_helper(
+            server,
+            client,
+            client.get(**kwargs),
+            expected_command=b"get",
+            expected_command_args=kwargs,
+            reply_args={"get": response},
+        )
+        == response
+    )
+
+
+@pytest.mark.asyncio
+async def test_bridge_client_get_command_should_fail_if_reply_missing_get(
+    server, client, game_and_player
+):
+    kwargs = dict(get=[], **game_and_player)
+    with pytest.raises(bridgeprotocol.InvalidMessage):
+        await _command_helper(
+            server,
+            client,
+            client.get(**kwargs),
+            expected_command=b"get",
+            expected_command_args=kwargs,
+        )
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "pubstate",
     [
