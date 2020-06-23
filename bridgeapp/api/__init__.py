@@ -11,6 +11,8 @@ from .. import models
 
 from . import _bridgeprotocol
 
+ROUTER_PREFIX = "/api/v1"
+
 router = fastapi.APIRouter()
 
 
@@ -25,10 +27,11 @@ def _shutdown_event():
 
 
 @router.post("/games", status_code=fastapi.status.HTTP_201_CREATED)
-async def create_game() -> models.Game:
+async def create_game(response: fastapi.Response) -> models.Game:
     """Create a new game"""
     client = _bridgeprotocol.get_client()
     game_uuid = await client.game()
+    response.headers["Location"] = f"{ROUTER_PREFIX}/games/{game_uuid}"
     return models.Game(uuid=game_uuid)
 
 
