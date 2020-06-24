@@ -625,3 +625,21 @@ class TestEventReceiver:
 def test_merge_patch(target, patch, result):
     """JSON Merge Patch example test cases from RFC 7396"""
     assert bridgeprotocol.utils.merge_patch(target, patch) == result
+
+
+@pytest.mark.parametrize(
+    "control_endpoint,event_endpoint", [
+        ("tcp://localhost:5555", "tcp://localhost:5556"),
+        ("tcp://example.com:1234", "tcp://example.com:1235")
+    ]
+)
+def test_endpoints(control_endpoint, event_endpoint):
+    assert bridgeprotocol.utils.endpoints(control_endpoint) == (control_endpoint, event_endpoint)
+
+
+@pytest.mark.parametrize(
+    "control_endpoint", ["inproc://wrong.endpoint", "tcp://localhost:not-a-port"]
+)
+def test_endpoints_should_fail_if_control_endpoint_has_wrong_format(control_endpoint):
+    with pytest.raises(ValueError):
+        bridgeprotocol.utils.endpoints(control_endpoint)

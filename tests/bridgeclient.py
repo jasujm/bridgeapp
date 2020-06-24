@@ -85,7 +85,8 @@ async def _play_bridge_game(
             )
 
 
-async def _async_main(control_endpoint, event_endpoint):
+async def _async_main(endpoint):
+    control_endpoint, event_endpoint = bridgeprotocol.utils.endpoints(endpoint)
     ctx = zmq.asyncio.Context()
     try:
         with await bridgeprotocol.BridgeClient.create(
@@ -108,16 +109,15 @@ async def _async_main(control_endpoint, event_endpoint):
 
 @click.command()
 @click_log.simple_verbosity_option()
-@click.argument("control_endpoint")
-@click.argument("event_endpoint")
-def main(control_endpoint, event_endpoint):
+@click.argument("endpoint")
+def main(endpoint):
     """Test client for the bridge backend
 
-    This program is a client that opens a connection to the endpoints
-    and plays arbitrary bridge games as fast as possible. Intended to
-    be used for stress testing.
+    This program is a client that connects to a bridge backend at
+    ENDPOINT and plays arbitrary bridge games as fast as
+    possible. Intended to be used for stress testing.
     """
-    asyncio.run(_async_main(control_endpoint, event_endpoint))
+    asyncio.run(_async_main(endpoint))
 
 
 if __name__ == "__main__":

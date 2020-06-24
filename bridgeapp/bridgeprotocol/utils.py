@@ -4,8 +4,42 @@ Utilities
 """
 
 import collections.abc as cabc
+import re
 
 import more_itertools as mi
+
+TCP_ENDPOINT_RE = re.compile(r"^tcp://(.+):(\d+)$")
+"""Regular expression matching ZeroMQ TCP endpoint"""
+
+
+def endpoints(control_endpoint: str):
+    """Get a tuple containing control and event endpoints to a server
+
+    Given a control endpoint, returns a tuple containing the control
+    and event endpoints to a bridge server. The endpoints are TCP
+    connections at successive ports, for example:
+
+    .. testsetup::
+
+        from bridgeapp.bridgeprotocol.utils import endpoints
+
+    .. doctest::
+
+        >>> endpoints("tcp://localhost:5555")
+        ('tcp://localhost:5555', 'tcp://localhost:5556')
+
+    Parameters:
+        control_endpoint: The control endpoint of the bridge backend
+
+    Raises:
+        :exc:`ValueError`: If ``control_endpoint`` is not a correctly
+          formatted TCP endpoint
+    """
+    if m := TCP_ENDPOINT_RE.fullmatch(control_endpoint):
+        address, control_port = m.groups()
+        event_port = int(control_port) + 1
+        return control_endpoint, f"tcp://{address}:{event_port}"
+    raise ValueError(f"Expected TCP endpoint, got: {control_endpoint}")
 
 
 def merge_patch(target: cabc.MutableMapping, patch):
