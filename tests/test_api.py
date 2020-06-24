@@ -20,6 +20,7 @@ def client():
 @pytest.fixture
 def mock_bridge_client(monkeypatch):
     from bridgeapp.web import api
+
     mock = unittest.mock.Mock(
         game=unittest.mock.AsyncMock(), join=unittest.mock.AsyncMock()
     )
