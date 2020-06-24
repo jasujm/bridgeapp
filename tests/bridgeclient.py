@@ -11,7 +11,7 @@ import click
 import click_log
 import zmq.asyncio
 
-from bridgeapp import bridgeprotocol, models
+from bridgeapp import bridgeprotocol, models, settings
 
 click_log.basic_config()
 logger = logging.getLogger(__name__)
@@ -109,7 +109,7 @@ async def _async_main(endpoint):
 
 @click.command()
 @click_log.simple_verbosity_option()
-@click.argument("endpoint")
+@click.argument("endpoint", required=False)
 def main(endpoint):
     """Test client for the bridge backend
 
@@ -117,6 +117,8 @@ def main(endpoint):
     ENDPOINT and plays arbitrary bridge games as fast as
     possible. Intended to be used for stress testing.
     """
+    defaults = {"backend_endpoint": endpoint} if endpoint else {}
+    s = settings.get_settings(**defaults)
     asyncio.run(_async_main(endpoint))
 
 

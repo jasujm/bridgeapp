@@ -2,7 +2,7 @@
 
 import zmq.asyncio
 
-from bridgeapp import bridgeprotocol
+from bridgeapp import bridgeprotocol, settings
 
 # This is rather weird stateful module but until I understand FastAPI
 # better to refactor it, disable pylint nagging about it
@@ -15,9 +15,8 @@ _bridge_client = None
 async def startup():
     """Initialize client at startup"""
     global _bridge_client
-    _bridge_client = await bridgeprotocol.BridgeClient.create(
-        _ctx, "tcp://localhost:5555"
-    )
+    s = settings.get_settings()
+    _bridge_client = await bridgeprotocol.BridgeClient.create(_ctx, s.backend_endpoint)
 
 
 def shutdown():

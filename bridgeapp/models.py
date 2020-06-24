@@ -13,7 +13,7 @@ import uuid
 import pydantic
 
 # Don't care about warning related to pydantic conventions
-# pylint: disable=no-self-argument,no-self-use
+# pylint: disable=no-self-argument,no-self-use,too-few-public-methods
 
 
 class Position(enum.Enum):
