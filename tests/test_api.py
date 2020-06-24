@@ -10,6 +10,7 @@ import fastapi.testclient
 import pytest
 
 from bridgeapp import models, app
+from bridgeapp.web import api
 
 
 @pytest.fixture
@@ -19,13 +20,15 @@ def client():
 
 @pytest.fixture
 def mock_bridge_client(monkeypatch):
-    from bridgeapp.web import api
-
     mock = unittest.mock.Mock(
         game=unittest.mock.AsyncMock(), join=unittest.mock.AsyncMock()
     )
     monkeypatch.setattr(api._bridgeprotocol, "get_client", lambda: mock)
     return mock
+
+
+def test_generate_player_uuid():
+    assert isinstance(api.utils.generate_player_uuid("username"), uuid.UUID)
 
 
 def test_create_game(client, mock_bridge_client):
@@ -37,11 +40,11 @@ def test_create_game(client, mock_bridge_client):
     assert res.json() == {"uuid": str(game_uuid)}
 
 
-def test_add_player(client, mock_bridge_client):
+@pytest.mark.parametrize("username", ["username", "anotheruser"])
+def test_add_player(client, mock_bridge_client, username):
     game_uuid = uuid.uuid4()
-    player_uuid = uuid.uuid4()
-    res = client.post(
-        f"/api/v1/games/{game_uuid}/players", json={"uuid": str(player_uuid)}
-    )
+    player_uuid = api.utils.generate_player_uuid(username)
+    mock_bridge_client.join.return_value = None
+    res = client.post(f"/api/v1/games/{game_uuid}/players", auth=(username, "secret"))
     assert res.status_code == fastapi.status.HTTP_204_NO_CONTENT
-    assert mock_bridge_client.called_once_with(game=game_uuid, player=player_uuid)
+    mock_bridge_client.join.assert_awaited_once_with(game=game_uuid, player=player_uuid)

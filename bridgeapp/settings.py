@@ -8,6 +8,7 @@ Bridgeapp settings
 
 
 import functools
+import uuid
 
 from pydantic import BaseSettings, Field
 
@@ -19,6 +20,15 @@ class Settings(BaseSettings):
 
     backend_endpoint: str = Field("tcp://localhost:5555", regex=TCP_ENDPOINT_RE)
     """Bridge backend server endpoint"""
+
+    uuid_namespace: uuid.UUID = Field(default_factory=uuid.uuid4)
+    """Root namespace for UUIDs
+
+    The application uses UUIDv5 algorithm to generate UUIDs e.g. for
+    players based on their username. This setting is used as the root
+    namespace. It should be set to a known value to ensure consistent
+    UUID generation across runs.
+    """
 
     class Config:  # pylint: disable=missing-class-docstring
         env_prefix = "bridgeapp_"
