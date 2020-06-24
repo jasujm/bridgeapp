@@ -54,13 +54,18 @@ class SocketBase(contextlib.AbstractContextManager, abc.ABC):
 class ClientBase(SocketBase):
     """Base for bridge protocol client"""
 
-    def __init__(self, ctx: zmq.asyncio.Context, endpoint: str):
+    def __init__(
+        self, ctx: zmq.asyncio.Context, endpoint: str, *, identity: bytes = None
+    ):
         """
         Parameters:
             ctx: The ZeroMQ context
             endpoint: The server endpoint
         """
-        super().__init__(ctx.socket(zmq.DEALER), endpoint)  # pylint: disable=no-member
+        socket = ctx.socket(zmq.DEALER)  # pylint: disable=no-member
+        if identity:
+            socket.identity = identity
+        super().__init__(socket, endpoint)
         self._counter = 0
         self._replies_pending = {}
 
