@@ -9,7 +9,7 @@ import fastapi
 import fastapi.testclient
 import pytest
 
-from bridgeapp import app, api, models
+from bridgeapp import models, app
 
 
 @pytest.fixture
@@ -19,6 +19,7 @@ def client():
 
 @pytest.fixture
 def mock_bridge_client(monkeypatch):
+    from bridgeapp.web import api
     mock = unittest.mock.Mock(
         game=unittest.mock.AsyncMock(), join=unittest.mock.AsyncMock()
     )

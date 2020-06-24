@@ -7,7 +7,7 @@ import uuid
 
 import fastapi
 
-from .. import models
+from bridgeapp import models
 
 from . import _bridgeprotocol
 

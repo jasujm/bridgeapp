@@ -2,7 +2,7 @@
 
 import zmq.asyncio
 
-from .. import bridgeprotocol
+from bridgeapp import bridgeprotocol
 
 # This is rather weird stateful module but until I understand FastAPI
 # better to refactor it, disable pylint nagging about it
