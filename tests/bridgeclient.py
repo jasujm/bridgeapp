@@ -2,7 +2,9 @@
 
 import asyncio
 import contextlib
+import logging
 import random
+import sys
 import uuid
 
 import click
@@ -12,6 +14,33 @@ import zmq.asyncio
 from bridgeapp import bridgeprotocol, models
 
 click_log.basic_config()
+logger = logging.getLogger(__name__)
+
+
+async def _wreak_havoc(client: bridgeprotocol.BridgeClient, game_uuid: uuid.UUID):
+    # Wreak minor havoc by trying to do illegal moves
+    player_uuid = uuid.uuid4()
+    while True:
+        await asyncio.sleep(0.1)
+        with contextlib.suppress(bridgeprotocol.CommandFailure):
+            await client.call(
+                game=game_uuid,
+                player=player_uuid,
+                call=models.Call(type=models.CallType.pass_),
+            )
+            logger.error("Havoc wreaked")
+            sys.exit(1)
+        with contextlib.suppress(bridgeprotocol.CommandFailure):
+            await client.play(
+                game=game_uuid,
+                player=player_uuid,
+                card=models.CardType(
+                    rank=random.choice(list(models.Rank)),
+                    suit=random.choice(list(models.Suit)),
+                ),
+            )
+            logger.error("Havoc wreaked")
+            sys.exit(1)
 
 
 async def _get_turn_from_deal_state(client, game, player):
@@ -28,10 +57,10 @@ async def _get_turn_from_events(event_receiver):
 async def _play_bridge_game(
     client: bridgeprotocol.BridgeClient,
     event_receiver: bridgeprotocol.BridgeEventReceiver,
+    game_uuid: uuid.UUID,
 ):
     player_uuids = {position: uuid.uuid4() for position in models.Position}
     player_uuid = player_uuids[models.Position.north]
-    game_uuid = await client.game()
     for position, player_uuid in player_uuids.items():
         await client.join(game=game_uuid, player=player_uuid, position=position)
     position_in_turn = await _get_turn_from_deal_state(client, game_uuid, player_uuid)
@@ -64,7 +93,15 @@ async def _async_main(control_endpoint, event_endpoint):
         ) as client, bridgeprotocol.BridgeEventReceiver(
             ctx, event_endpoint
         ) as event_receiver:
-            await _play_bridge_game(client, event_receiver)
+            game_uuid = await client.game()
+            await asyncio.wait(
+                [
+                    asyncio.create_task(_wreak_havoc(client, game_uuid)),
+                    asyncio.create_task(
+                        _play_bridge_game(client, event_receiver, game_uuid)
+                    ),
+                ]
+            )
     finally:
         ctx.term()
 
