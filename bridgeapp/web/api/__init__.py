@@ -17,6 +17,13 @@ router = fastapi.APIRouter()
 security = fastapi.security.HTTPBasic()
 
 
+def _get_player_uuid(
+    credentials: fastapi.security.HTTPBasicCredentials = fastapi.Depends(security),
+):
+    # TODO: Actually authenticate a player
+    return utils.generate_player_uuid(credentials.username)
+
+
 @router.post(
     "/games", status_code=fastapi.status.HTTP_201_CREATED, summary="Create a new game"
 )
@@ -39,16 +46,13 @@ async def create_game(response: fastapi.Response) -> models.Game:
     summary="Add a player to a game",
 )
 async def add_player(
-    game_uuid: uuid.UUID,
-    credentials: fastapi.security.HTTPBasicCredentials = fastapi.Depends(security),
+    game_uuid: uuid.UUID, player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid),
 ):
     """Add a player to an existing game
 
     This call causes the authenticated user to be added as a player to
     the game identified by ``game_uuid``.
     """
-    # TODO: Actually authenticate a player
-    player_uuid = utils.generate_player_uuid(credentials.username)
     client = _bridgeprotocol.get_client()
     await client.join(game=game_uuid, player=player_uuid)
 
