@@ -119,7 +119,7 @@ def main(endpoint):
     """
     defaults = {"backend_endpoint": endpoint} if endpoint else {}
     s = settings.get_settings(**defaults)
-    asyncio.run(_async_main(endpoint))
+    asyncio.run(_async_main(s.backend_endpoint))
 
 
 if __name__ == "__main__":
