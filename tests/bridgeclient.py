@@ -66,7 +66,7 @@ async def _play_bridge_game(
     position_in_turn = await _get_turn_from_deal_state(client, game_uuid, player_uuid)
     while True:
         player_uuid = player_uuids[position_in_turn]
-        player_state = await client.get_player(game=game_uuid, player=player_uuid)
+        player_state = await client.get_self(game=game_uuid, player=player_uuid)
         if calls := player_state.allowedCalls:
             await client.call(
                 game=game_uuid, player=player_uuid, call=random.choice(calls)

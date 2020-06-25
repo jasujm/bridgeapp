@@ -513,13 +513,13 @@ class TestBridgeClientGetDealCommand:
         ),
     ],
 )
-class TestBridgeClientGetPlayerCommand:
+class TestBridgeClientGetSelfCommand:
     async def test_success(self, server, client, game_and_player, self_):
         assert (
             await _command_helper(
                 server,
                 client,
-                client.get_player(**game_and_player),
+                client.get_self(**game_and_player),
                 expected_command=b"get",
                 expected_command_args=dict(**game_and_player, get=["self"]),
                 reply_args={"get": {"self": self_}},
@@ -534,7 +534,7 @@ class TestBridgeClientGetPlayerCommand:
             await _command_helper(
                 server,
                 client,
-                client.get_player(**game_and_player),
+                client.get_self(**game_and_player),
                 expected_command=b"get",
                 expected_command_args=dict(**game_and_player, get=["self"]),
                 reply_args={"get": {}},
@@ -547,7 +547,7 @@ class TestBridgeClientGetPlayerCommand:
             await _command_helper(
                 server,
                 client,
-                client.get_player(**game_and_player),
+                client.get_self(**game_and_player),
                 expected_command=b"get",
                 expected_command_args=dict(**game_and_player, get=["self"]),
                 reply_args={"get": {"self": "invalid"}},

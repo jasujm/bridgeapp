@@ -82,7 +82,7 @@ class BridgeClient(_base.ClientBase):
             self._create_deal_state, reply, "get", command="get"
         )
 
-    async def get_player(self, *, game: uuid.UUID, player: OptionalUuid = None):
+    async def get_self(self, *, game: uuid.UUID, player: OptionalUuid = None):
         """Get the player state from the server"""
         reply = await self.command("get", game=game, player=player, get=["self"])
         return self._convert_reply_safe(
