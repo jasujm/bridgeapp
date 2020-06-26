@@ -43,3 +43,9 @@ Module reference
 
 .. automodule:: bridgeapp.bridgeprotocol.utils
    :members:
+
+
+Settings
+========
+
+.. pydantic:: bridgeapp.settings.Settings

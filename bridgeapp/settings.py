@@ -18,20 +18,22 @@ from .bridgeprotocol.utils import TCP_ENDPOINT_RE
 class Settings(BaseSettings):
     """Bridgeapp settings"""
 
-    api_v1_prefix = "/api/v1"
-    """The API URL prefix"""
+    api_v1_prefix = Field("/api/v1", title="The API URL prefix")
 
-    backend_endpoint: str = Field("tcp://localhost:5555", regex=TCP_ENDPOINT_RE)
-    """Bridge backend server endpoint"""
+    backend_endpoint: str = Field(
+        "tcp://localhost:5555",
+        title="Bridge backend server endpoint",
+        regex=TCP_ENDPOINT_RE,
+    )
 
-    uuid_namespace: uuid.UUID = Field(default_factory=uuid.uuid4)
-    """Root namespace for UUIDs
-
-    The application uses UUIDv5 algorithm to generate UUIDs e.g. for
-    players based on their username. This setting is used as the root
-    namespace. It should be set to a known value to ensure consistent
-    UUID generation across runs.
-    """
+    uuid_namespace: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        title="Root namespace for UUIDs",
+        description="""
+The application uses UUIDv5 algorithm to generate UUIDs e.g. for players based
+on their username. This setting is used as the root namespace. It should be set
+to a known value to ensure consistent UUID generation across runs."""
+    )
 
     class Config:  # pylint: disable=missing-class-docstring
         env_prefix = "bridgeapp_"
