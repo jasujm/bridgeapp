@@ -9,6 +9,10 @@ from bridgeapp import models as base_models
 
 
 class Game(base_models.Game):
-    """Game representation in the API"""
+    """Bridge game
+
+    Model containing the basic information of a game, and the current
+    deal state.
+    """
 
     deal = base_models.DealState()
