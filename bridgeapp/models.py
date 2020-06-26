@@ -48,13 +48,7 @@ class Bid(pydantic.BaseModel):
     """Bridge bid"""
 
     strain: Strain
-    level: int
-
-    @pydantic.validator("level")
-    def _level_must_be_between_one_and_seven(cls, level):
-        if not 1 <= level <= 7:
-            raise ValueError("`level` must be between 1 and 7")
-        return level
+    level: int = pydantic.Field(ge=1, le=7)
 
 
 class Call(pydantic.BaseModel):
