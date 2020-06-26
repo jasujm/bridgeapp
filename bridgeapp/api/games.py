@@ -7,7 +7,7 @@ import uuid
 
 import fastapi
 
-from bridgeapp import bridgeprotocol
+from bridgeapp import bridgeprotocol, models as base_models
 
 from . import models, utils
 
@@ -89,6 +89,56 @@ async def post_game_players(
     client = utils.get_bridge_client()
     try:
         await client.join(game=game_uuid, player=player_uuid)
+    except bridgeprotocol.CommandFailure:
+        raise fastapi.HTTPException(
+            status_code=fastapi.status.HTTP_400_BAD_REQUEST, detail="Error"
+        )
+
+
+@router.post(
+    "/{game_uuid}/calls",
+    name="game_calls",
+    summary="Add a call to the current bidding",
+    status_code=fastapi.status.HTTP_204_NO_CONTENT,
+)
+async def post_game_calls(
+    game_uuid: uuid.UUID,
+    call: base_models.Call,
+    player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid),
+):
+    """
+    This call causes the authenticated user to make a call (no pun intended) in
+    specified in the body of the request. The call is only possible during the
+    bidding phase of a deal, abiding to the laws of contract bridge.
+    """
+    client = utils.get_bridge_client()
+    try:
+        await client.call(game=game_uuid, player=player_uuid, call=call)
+    except bridgeprotocol.CommandFailure:
+        raise fastapi.HTTPException(
+            status_code=fastapi.status.HTTP_400_BAD_REQUEST, detail="Error"
+        )
+
+
+@router.post(
+    "/{game_uuid}/trick",
+    name="game_trick",
+    summary="Add a card to the current trick",
+    status_code=fastapi.status.HTTP_204_NO_CONTENT,
+)
+async def post_game_trick(
+    game_uuid: uuid.UUID,
+    card: base_models.CardType,
+    player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid),
+):
+    """
+    This call causes the authenticated user to play the card to the current
+    specified in the body of the request. The call is only possible during the
+    playing phase of a deal, abiding to the laws of contract bridge.
+    """
+    client = utils.get_bridge_client()
+    try:
+        await client.play(game=game_uuid, player=player_uuid, card=card)
     except bridgeprotocol.CommandFailure:
         raise fastapi.HTTPException(
             status_code=fastapi.status.HTTP_400_BAD_REQUEST, detail="Error"
