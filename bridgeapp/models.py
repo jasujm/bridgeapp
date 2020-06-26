@@ -59,8 +59,8 @@ class Call(pydantic.BaseModel):
 
     @pydantic.root_validator
     def _check_call_has_bid_iff_type_is_bid(cls, values):
-        if bool(values["type"] == CallType.bid) == bool(values["bid"] is None):
-            raise ValueError("Call must have `bid` if and only if its `type` is bid")
+        if bool(values.get("type") == CallType.bid) == bool(values.get("bid") is None):
+            raise ValueError("Call must have bid if and only if its type is bid")
         return values
 
 
