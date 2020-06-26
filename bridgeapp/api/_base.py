@@ -4,8 +4,6 @@ import fastapi
 
 from . import _bridgeprotocol, games
 
-ROUTER_PREFIX = "/api/v1"
-
 router = fastapi.APIRouter()
 
 router.include_router(games.router, prefix="/games", tags=["games"])

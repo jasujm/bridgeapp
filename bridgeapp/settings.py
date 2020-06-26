@@ -18,6 +18,9 @@ from .bridgeprotocol.utils import TCP_ENDPOINT_RE
 class Settings(BaseSettings):
     """Bridgeapp settings"""
 
+    api_v1_prefix = "/api/v1"
+    """The API URL prefix"""
+
     backend_endpoint: str = Field("tcp://localhost:5555", regex=TCP_ENDPOINT_RE)
     """Bridge backend server endpoint"""
 
@@ -35,7 +38,7 @@ class Settings(BaseSettings):
 
 
 @functools.lru_cache
-def get_settings(**kwargs):
+def get_settings(**kwargs) -> Settings:
     """Get the application settings
 
     Parameters:

@@ -9,9 +9,6 @@ import fastapi
 
 from . import models, utils
 
-# TODO: This is ugly and redundant
-ROUTER_PREFIX = "/api/v1/games"
-
 router = fastapi.APIRouter()
 security = fastapi.security.HTTPBasic()
 
@@ -24,9 +21,13 @@ def _get_player_uuid(
 
 
 @router.post(
-    "", status_code=fastapi.status.HTTP_201_CREATED, summary="Create a new game",
+    "",
+    name="games_list",
+    status_code=fastapi.status.HTTP_201_CREATED,
+    summary="Create a new game",
 )
-async def create_game(
+async def games_list(
+    request: fastapi.Request,
     response: fastapi.Response,
     # pylint: disable=unused-argument
     credentials: fastapi.security.HTTPBasicCredentials = fastapi.Depends(security),
@@ -39,12 +40,12 @@ async def create_game(
     """
     client = utils.get_bridge_client()
     game_uuid = await client.game()
-    response.headers["Location"] = f"{ROUTER_PREFIX}/{game_uuid}"
+    response.headers["Location"] = request.url_for("game_details", game_uuid=game_uuid)
     return models.Game(uuid=game_uuid).dict(exclude_unset=True)
 
 
-@router.get("/{game_uuid}", summary="Get information about a game")
-async def read_game(
+@router.get("/{game_uuid}", name="game_details", summary="Get information about a game")
+async def get_game_details(
     game_uuid: uuid.UUID, player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid)
 ):
     """Get information about a game"""
@@ -55,10 +56,11 @@ async def read_game(
 
 @router.post(
     "/{game_uuid}/players",
+    name="game_players_list",
     status_code=fastapi.status.HTTP_204_NO_CONTENT,
     summary="Add a player to a game",
 )
-async def add_player(
+async def post_game_players(
     game_uuid: uuid.UUID, player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid),
 ):
     """Add a player to an existing game

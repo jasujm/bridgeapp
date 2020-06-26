@@ -56,7 +56,7 @@ def test_create_game(client, mock_bridge_client, game_uuid, username):
     mock_bridge_client.game.return_value = game_uuid
     res = client.post("/api/v1/games", auth=(username, "secret"))
     assert res.status_code == fastapi.status.HTTP_201_CREATED
-    assert res.headers["Location"] == f"/api/v1/games/{game_uuid}"
+    assert res.headers["Location"] == f"http://testserver/api/v1/games/{game_uuid}"
     assert res.json() == {"uuid": str(game_uuid)}
 
 
