@@ -24,7 +24,7 @@ def mock_bridge_client(monkeypatch):
         join=unittest.mock.AsyncMock(),
         get_deal=unittest.mock.AsyncMock(),
     )
-    monkeypatch.setattr(api._bridgeprotocol, "get_client", lambda: mock)
+    monkeypatch.setattr(api.utils, "get_bridge_client", lambda: mock)
     return mock
 
 

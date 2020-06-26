@@ -1,4 +1,4 @@
-"""Bridge protocol dependency for the bridgeapp API"""
+"""Bridge protocol glue code for the bridgeapp API"""
 
 import zmq.asyncio
 
@@ -22,8 +22,3 @@ async def startup():
 def shutdown():
     """Close client at shutdown"""
     _bridge_client.close()
-
-
-def get_client():
-    """Get bridge client"""
-    return _bridge_client

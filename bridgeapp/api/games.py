@@ -7,7 +7,7 @@ import uuid
 
 import fastapi
 
-from . import _bridgeprotocol, models, utils
+from . import models, utils
 
 # TODO: This is ugly and redundant
 ROUTER_PREFIX = "/api/v1/games"
@@ -37,7 +37,7 @@ async def create_game(
     generate an UUID for the game and return it in the response
     body.
     """
-    client = _bridgeprotocol.get_client()
+    client = utils.get_bridge_client()
     game_uuid = await client.game()
     response.headers["Location"] = f"{ROUTER_PREFIX}/{game_uuid}"
     return models.Game(uuid=game_uuid).dict(exclude_unset=True)
@@ -48,7 +48,7 @@ async def read_game(
     game_uuid: uuid.UUID, player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid)
 ):
     """Get information about a game"""
-    client = _bridgeprotocol.get_client()
+    client = utils.get_bridge_client()
     deal = await client.get_deal(game=game_uuid, player=player_uuid)
     return models.Game(uuid=game_uuid, deal=deal)
 
@@ -66,5 +66,5 @@ async def add_player(
     This call causes the authenticated user to be added as a player to
     the game identified by ``game_uuid``.
     """
-    client = _bridgeprotocol.get_client()
+    client = utils.get_bridge_client()
     await client.join(game=game_uuid, player=player_uuid)

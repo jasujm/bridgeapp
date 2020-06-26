@@ -1,7 +1,4 @@
-"""
-Bridge API base definitions
----------------------------
-"""
+"""Bridge API base definitions"""
 
 import fastapi
 
