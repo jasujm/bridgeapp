@@ -32,7 +32,7 @@ class Settings(BaseSettings):
         description="""
 The application uses UUIDv5 algorithm to generate UUIDs e.g. for players based
 on their username. This setting is used as the root namespace. It should be set
-to a known value to ensure consistent UUID generation across runs."""
+to a known value to ensure consistent UUID generation across runs.""",
     )
 
     class Config:  # pylint: disable=missing-class-docstring

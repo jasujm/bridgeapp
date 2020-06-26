@@ -7,6 +7,8 @@ import uuid
 
 import fastapi
 
+from bridgeapp import bridgeprotocol
+
 from . import models, utils
 
 router = fastapi.APIRouter()
@@ -14,6 +16,7 @@ security = fastapi.security.HTTPBasic()
 
 # API calls are documented in the fastapi style
 # pylint: disable=missing-function-docstring
+
 
 def _get_player_uuid(
     credentials: fastapi.security.HTTPBasicCredentials = fastapi.Depends(security),
@@ -39,7 +42,12 @@ async def games_list(
     for the game and return it in the response body.
     """
     client = utils.get_bridge_client()
-    game_uuid = await client.game()
+    try:
+        game_uuid = await client.game()
+    except bridgeprotocol.CommandFailure:
+        raise fastapi.HTTPException(
+            status_code=fastapi.status.HTTP_400_BAD_REQUEST, detail="Error"
+        )
     response.headers["Location"] = request.url_for("game_details", game_uuid=game_uuid)
     return models.Game(uuid=game_uuid).dict(exclude_unset=True)
 
@@ -54,7 +62,12 @@ async def get_game_details(
     game_uuid: uuid.UUID, player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid)
 ):
     client = utils.get_bridge_client()
-    deal = await client.get_deal(game=game_uuid, player=player_uuid)
+    try:
+        deal = await client.get_deal(game=game_uuid, player=player_uuid)
+    except bridgeprotocol.CommandFailure:
+        raise fastapi.HTTPException(
+            status_code=fastapi.status.HTTP_400_BAD_REQUEST, detail="Error"
+        )
     return models.Game(uuid=game_uuid, deal=deal)
 
 
@@ -72,4 +85,9 @@ async def post_game_players(
     identified by ``game_uuid``.
     """
     client = utils.get_bridge_client()
-    await client.join(game=game_uuid, player=player_uuid)
+    try:
+        await client.join(game=game_uuid, player=player_uuid)
+    except bridgeprotocol.CommandFailure:
+        raise fastapi.HTTPException(
+            status_code=fastapi.status.HTTP_400_BAD_REQUEST, detail="Error"
+        )

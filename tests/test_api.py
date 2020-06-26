@@ -9,7 +9,7 @@ import fastapi
 import fastapi.testclient
 import pytest
 
-from bridgeapp import app, api, models
+from bridgeapp import app, api, bridgeprotocol, models
 
 
 @pytest.fixture
@@ -60,6 +60,15 @@ def test_create_game(client, mock_bridge_client, game_uuid, username):
     assert api.models.Game(**res.json()) == api.models.Game(uuid=game_uuid)
 
 
+def test_create_game_should_fail_if_backend_fails(
+    client, mock_bridge_client, game_uuid, username
+):
+    mock_bridge_client.game.side_effect = bridgeprotocol.CommandFailure
+    res = client.post("/api/v1/games", auth=(username, "secret"))
+    assert res.status_code == fastapi.status.HTTP_400_BAD_REQUEST
+    mock_bridge_client.game.assert_awaited_once()
+
+
 def test_read_game(client, mock_bridge_client, game_uuid, username_and_player_uuid):
     username, player_uuid = username_and_player_uuid
     deal_state = models.DealState(positionInTurn=models.Position.north)
@@ -71,9 +80,27 @@ def test_read_game(client, mock_bridge_client, game_uuid, username_and_player_uu
     )
 
 
+def test_read_game_should_fail_if_backend_fails(
+    client, mock_bridge_client, game_uuid, username
+):
+    mock_bridge_client.get_deal.side_effect = bridgeprotocol.CommandFailure
+    res = client.get(f"/api/v1/games/{game_uuid}", auth=(username, "secret"))
+    assert res.status_code == fastapi.status.HTTP_400_BAD_REQUEST
+    mock_bridge_client.get_deal.assert_awaited_once()
+
+
 def test_add_player(client, mock_bridge_client, game_uuid, username_and_player_uuid):
     username, player_uuid = username_and_player_uuid
     mock_bridge_client.join.return_value = None
     res = client.post(f"/api/v1/games/{game_uuid}/players", auth=(username, "secret"))
     assert res.status_code == fastapi.status.HTTP_204_NO_CONTENT
     mock_bridge_client.join.assert_awaited_once_with(game=game_uuid, player=player_uuid)
+
+
+def test_add_player_should_fail_if_backend_fails(
+    client, mock_bridge_client, game_uuid, username
+):
+    mock_bridge_client.join.side_effect = bridgeprotocol.CommandFailure
+    res = client.post(f"/api/v1/games/{game_uuid}/players", auth=(username, "secret"))
+    assert res.status_code == fastapi.status.HTTP_400_BAD_REQUEST
+    mock_bridge_client.join.assert_awaited_once()
