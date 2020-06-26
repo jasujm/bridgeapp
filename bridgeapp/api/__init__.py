@@ -25,7 +25,10 @@ def _get_player_uuid(
 
 
 @router.post(
-    "/games", status_code=fastapi.status.HTTP_201_CREATED, summary="Create a new game"
+    "/games",
+    tags=["games"],
+    status_code=fastapi.status.HTTP_201_CREATED,
+    summary="Create a new game",
 )
 async def create_game(
     response: fastapi.Response,
@@ -43,7 +46,9 @@ async def create_game(
     return models.Game(uuid=game_uuid).dict(exclude_unset=True)
 
 
-@router.get("/games/{game_uuid}", summary="Get information about a game")
+@router.get(
+    "/games/{game_uuid}", tags=["games"], summary="Get information about a game"
+)
 async def read_game(
     game_uuid: uuid.UUID, player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid)
 ):
@@ -55,6 +60,7 @@ async def read_game(
 
 @router.post(
     "/games/{game_uuid}/players",
+    tags=["games"],
     status_code=fastapi.status.HTTP_204_NO_CONTENT,
     summary="Add a player to a game",
 )
