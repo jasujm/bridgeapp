@@ -29,8 +29,7 @@ def _get_player_uuid(
 async def games_list(
     request: fastapi.Request,
     response: fastapi.Response,
-    # pylint: disable=unused-argument
-    credentials: fastapi.security.HTTPBasicCredentials = fastapi.Depends(security),
+    _credentials: fastapi.security.HTTPBasicCredentials = fastapi.Depends(security),
 ):
     """Create a new game
 
