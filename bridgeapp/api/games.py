@@ -12,6 +12,8 @@ from . import models, utils
 router = fastapi.APIRouter()
 security = fastapi.security.HTTPBasic()
 
+# API calls are documented in the fastapi style
+# pylint: disable=missing-function-docstring
 
 def _get_player_uuid(
     credentials: fastapi.security.HTTPBasicCredentials = fastapi.Depends(security),
@@ -32,11 +34,9 @@ async def games_list(
     response: fastapi.Response,
     _credentials: fastapi.security.HTTPBasicCredentials = fastapi.Depends(security),
 ):
-    """Create a new game
-
-    This call causes a new game to be created. The server SHALL
-    generate an UUID for the game and return it in the response
-    body.
+    """
+    This call causes a new game to be created. The server SHALL generate an UUID
+    for the game and return it in the response body.
     """
     client = utils.get_bridge_client()
     game_uuid = await client.game()
@@ -53,7 +53,6 @@ async def games_list(
 async def get_game_details(
     game_uuid: uuid.UUID, player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid)
 ):
-    """Get information about a game"""
     client = utils.get_bridge_client()
     deal = await client.get_deal(game=game_uuid, player=player_uuid)
     return models.Game(uuid=game_uuid, deal=deal)
@@ -68,10 +67,9 @@ async def get_game_details(
 async def post_game_players(
     game_uuid: uuid.UUID, player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid),
 ):
-    """Add a player to an existing game
-
-    This call causes the authenticated user to be added as a player to
-    the game identified by ``game_uuid``.
+    """
+    This call causes the authenticated user to be added as a player to the game
+    identified by ``game_uuid``.
     """
     client = utils.get_bridge_client()
     await client.join(game=game_uuid, player=player_uuid)
