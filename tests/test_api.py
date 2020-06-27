@@ -73,10 +73,10 @@ def test_create_game_should_fail_if_backend_fails(
 
 def test_read_game(client, mock_bridge_client, game_uuid, username_and_player_uuid):
     username, player_uuid = username_and_player_uuid
-    deal_state = models.DealState(positionInTurn=models.Position.north)
-    mock_bridge_client.get_deal.return_value = deal_state
+    deal = models.Deal(uuid=uuid.uuid4())
+    mock_bridge_client.get_deal.return_value = deal
     res = client.get(f"/api/v1/games/{game_uuid}", auth=(username, "secret"))
-    assert api.models.Game(**res.json()) == {"uuid": game_uuid, "deal": deal_state}
+    assert api.models.Game(**res.json()) == {"uuid": game_uuid, "deal": deal}
     mock_bridge_client.get_deal.assert_awaited_once_with(
         game=game_uuid, player=player_uuid
     )

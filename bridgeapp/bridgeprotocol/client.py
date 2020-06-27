@@ -78,9 +78,7 @@ class BridgeClient(_base.ClientBase):
         reply = await self.command(
             "get", game=game, player=player, get=["pubstate", "privstate"]
         )
-        return self._convert_reply_safe(
-            self._create_deal_state, reply, "get", command="get"
-        )
+        return self._convert_reply_safe(self._create_deal, reply, "get", command="get")
 
     async def get_self(self, *, game: uuid.UUID, player: OptionalUuid = None):
         """Get the player state from the server"""
@@ -110,13 +108,14 @@ class BridgeClient(_base.ClientBase):
         return orjson.loads(obj)
 
     @staticmethod
-    def _create_deal_state(get):
+    def _create_deal(get):
         pubstate = get["pubstate"]
         privstate = get["privstate"]
         assert isinstance(pubstate, dict)
         assert isinstance(privstate, dict)
         state = utils.merge_patch(pubstate, privstate)
-        return models.DealState(**state)
+        deal_uuid = state.pop("deal")
+        return models.Deal(uuid=deal_uuid, **state)
 
     @staticmethod
     def _create_player_state(get):

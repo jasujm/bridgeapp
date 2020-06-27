@@ -43,9 +43,9 @@ async def _wreak_havoc(client: bridgeprotocol.BridgeClient, game_uuid: uuid.UUID
             sys.exit(1)
 
 
-async def _get_turn_from_deal_state(client, game, player):
-    deal_state = await client.get_deal(game=game, player=player)
-    return deal_state.positionInTurn
+async def _get_turn_from_deal(client, game, player):
+    deal = await client.get_deal(game=game, player=player)
+    return deal.positionInTurn
 
 
 async def _get_turn_from_events(event_receiver):
@@ -63,7 +63,7 @@ async def _play_bridge_game(
     player_uuid = player_uuids[models.Position.north]
     for position, player_uuid in player_uuids.items():
         await client.join(game=game_uuid, player=player_uuid, position=position)
-    position_in_turn = await _get_turn_from_deal_state(client, game_uuid, player_uuid)
+    position_in_turn = await _get_turn_from_deal(client, game_uuid, player_uuid)
     while True:
         player_uuid = player_uuids[position_in_turn]
         player_state = await client.get_self(game=game_uuid, player=player_uuid)
@@ -80,9 +80,7 @@ async def _play_bridge_game(
                 _get_turn_from_events(event_receiver), timeout=0.1
             )
         except asyncio.TimeoutError:
-            position_in_turn = await _get_turn_from_deal_state(
-                client, game_uuid, player_uuid
-            )
+            position_in_turn = await _get_turn_from_deal(client, game_uuid, player_uuid)
 
 
 async def _async_main(endpoint):

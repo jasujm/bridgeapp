@@ -385,9 +385,10 @@ async def test_bridge_client_get_command_should_fail_if_reply_missing_get(
 @pytest.mark.parametrize(
     "pubstate",
     [
-        models.DealState(),
+        models.Deal(uuid=uuid.uuid4()),
         # This isn't valid bridge deal state but... whatever
-        models.DealState(
+        models.Deal(
+            uuid=uuid.uuid4(),
             positionInTurn=_any_position(),
             calls=[
                 models.PositionCallPair(
@@ -413,7 +414,8 @@ async def test_bridge_client_get_command_should_fail_if_reply_missing_get(
                         for i in range(3)
                     ],
                     winner=_any_position(),
-                ) for j in range(3)
+                )
+                for j in range(3)
             ],
             vulnerability=models.Vulnerability(northSouth=True, eastWest=False,),
         ),
@@ -424,9 +426,11 @@ async def test_bridge_client_get_command_should_fail_if_reply_missing_get(
 )
 class TestBridgeClientGetDealCommand:
     async def test_success(self, server, client, game_and_player, pubstate, privstate):
-        deal_state = copy.deepcopy(pubstate)
+        deal = copy.deepcopy(pubstate)
         if cards_east := privstate["cards"].get("east"):
-            deal_state.cards.east = copy.deepcopy(cards_east)
+            deal.cards.east = copy.deepcopy(cards_east)
+        pubstate = pubstate.dict()
+        pubstate["deal"] = str(pubstate.pop("uuid"))
         assert (
             await _command_helper(
                 server,
@@ -438,7 +442,7 @@ class TestBridgeClientGetDealCommand:
                 ),
                 reply_args={"get": {"pubstate": pubstate, "privstate": privstate}},
             )
-            == deal_state
+            == deal
         )
 
     async def test_missing_pubstate_should_lead_to_failure(
@@ -459,6 +463,7 @@ class TestBridgeClientGetDealCommand:
     async def test_invalid_pubstate_should_lead_to_failure(
         self, server, client, game_and_player, pubstate, privstate
     ):
+        # pubstate is invalid if we don't do the preprosessing here
         with pytest.raises(bridgeprotocol.InvalidMessage):
             await _command_helper(
                 server,
@@ -468,12 +473,14 @@ class TestBridgeClientGetDealCommand:
                 expected_command_args=dict(
                     **game_and_player, get=["pubstate", "privstate"]
                 ),
-                reply_args={"get": {"pubstate": "invalid", "privstate": privstate}},
+                reply_args={"get": {"pubstate": pubstate, "privstate": privstate}},
             )
 
     async def test_missing_privstate_should_lead_to_failure(
         self, server, client, game_and_player, pubstate, privstate
     ):
+        pubstate = pubstate.dict()
+        pubstate["deal"] = str(pubstate.pop("uuid"))
         with pytest.raises(bridgeprotocol.InvalidMessage):
             await _command_helper(
                 server,
@@ -489,6 +496,8 @@ class TestBridgeClientGetDealCommand:
     async def test_invalid_privstate_should_lead_to_failure(
         self, server, client, game_and_player, pubstate, privstate
     ):
+        pubstate = pubstate.dict()
+        pubstate["deal"] = str(pubstate.pop("uuid"))
         with pytest.raises(bridgeprotocol.InvalidMessage):
             await _command_helper(
                 server,

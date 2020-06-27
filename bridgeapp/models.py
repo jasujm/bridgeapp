@@ -154,9 +154,22 @@ class Trick(pydantic.BaseModel):
     winner: typing.Optional[Position]
 
 
-class DealState(pydantic.BaseModel):
-    """Bridge deal state"""
+class Game(pydantic.BaseModel):
+    """Bridge game"""
 
+    uuid: uuid.UUID
+
+
+class Player(pydantic.BaseModel):
+    """Player taking part in a bridge game"""
+
+    uuid: uuid.UUID
+
+
+class Deal(pydantic.BaseModel):
+    """Bridge deal"""
+
+    uuid: uuid.UUID
     positionInTurn: typing.Optional[Position]
     calls: typing.List[PositionCallPair] = []
     declarer: typing.Optional[Position]
@@ -172,15 +185,3 @@ class PlayerState(pydantic.BaseModel):
     position: typing.Optional[Position]
     allowedCalls: typing.List[Call] = []
     allowedCards: typing.List[CardType] = []
-
-
-class Game(pydantic.BaseModel):
-    """Bridge game"""
-
-    uuid: uuid.UUID
-
-
-class Player(pydantic.BaseModel):
-    """Player taking part in a bridge game"""
-
-    uuid: uuid.UUID
