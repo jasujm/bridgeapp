@@ -126,13 +126,6 @@ class Cards(pydantic.BaseModel):
     west: CardList = []
 
 
-class TricksWon(pydantic.BaseModel):
-    """Trick tally by partnership"""
-
-    northSouth: int = 0
-    eastWest: int = 0
-
-
 class Vulnerability(pydantic.BaseModel):
     """Vulnerability by partnership"""
 
@@ -154,6 +147,13 @@ class PositionCardPair(pydantic.BaseModel):
     card: CardType
 
 
+class Trick(pydantic.BaseModel):
+    """Trick in a bridge playing phase"""
+
+    cards: typing.Optional[typing.List[PositionCardPair]]
+    winner: typing.Optional[Position]
+
+
 class DealState(pydantic.BaseModel):
     """Bridge deal state"""
 
@@ -162,8 +162,7 @@ class DealState(pydantic.BaseModel):
     declarer: typing.Optional[Position]
     contract: typing.Optional[Contract]
     cards: Cards = Cards()
-    trick: typing.List[PositionCardPair] = []
-    tricksWon: TricksWon = TricksWon()
+    tricks: typing.List[Trick] = []
     vulnerability: Vulnerability = Vulnerability()
 
 

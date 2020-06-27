@@ -405,12 +405,16 @@ async def test_bridge_client_get_command_should_fail_if_reply_missing_get(
             ),
             cards=models.Cards(north=[_any_card(), _any_card()], east=[None, None],),
             tricks=[
-                models.PositionCardPair(position=_any_position(), card=_any_card(),)
-                for i in range(3)
+                models.Trick(
+                    cards=[
+                        models.PositionCardPair(
+                            position=_any_position(), card=_any_card()
+                        )
+                        for i in range(3)
+                    ],
+                    winner=_any_position(),
+                ) for j in range(3)
             ],
-            tricksWon=models.TricksWon(
-                northSouth=random.randint(1, 6), eastWest=random.randint(1, 6),
-            ),
             vulnerability=models.Vulnerability(northSouth=True, eastWest=False,),
         ),
     ],
