@@ -25,6 +25,7 @@ def mock_bridge_client(monkeypatch):
         game=unittest.mock.AsyncMock(),
         join=unittest.mock.AsyncMock(),
         get_deal=unittest.mock.AsyncMock(),
+        get_self=unittest.mock.AsyncMock(),
         call=unittest.mock.AsyncMock(),
         play=unittest.mock.AsyncMock(),
     )
@@ -89,6 +90,26 @@ def test_read_game_should_fail_if_backend_fails(
     res = client.get(f"/api/v1/games/{game_uuid}", auth=(username, "secret"))
     assert res.status_code == fastapi.status.HTTP_400_BAD_REQUEST
     mock_bridge_client.get_deal.assert_awaited_once()
+
+
+def test_read_self(client, mock_bridge_client, game_uuid, username_and_player_uuid):
+    username, player_uuid = username_and_player_uuid
+    player_state = models.PlayerState(position=models.Position.north)
+    mock_bridge_client.get_self.return_value = player_state
+    res = client.get(f"/api/v1/games/{game_uuid}/self", auth=(username, "secret"))
+    assert models.PlayerState(**res.json()) == player_state
+    mock_bridge_client.get_self.assert_awaited_once_with(
+        game=game_uuid, player=player_uuid
+    )
+
+
+def test_read_game_should_fail_if_backend_fails(
+    client, mock_bridge_client, game_uuid, username
+):
+    mock_bridge_client.get_self.side_effect = bridgeprotocol.CommandFailure
+    res = client.get(f"/api/v1/games/{game_uuid}/self", auth=(username, "secret"))
+    assert res.status_code == fastapi.status.HTTP_400_BAD_REQUEST
+    mock_bridge_client.get_self.assert_awaited_once()
 
 
 def test_add_player(client, mock_bridge_client, game_uuid, username_and_player_uuid):

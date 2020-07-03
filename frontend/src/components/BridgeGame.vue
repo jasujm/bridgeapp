@@ -6,6 +6,15 @@
             <input type="text" name="gameUuid" v-model="gameUuid" placeholder="UUID" />
             <button type="button" v-on:click="joinGame()">Join existing game</button>
         </p>
+        <div v-if="dealState" class="self">
+            <p>Position: {{ selfState.position }}</p>
+            <div v-if="selfState.allowedCalls.length" class="calls">
+                <button v-for="call in selfState.allowedCalls" :key="call" v-on:click="makeCall(call)">{{ call }}</button>
+            </div>
+            <div v-if="selfState.allowedCards.length" class="cards">
+                <button v-for="card in selfState.allowedCards" :key="card" v-on:click="makeCard(card)">{{ card }}</button>
+            </div>
+        </div>
         <pre>{{ dealState }}</pre>
     </div>
 </template>
@@ -43,7 +52,7 @@ export default {
                     auth: this.playerAccount,
                 },
             );
-            await this.updateState();
+            setInterval(this.updateState, 3000);
         },
         updateState: async function () {
             let response = await axios.get(
@@ -53,6 +62,33 @@ export default {
                 },
             );
             this.dealState = response.data.deal;
+            response = await axios.get(
+                `http://localhost:8000/api/v1/games/${this.gameUuid}/self`,
+                {
+                    auth: this.playerAccount,
+                },
+            );
+            this.selfState = response.data;
+        },
+        makeCall: async function (call) {
+            await axios.post(
+                `http://localhost:8000/api/v1/games/${this.gameUuid}/calls`,
+                call,
+                {
+                    auth: this.playerAccount,
+                },
+            );
+            this.updateState();
+        },
+        makeCard: async function (card) {
+            await axios.post(
+                `http://localhost:8000/api/v1/games/${this.gameUuid}/trick`,
+                card,
+                {
+                    auth: this.playerAccount,
+                },
+            );
+            this.updateState();
         },
     }
 }

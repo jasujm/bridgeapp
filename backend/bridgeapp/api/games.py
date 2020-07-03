@@ -59,7 +59,7 @@ async def get_game_details(
     game_uuid: uuid.UUID, player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid)
 ):
     """
-    The response SHALL contain a representation of the game from the point of
+    The response contains a representation of the game from the point of
     view of the authenticated player. If the player is not in the game, only
     public information will be retrieved.
     """
@@ -71,6 +71,28 @@ async def get_game_details(
             status_code=fastapi.status.HTTP_400_BAD_REQUEST, detail="Error"
         )
     return models.Game(uuid=game_uuid, deal=deal)
+
+
+@router.get(
+    "/{game_uuid}/self",
+    name="game_self",
+    summary="Get information about the authenticated player",
+    response_model=base_models.PlayerState,
+)
+async def get_game_self(
+    game_uuid: uuid.UUID, player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid)
+):
+    """
+    The response contains information about the authenticated player itself
+    within the game, including position and available moves.
+    """
+    client = utils.get_bridge_client()
+    try:
+        return await client.get_self(game=game_uuid, player=player_uuid)
+    except bridgeprotocol.CommandFailure:
+        raise fastapi.HTTPException(
+            status_code=fastapi.status.HTTP_400_BAD_REQUEST, detail="Error"
+        )
 
 
 @router.post(
