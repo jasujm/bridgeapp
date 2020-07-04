@@ -8,11 +8,13 @@ Bridgeapp settings
 
 
 import functools
+import typing
 import uuid
 
 from pydantic import BaseSettings, Field
 
 from .bridgeprotocol.utils import TCP_ENDPOINT_RE
+from .bridgeprotocol import CurveKeys
 
 
 class Settings(BaseSettings):
@@ -33,6 +35,10 @@ class Settings(BaseSettings):
 The application uses UUIDv5 algorithm to generate UUIDs e.g. for players based
 on their username. This setting is used as the root namespace. It should be set
 to a known value to ensure consistent UUID generation across runs.""",
+    )
+
+    curve_keys: typing.Optional[CurveKeys] = Field(
+        None, title="CURVE ZeroMQ keys to establish connection with the backend"
     )
 
     class Config:  # pylint: disable=missing-class-docstring

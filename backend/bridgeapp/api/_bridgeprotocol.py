@@ -16,7 +16,9 @@ async def startup():
     """Initialize client at startup"""
     global _bridge_client
     s = settings.get_settings()
-    _bridge_client = await bridgeprotocol.BridgeClient.create(_ctx, s.backend_endpoint)
+    _bridge_client = await bridgeprotocol.BridgeClient.create(
+        _ctx, s.backend_endpoint, curve_keys=s.curve_keys
+    )
 
 
 def shutdown():

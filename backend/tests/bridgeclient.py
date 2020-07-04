@@ -5,6 +5,7 @@ import contextlib
 import logging
 import random
 import sys
+import typing
 import uuid
 
 import click
@@ -83,14 +84,16 @@ async def _play_bridge_game(
             position_in_turn = await _get_turn_from_deal(client, game_uuid, player_uuid)
 
 
-async def _async_main(endpoint):
+async def _async_main(
+    endpoint: str, *, curve_keys: typing.Optional[bridgeprotocol.CurveKeys] = None
+):
     control_endpoint, event_endpoint = bridgeprotocol.utils.endpoints(endpoint)
     ctx = zmq.asyncio.Context()
     try:
         with await bridgeprotocol.BridgeClient.create(
-            ctx, control_endpoint
+            ctx, control_endpoint, curve_keys=curve_keys
         ) as client, bridgeprotocol.BridgeEventReceiver(
-            ctx, event_endpoint
+            ctx, event_endpoint, curve_keys=curve_keys
         ) as event_receiver:
             game_uuid = await client.game()
             await asyncio.wait(
@@ -117,7 +120,7 @@ def main(endpoint):
     """
     defaults = {"backend_endpoint": endpoint} if endpoint else {}
     s = settings.get_settings(**defaults)
-    asyncio.run(_async_main(s.backend_endpoint))
+    asyncio.run(_async_main(s.backend_endpoint, curve_keys=s.curve_keys))
 
 
 if __name__ == "__main__":
