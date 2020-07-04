@@ -9,6 +9,8 @@ import typing
 
 import zmq
 import zmq.asyncio
+import zmq.utils.z85 as z85
+import pydantic
 
 from . import exceptions, utils
 
@@ -19,6 +21,14 @@ RawArgumentsInput = typing.Mapping[bytes, bytes]
 RawArgumentsOutput = typing.Dict[bytes, bytes]
 
 
+class CurveKeys(pydantic.BaseModel):
+    """Keys needed to establish a secure ZeroMQ connection"""
+
+    serverkey: str
+    publickey: str
+    secretkey: str
+
+
 class SocketBase(contextlib.AbstractContextManager, abc.ABC):
     """Base class
 
@@ -27,13 +37,25 @@ class SocketBase(contextlib.AbstractContextManager, abc.ABC):
     serialization and deserialization of messages.
     """
 
-    def __init__(self, socket: zmq.Socket, endpoint: str):
+    def __init__(
+        self,
+        socket: zmq.Socket,
+        endpoint: str,
+        *,
+        curve_keys: typing.Optional[CurveKeys] = None,
+    ):
         """
         Parameters:
             ctx: The ZeroMQ context
             endpoint: The server endpoint
+            curvekeys: If given, the CURVE keys that will be used to establish
+                       the connection to the backend
         """
         self._socket = socket
+        if curve_keys:
+            self._socket.curve_serverkey = z85.decode(curve_keys.serverkey)
+            self._socket.curve_publickey = z85.decode(curve_keys.publickey)
+            self._socket.curve_secretkey = z85.decode(curve_keys.secretkey)
         self._socket.connect(endpoint)
 
     def close(self):
@@ -55,17 +77,21 @@ class ClientBase(SocketBase):
     """Base for bridge protocol client"""
 
     def __init__(
-        self, ctx: zmq.asyncio.Context, endpoint: str, *, identity: bytes = None
+        self,
+        ctx: zmq.asyncio.Context,
+        endpoint: str,
+        *,
+        curve_keys: typing.Optional[CurveKeys] = None,
     ):
         """
         Parameters:
             ctx: The ZeroMQ context
             endpoint: The server endpoint
+            curve_keys: If given, the CURVE keys that will be used to establish
+                the connection to the backend
         """
         socket = ctx.socket(zmq.DEALER)  # pylint: disable=no-member
-        if identity:
-            socket.identity = identity
-        super().__init__(socket, endpoint)
+        super().__init__(socket, endpoint, curve_keys=curve_keys)
         self._counter = 0
         self._replies_pending = {}
 
@@ -186,16 +212,24 @@ class ClientBase(SocketBase):
 class EventReceiverBase(SocketBase):
     """Base for bridge protocol event receiver"""
 
-    def __init__(self, ctx: zmq.asyncio.Context, endpoint: str):
+    def __init__(
+        self,
+        ctx: zmq.asyncio.Context,
+        endpoint: str,
+        *,
+        curve_keys: typing.Optional[CurveKeys] = None,
+    ):
         """
         Parameters:
             ctx: The ZeroMQ context
             endpoint: The server endpoint
+            curve_keys: If given, the CURVE keys that will be used to establish
+                the connection to the backend
         """
         # pylint: disable=no-member
         socket = ctx.socket(zmq.SUB)
         socket.setsockopt(zmq.SUBSCRIBE, b"")
-        super().__init__(socket, endpoint)
+        super().__init__(socket, endpoint, curve_keys=curve_keys)
 
     async def events(self):
         """Receive events from the server

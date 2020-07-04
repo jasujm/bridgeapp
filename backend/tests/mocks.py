@@ -4,6 +4,7 @@ import contextlib
 import typing
 
 import zmq
+import zmq.utils.z85 as z85
 
 from bridgeapp import bridgeprotocol
 
@@ -17,19 +18,28 @@ class MockBridgeServer(contextlib.AbstractContextManager):
     - It must receive messages from a single client.
     """
 
-    _MOCK_SERVER_ENDPOINT = "inproc://bridgeapp.test.bridgeserver"
-    _MOCK_SERVER_EVENT_ENDPOINT = "inproc://bridgeapp.test.bridgeserver.events"
-
-    def __init__(self, ctx: zmq.asyncio.Context):
+    def __init__(
+        self, ctx: zmq.asyncio.Context, tmpdir, secretkey: typing.Optional[bytes] = None
+    ):
         """
         Parameters:
             ctx: The ZeroMQ context
+            tmpdir: Temporary directory where the sockets are created
+            secretkey: CURVE secret key
         """
+        self._mock_server_endpoint = f"ipc://{tmpdir.join('server.endpoint')}"
         self._socket = ctx.socket(zmq.ROUTER)
-        self._socket.bind(self._MOCK_SERVER_ENDPOINT)
+        if secretkey:
+            self._socket.curve_server = 1
+            self._socket.curve_secretkey = z85.decode(secretkey)
+        self._socket.bind(self._mock_server_endpoint)
         self._router_id = None
+        self._mock_event_endpoint = f"ipc://{tmpdir.join('event.endpoint')}"
         self._event_socket = ctx.socket(zmq.PUB)
-        self._event_socket.bind(self._MOCK_SERVER_EVENT_ENDPOINT)
+        if secretkey:
+            self._event_socket.curve_server = 1
+            self._event_socket.curve_secretkey = z85.decode(secretkey)
+        self._event_socket.bind(self._mock_event_endpoint)
 
     def close(self):
         """Close the underlying sockets"""
@@ -81,9 +91,9 @@ class MockBridgeServer(contextlib.AbstractContextManager):
     @property
     def endpoint(self) -> str:
         """The endpoint the server binds to"""
-        return self._MOCK_SERVER_ENDPOINT
+        return self._mock_server_endpoint
 
     @property
     def event_endpoint(self) -> str:
         """The endpoint the server binds to"""
-        return self._MOCK_SERVER_EVENT_ENDPOINT
+        return self._mock_event_endpoint

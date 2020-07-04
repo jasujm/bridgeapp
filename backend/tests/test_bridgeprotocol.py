@@ -24,9 +24,9 @@ def zmq_ctx():
 
 
 @pytest.fixture
-def server(zmq_ctx):
+def server(zmq_ctx, tmpdir):
     """Yield a :class:`mocks.MockBridgeServer` instance"""
-    with mocks.MockBridgeServer(zmq_ctx) as srv:
+    with mocks.MockBridgeServer(zmq_ctx, tmpdir) as srv:
         yield srv
 
 
@@ -62,6 +62,15 @@ async def raw_command(request, server, client):
     tag, server_command, server_command_arguments = await server.get_command()
     assert (server_command, server_command_arguments) == (command, command_arguments)
     return tag, task
+
+
+@pytest.fixture
+def curve_keys():
+    return bridgeprotocol.CurveKeys(
+        serverkey="rq:rM>}U?@Lns47E1%kR.o@n%FcmmsL/@{H8]yf7",
+        publickey="Yne@$w-vo<fVvi]a<NY6T1ed:M$fCG*[IaLV{hID",
+        secretkey="D:)Q[IlAW!ahhC2ac:9*A}h:p?([4%wOTJ%JR%cs",
+    )
 
 
 @pytest.fixture
@@ -151,6 +160,21 @@ async def test_failed_command_should_raise_exception(
     await server.reply(tag, b"ERR", reply_arguments)
     with pytest.raises(bridgeprotocol.CommandFailure):
         await task
+
+
+@pytest.mark.asyncio
+async def test_client_with_curve(zmq_ctx, tmpdir, curve_keys):
+    command = b"command"
+    with mocks.MockBridgeServer(
+        zmq_ctx, tmpdir, secretkey="JTKVSB%%)wK0E.X)V>+}o?pNmC{O&4W4b!Ni{Lh6"
+    ) as server:
+        with bridgeprotocol.BridgeClient(
+            zmq_ctx, server.endpoint, curve_keys=curve_keys
+        ) as client:
+            task = asyncio.create_task(client._raw_command(command, {}))
+            _, server_command, _ = await server.get_command()
+            assert server_command == command
+            task.cancel()
 
 
 @pytest.mark.asyncio
@@ -582,6 +606,23 @@ async def test_event_with_odd_number_of_argument_frames_should_raise_error(
     server._event_socket.send_multipart([b"tag", b"key"])
     with pytest.raises(bridgeprotocol.InvalidMessage):
         await event_receiver._get_raw_event()
+
+
+@pytest.mark.asyncio
+async def test_event_receiver_with_curve(zmq_ctx, tmpdir, curve_keys):
+    event = b"event"
+    with mocks.MockBridgeServer(
+        zmq_ctx, tmpdir, secretkey="JTKVSB%%)wK0E.X)V>+}o?pNmC{O&4W4b!Ni{Lh6"
+    ) as server:
+        with bridgeprotocol.BridgeEventReceiver(
+            zmq_ctx, server.event_endpoint, curve_keys=curve_keys
+        ) as event_receiver:
+            # Establishing a pub-sub connection happens
+            # asynchronously. Waiting for a while is required for this
+            # test case to success. Could this be made less flaky?
+            await asyncio.sleep(0.03)
+            await server.send_event(event, {})
+            assert await event_receiver._get_raw_event() == (event, {})
 
 
 @pytest.mark.asyncio

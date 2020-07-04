@@ -19,14 +19,19 @@ class BridgeClient(_base.ClientBase):
 
     @classmethod
     async def create(
-        cls, ctx: zmq.asyncio.Context, endpoint: str, *, identity: bytes = None
+        cls,
+        ctx: zmq.asyncio.Context,
+        endpoint: str,
+        *,
+        curve_keys: typing.Optional[_base.CurveKeys] = None,
     ) -> "BridgeClient":
         """Create client and perform handshake with the server
 
         Parameters:
             ctx: The ZeroMQ context
             endpoint: The server endpoint
-            identity: The socket identity
+            curve_keys: If given, the CURVE keys that will be used to establish
+                the connection to the backend
 
         Returns:
             An initialized client that has performed the handshake
@@ -36,7 +41,7 @@ class BridgeClient(_base.ClientBase):
             :exc:`exceptions.ProtocolError`: If performing the connection or the
                 handshake fails
         """
-        client = cls(ctx, endpoint, identity=identity)
+        client = cls(ctx, endpoint, curve_keys=curve_keys)
         try:
             await client.hello()
             return client
