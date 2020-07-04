@@ -29,7 +29,11 @@ def mock_bridge_client(monkeypatch):
         call=unittest.mock.AsyncMock(),
         play=unittest.mock.AsyncMock(),
     )
-    monkeypatch.setattr(api.utils, "get_bridge_client", lambda: mock)
+
+    async def mock_get_bridge_client():
+        return mock
+
+    monkeypatch.setattr(api.utils, "get_bridge_client", mock_get_bridge_client)
     return mock
 
 

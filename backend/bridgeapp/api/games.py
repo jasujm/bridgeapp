@@ -38,7 +38,7 @@ async def post_games(
     This call causes a new game to be created. The server SHALL generate an UUID
     for the game and return it in the response body.
     """
-    client = utils.get_bridge_client()
+    client = await utils.get_bridge_client()
     try:
         game_uuid = await client.game()
     except bridgeprotocol.CommandFailure:
@@ -63,7 +63,7 @@ async def get_game_details(
     view of the authenticated player. If the player is not in the game, only
     public information will be retrieved.
     """
-    client = utils.get_bridge_client()
+    client = await utils.get_bridge_client()
     try:
         deal = await client.get_deal(game=game_uuid, player=player_uuid)
     except bridgeprotocol.CommandFailure:
@@ -86,7 +86,7 @@ async def get_game_self(
     The response contains information about the authenticated player itself
     within the game, including position and available moves.
     """
-    client = utils.get_bridge_client()
+    client = await utils.get_bridge_client()
     try:
         return await client.get_self(game=game_uuid, player=player_uuid)
     except bridgeprotocol.CommandFailure:
@@ -108,7 +108,7 @@ async def post_game_players(
     This call causes the authenticated user to be added as a player to the game
     identified by ``game_uuid``.
     """
-    client = utils.get_bridge_client()
+    client = await utils.get_bridge_client()
     try:
         await client.join(game=game_uuid, player=player_uuid)
     except bridgeprotocol.CommandFailure:
@@ -133,7 +133,7 @@ async def post_game_calls(
     specified in the body of the request. The call is only possible during the
     bidding phase of a deal, abiding to the laws of contract bridge.
     """
-    client = utils.get_bridge_client()
+    client = await utils.get_bridge_client()
     try:
         await client.call(game=game_uuid, player=player_uuid, call=call)
     except bridgeprotocol.CommandFailure:
@@ -158,7 +158,7 @@ async def post_game_trick(
     specified in the body of the request. The call is only possible during the
     playing phase of a deal, abiding to the laws of contract bridge.
     """
-    client = utils.get_bridge_client()
+    client = await utils.get_bridge_client()
     try:
         await client.play(game=game_uuid, player=player_uuid, card=card)
     except bridgeprotocol.CommandFailure:
