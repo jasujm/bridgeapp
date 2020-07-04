@@ -6,12 +6,13 @@ Bridgeapp API utilities
 import threading
 import uuid
 
-from bridgeapp import settings, bridgeprotocol
+from bridgeapp import bridgeprotocol
+from bridgeapp.settings import settings
 
 from . import _bridgeprotocol
 
 
-PLAYER_UUID_NS = uuid.uuid5(settings.get_settings().uuid_namespace, "players")
+PLAYER_UUID_NS = uuid.uuid5(settings.uuid_namespace, "players")
 """UUID namespace for bridge players"""
 
 

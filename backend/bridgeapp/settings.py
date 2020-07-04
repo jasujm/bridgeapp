@@ -53,3 +53,6 @@ def get_settings(**kwargs) -> Settings:
         kwargs: The settings to be overridden
     """
     return Settings(**kwargs)
+
+
+settings = Settings()

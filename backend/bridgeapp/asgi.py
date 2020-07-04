@@ -6,7 +6,8 @@ Entry point to the ASGI app
 import fastapi
 import fastapi.middleware.cors
 
-from . import api, settings
+from . import api
+from .settings import settings
 
 app = fastapi.FastAPI()
 
@@ -25,4 +26,4 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(api.router, prefix=settings.get_settings().api_v1_prefix)
+app.include_router(api.router, prefix=settings.api_v1_prefix)
