@@ -1,0 +1,48 @@
+# Bits for deploying Gunicorn app source:
+# https://docs.gunicorn.org/en/stable/deploy.html
+
+ssl_certificate      /etc/letsencrypt/live/${server_name}/fullchain.pem;
+ssl_certificate_key  /etc/letsencrypt/live/${server_name}/privkey.pem;
+include              /etc/nginx/conf.d/inc.d/ssl.conf;
+include              /etc/nginx/conf.d/inc.d/security_headers.conf;
+
+upstream backend {
+    server backend:8000;
+}
+
+server {
+    listen       [::]:443 ssl default_server;
+    listen       443 ssl default_server;
+    return       444;
+}
+
+server {
+    listen       [::]:443 http2 ssl;
+    listen       443 http2 ssl;
+    server_name  $server_name localhost 127.0.0.1;
+    charset      utf-8;
+
+    gzip             on;
+    gzip_types       text/plain text/xml text/css application/javascript;
+    gzip_min_length  1024;
+
+    location / {
+        try_files $uri @proxy_to_backend;
+    }
+
+    location @proxy_to_backend {
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Host $http_host;
+        proxy_redirect off;
+        proxy_pass http://backend;
+    }
+
+    location = /robots.txt {
+        return 404;
+    }
+
+    location = /favicon.ico {
+        return 404;
+    }
+}

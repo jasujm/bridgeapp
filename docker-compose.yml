@@ -3,8 +3,6 @@ services:
   backend:
     image: "jasujm/bridgeapp-backend"
     build: "backend/"
-    ports:
-    - "8000:8000"
     environment:
     - "bridgeapp_backend_endpoint=tcp://bridge:5555"
     command: >-
@@ -19,3 +17,47 @@ services:
     - "./config/bridge:/etc/bridge:ro"
     env_file:
     - "./.env.bridge"
+  nginx:
+    image: "nginx"
+    ports:
+    - "80:80"
+    - "443:443"
+    entrypoint: >-
+      /bin/bash -c "trap 'kill $$(jobs -p)' EXIT;
+
+      function process_config {
+        envsubst '$$server_name' < /etc/nginx/conf.d/$${1}.conf.in \
+          > /etc/nginx/conf.d/$${1}.conf
+      };
+
+      while :; do
+        sleep 1d;
+        nginx -s reload;
+      done &
+      process_config default;
+      if [ -d /etc/letsencrypt/live/$${server_name} ]; then
+        process_config bridgeapp;
+      fi;
+      nginx -g 'daemon off;'"
+    env_file:
+    - "./.env.nginx"
+    volumes:
+    - "certbotetc:/etc/letsencrypt:ro"
+    - "certbotwww:/var/www/certbot:ro"
+    - "./config/nginx:/etc/nginx/conf.d"
+  certbot:
+    image: "certbot/certbot"
+    entrypoint: >-
+      /bin/sh -c "trap exit TERM;
+      while :;
+        do certbot renew;
+        sleep 1d;
+      done;"
+    volumes:
+    - "certbotetc:/etc/letsencrypt"
+    - "certbotwww:/var/www/certbot"
+    depends_on:
+    - "nginx"
+volumes:
+  certbotetc:
+  certbotwww:

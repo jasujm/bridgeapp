@@ -1,0 +1,7 @@
+version: "3"
+services:
+  nginx:
+    volumes:
+    - "./.env/ssl:/etc/letsencrypt:ro"
+  certbot:
+    entrypoint: "true"
