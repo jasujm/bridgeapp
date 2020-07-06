@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     backend_endpoint: str = Field(
         "tcp://localhost:5555",
         title="Bridge backend server endpoint",
-        regex=TCP_ENDPOINT_RE,
+        regex=TCP_ENDPOINT_RE.pattern,
     )
 
     uuid_namespace: uuid.UUID = Field(
