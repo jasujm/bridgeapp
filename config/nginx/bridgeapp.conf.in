@@ -26,11 +26,13 @@ server {
     gzip_types       text/plain text/xml text/css application/javascript;
     gzip_min_length  1024;
 
+    root /var/www/frontend;
+
     location / {
-        try_files $uri @proxy_to_backend;
+        try_files $uri $uri/index.html;
     }
 
-    location @proxy_to_backend {
+    location /api/v1 {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header Host $http_host;
