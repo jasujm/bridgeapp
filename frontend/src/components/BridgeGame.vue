@@ -4,7 +4,7 @@
         <p><button type="button" v-on:click="createNewGame()">New game</button></p>
         <p>
             <input type="text" name="gameUuid" v-model="gameUuid" placeholder="UUID" />
-            <button type="button" v-on:click="joinGame()">Join existing game</button>
+            <button type="button" v-on:click="joinGame()">Join game</button>
         </p>
         <div v-if="dealState" class="self">
             <p>Position: {{ selfState.position }}</p>

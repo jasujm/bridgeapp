@@ -1,8 +1,14 @@
 <template>
     <div class="app">
-        <h1>Bridge app!</h1>
-        <BridgeGame v-bind:playerAccount="playerAccount" v-if="authenticated" />
-        <LoginForm v-else />
+        <p><strong>What is this?</strong> It is a work in
+        progress <a href="https://github.com/jasujm/bridgeapp">contract
+        bridge webapp</a>. You can play it, if you don't mind
+        interfacing raw UUIDs and JSON as user interface. You can
+        login with any credentials. The app will track you by the user
+        name only. The users and games will be gone when I reset the
+        server, which is regularly.</p>
+        <BridgeGame v-bind:playerAccount="playerAccount"
+        v-if="authenticated" /> <LoginForm v-else />
     </div>
 </template>
 
