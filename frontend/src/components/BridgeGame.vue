@@ -35,7 +35,7 @@ export default {
     methods: {
         createNewGame: async function () {
             let response = await axios.post(
-                "http://localhost:8000/api/v1/games",
+                "/api/v1/games",
                 {},
                 {
                     auth: this.playerAccount,
@@ -46,7 +46,7 @@ export default {
         },
         joinGame: async function () {
             await axios.post(
-                `http://localhost:8000/api/v1/games/${this.gameUuid}/players`,
+                `/api/v1/games/${this.gameUuid}/players`,
                 {},
                 {
                     auth: this.playerAccount,
@@ -56,14 +56,14 @@ export default {
         },
         updateState: async function () {
             let response = await axios.get(
-                `http://localhost:8000/api/v1/games/${this.gameUuid}`,
+                `/api/v1/games/${this.gameUuid}`,
                 {
                     auth: this.playerAccount,
                 },
             );
             this.dealState = response.data.deal;
             response = await axios.get(
-                `http://localhost:8000/api/v1/games/${this.gameUuid}/self`,
+                `/api/v1/games/${this.gameUuid}/self`,
                 {
                     auth: this.playerAccount,
                 },
@@ -72,7 +72,7 @@ export default {
         },
         makeCall: async function (call) {
             await axios.post(
-                `http://localhost:8000/api/v1/games/${this.gameUuid}/calls`,
+                `/api/v1/games/${this.gameUuid}/calls`,
                 call,
                 {
                     auth: this.playerAccount,
@@ -82,7 +82,7 @@ export default {
         },
         makeCard: async function (card) {
             await axios.post(
-                `http://localhost:8000/api/v1/games/${this.gameUuid}/trick`,
+                `/api/v1/games/${this.gameUuid}/trick`,
                 card,
                 {
                     auth: this.playerAccount,
