@@ -13,7 +13,7 @@ services:
     environment:
     - "bridgeapp_backend_endpoint=tcp://bridge:5555"
     command: >-
-      gunicorn -b 0.0.0.0:8000 -k uvicorn.workers.UvicornWorker bridgeapp:app
+      gunicorn -b 0.0.0.0:8000 -k uvicorn.workers.UvicornWorker bridgeapp
     env_file:
     - "./.env.backend"
   bridge:

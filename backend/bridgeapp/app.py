@@ -9,7 +9,7 @@ import fastapi.middleware.cors
 from . import api
 from .settings import settings
 
-app = fastapi.FastAPI()
+application = fastapi.FastAPI()
 
 # Allow cross-origin references for development
 
@@ -18,7 +18,7 @@ origins = [
     "http://localhost:8080",
 ]
 
-app.add_middleware(
+application.add_middleware(
     fastapi.middleware.cors.CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
@@ -26,4 +26,4 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(api.router, prefix=settings.api_v1_prefix)
+application.include_router(api.router, prefix=settings.api_v1_prefix)
