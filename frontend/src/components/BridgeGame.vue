@@ -35,7 +35,7 @@ export default {
     methods: {
         createNewGame: async function () {
             let response = await axios.post(
-                "/api/v1/games",
+                this.getApiUrl("/games"),
                 {},
                 {
                     auth: this.playerAccount,
@@ -46,7 +46,7 @@ export default {
         },
         joinGame: async function () {
             await axios.post(
-                `/api/v1/games/${this.gameUuid}/players`,
+                this.getApiUrl(`/games/${this.gameUuid}/players`),
                 {},
                 {
                     auth: this.playerAccount,
@@ -56,14 +56,14 @@ export default {
         },
         updateState: async function () {
             let response = await axios.get(
-                `/api/v1/games/${this.gameUuid}`,
+                this.getApiUrl(`/games/${this.gameUuid}`),
                 {
                     auth: this.playerAccount,
                 },
             );
             this.dealState = response.data.deal;
             response = await axios.get(
-                `/api/v1/games/${this.gameUuid}/self`,
+                this.getApiUrl(`/games/${this.gameUuid}/self`),
                 {
                     auth: this.playerAccount,
                 },
@@ -72,7 +72,7 @@ export default {
         },
         makeCall: async function (call) {
             await axios.post(
-                `/api/v1/games/${this.gameUuid}/calls`,
+                this.getApiUrl(`/games/${this.gameUuid}/calls`),
                 call,
                 {
                     auth: this.playerAccount,
@@ -82,13 +82,16 @@ export default {
         },
         makeCard: async function (card) {
             await axios.post(
-                `/api/v1/games/${this.gameUuid}/trick`,
+                this.getApiUrl(`/games/${this.gameUuid}/trick`),
                 card,
                 {
                     auth: this.playerAccount,
                 },
             );
             this.updateState();
+        },
+        getApiUrl (route) {
+            return `${process.env.VUE_APP_BRIDGEAPP_API_PREFIX || ""}/api/v1${route}`
         },
     }
 }
