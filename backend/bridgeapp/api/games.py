@@ -35,8 +35,8 @@ async def post_games(
     _credentials: fastapi.security.HTTPBasicCredentials = fastapi.Depends(security),
 ):
     """
-    This call causes a new game to be created. The server SHALL generate an UUID
-    for the game and return it in the response body.
+    This call causes a new game to be created. The server generates an UUID for
+    the game and return it in the response body.
     """
     client = await utils.get_bridge_client()
     try:
@@ -106,7 +106,7 @@ async def post_game_players(
 ):
     """
     This call causes the authenticated user to be added as a player to the game
-    identified by ``game_uuid``.
+    identified by the parameter.
     """
     client = await utils.get_bridge_client()
     try:
@@ -129,9 +129,9 @@ async def post_game_calls(
     player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid),
 ):
     """
-    This call causes the authenticated user to make a call (no pun intended) in
-    specified in the body of the request. The call is only possible during the
-    bidding phase of a deal, abiding to the laws of contract bridge.
+    This call causes the authenticated user to make a call (no pun
+    intended) in the ongoing bidding. The call is only possible during
+    the bidding phase of a deal, following the laws of contract bridge.
     """
     client = await utils.get_bridge_client()
     try:
@@ -154,9 +154,9 @@ async def post_game_trick(
     player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid),
 ):
     """
-    This call causes the authenticated user to play the card to the current
-    specified in the body of the request. The call is only possible during the
-    playing phase of a deal, abiding to the laws of contract bridge.
+    This call causes the authenticated user to play the card to the
+    current trick. The call is only possible during the playing phase
+    of a deal, following the laws of contract bridge.
     """
     client = await utils.get_bridge_client()
     try:

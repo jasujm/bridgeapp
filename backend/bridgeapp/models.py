@@ -50,9 +50,18 @@ class Bid(pydantic.BaseModel):
     strain: Strain
     level: int = pydantic.Field(ge=1, le=7)
 
+    class Config:
+        schema_extra = {
+            "example": {"strain": Strain.clubs, "level": 1},
+        }
+
 
 class Call(pydantic.BaseModel):
-    """Call during bridge bidding phase"""
+    """Call during bridge bidding phase
+
+    A call is either a bid, pass, double or redouble. If (and only if)
+    the call type is bid, must the bid property be populated.
+    """
 
     type: CallType
     bid: typing.Optional[Bid]
@@ -62,6 +71,14 @@ class Call(pydantic.BaseModel):
         if bool(values.get("type") == CallType.bid) == bool(values.get("bid") is None):
             raise ValueError("Call must have bid if and only if its type is bid")
         return values
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "type": CallType.bid,
+                "bid": Bid(strain=Strain.hearts, level=4),
+            },
+        }
 
 
 class Doubling(enum.Enum):
@@ -77,6 +94,14 @@ class Contract(pydantic.BaseModel):
 
     bid: Bid
     doubling: Doubling
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "bid": Bid(strain=Strain.hearts, level=4),
+                "doubling": Doubling.undoubled,
+            },
+        }
 
 
 class Rank(enum.Enum):
@@ -112,18 +137,38 @@ class CardType(pydantic.BaseModel):
     rank: Rank
     suit: Suit
 
+    class Config:
+        schema_extra = {
+            "example": {"rank": Rank.ace, "suit": Suit.spades},
+        }
+
 
 CardList = typing.List[typing.Optional[CardType]]
 """List of cards, either revealed or not revealed"""
 
 
 class Cards(pydantic.BaseModel):
-    """Cards in a bridge deal"""
+    """Cards in a bridge deal
+
+    Describes the cards held by each of the four positions. A card may
+    be either known or unknown, represented by a Card object or null,
+    respectively.
+    """
 
     north: CardList = []
     east: CardList = []
     south: CardList = []
     west: CardList = []
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "north": [CardType(rank=Rank.queen, suit=Suit.hearts)],
+                "east": [None],
+                "south": [None],
+                "west": [],
+            },
+        }
 
 
 class Vulnerability(pydantic.BaseModel):
@@ -139,6 +184,11 @@ class PositionCallPair(pydantic.BaseModel):
     position: Position
     call: Call
 
+    class Config:
+        schema_extra = {
+            "example": {"position": Position.north, "call": Call(type=CallType.pass_)},
+        }
+
 
 class PositionCardPair(pydantic.BaseModel):
     """Position-card pair"""
@@ -146,9 +196,24 @@ class PositionCardPair(pydantic.BaseModel):
     position: Position
     card: CardType
 
+    class Config:
+        schema_extra = {
+            "example": {
+                "position": Position.north,
+                "card": CardType(rank=Rank.seven, suit=Suit.diamonds),
+            },
+        }
+
 
 class Trick(pydantic.BaseModel):
-    """Trick in a bridge playing phase"""
+    """Trick in a bridge playing phase
+
+    The cards array contains the cards played to the trick so far. A
+    complete trick has four cards, one from each player. A complete
+    trick also has a winner, which is the position that won the trick.
+
+    The cards array may also be null for a trick that is closed.
+    """
 
     cards: typing.Optional[typing.List[PositionCardPair]]
     winner: typing.Optional[Position]
@@ -167,7 +232,13 @@ class Player(pydantic.BaseModel):
 
 
 class Deal(pydantic.BaseModel):
-    """Bridge deal"""
+    """Bridge deal
+
+    The deal object contains the description of an ongoing or
+    completed deal. Depending on the phase of the deal, some or all of
+    the data may be populated. Different information may be available
+    to different players (notably which cards are visible to whom).
+    """
 
     uuid: uuid.UUID
     positionInTurn: typing.Optional[Position]
@@ -180,8 +251,22 @@ class Deal(pydantic.BaseModel):
 
 
 class PlayerState(pydantic.BaseModel):
-    """Player state within a bridge deal"""
+    """Player state within a bridge deal
+
+    The player state object doesn't describe the deal itself, but
+    contains auxiliary information about the player and their choices
+    in an ongoing deal.
+    """
 
     position: typing.Optional[Position]
     allowedCalls: typing.List[Call] = []
     allowedCards: typing.List[CardType] = []
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "position": Position.east,
+                "allowedCalls": [],
+                "allowedCards": [CardType(rank=Rank.ten, suit=Suit.clubs)],
+            },
+        }
