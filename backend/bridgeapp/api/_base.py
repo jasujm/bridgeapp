@@ -4,6 +4,6 @@ import fastapi
 
 from . import games
 
-router = fastapi.APIRouter()
+subapp = fastapi.FastAPI()
 
-router.include_router(games.router, prefix="/games", tags=["games"])
+subapp.include_router(games.router, prefix="/games", tags=["games"])

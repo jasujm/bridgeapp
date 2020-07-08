@@ -26,4 +26,4 @@ application.add_middleware(
     allow_headers=["*"],
 )
 
-application.include_router(api.router, prefix=settings.api_v1_prefix)
+application.mount(settings.api_v1_prefix, api.subapp)
