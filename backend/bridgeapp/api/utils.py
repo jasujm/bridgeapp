@@ -11,6 +11,8 @@ from bridgeapp.settings import settings
 
 from . import _bridgeprotocol
 
+_threadlocal = threading.local()
+
 
 PLAYER_UUID_NS = uuid.uuid5(settings.uuid_namespace, "players")
 """UUID namespace for bridge players"""
@@ -32,9 +34,8 @@ async def get_bridge_client() -> bridgeprotocol.BridgeClient:
     object is created and returned for each thread calling this
     function.
     """
-    threadlocal = threading.local()
-    if client := getattr(threadlocal, "bridge_client", None):
+    if client := getattr(_threadlocal, "bridge_client", None):
         return client
     client = await _bridgeprotocol.create_client()
-    threadlocal.bridge_client = client
+    _threadlocal.bridge_client = client
     return client

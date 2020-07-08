@@ -2,7 +2,7 @@
 
 import fastapi
 
-from . import _bridgeprotocol, games
+from . import games
 
 router = fastapi.APIRouter()
 
