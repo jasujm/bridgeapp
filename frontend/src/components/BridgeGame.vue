@@ -21,6 +21,7 @@
 
 <script>
 import axios from 'axios'
+import _ from 'lodash'
 
 export default {
     name: 'BridgeGame',
@@ -30,6 +31,7 @@ export default {
             gameUuid: "",
             dealState: null,
             selfState: null,
+            websocket: null,
         }
     },
     methods: {
@@ -52,7 +54,9 @@ export default {
                     auth: this.playerAccount,
                 },
             );
-            setInterval(this.updateState, 3000);
+            this.websocket = new WebSocket(this.getWebsocketUrl(`/games/${this.gameUuid}/ws`));
+            this.websocket.onmessage = _.debounce(this.updateState, 50);
+            this.updateState();
         },
         updateState: async function () {
             let response = await axios.get(
@@ -78,7 +82,6 @@ export default {
                     auth: this.playerAccount,
                 },
             );
-            this.updateState();
         },
         makeCard: async function (card) {
             await axios.post(
@@ -88,10 +91,13 @@ export default {
                     auth: this.playerAccount,
                 },
             );
-            this.updateState();
         },
         getApiUrl (route) {
             return `${process.env.VUE_APP_BRIDGEAPP_API_PREFIX || ""}/api/v1${route}`
+        },
+        getWebsocketUrl (route) {
+            const prefix = process.env.VUE_APP_BRIDGEAPP_WEBSOCKET_PREFIX || `wss://${location.host}`;
+            return `${prefix}/api/v1${route}`;
         },
     }
 }

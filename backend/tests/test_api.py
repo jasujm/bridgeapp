@@ -2,6 +2,7 @@
 Tests for the :mod:`bridgeapp.api` module
 """
 
+import itertools
 import unittest.mock
 import uuid
 
@@ -20,7 +21,7 @@ def client():
 
 @pytest.fixture
 def mock_bridge_client(monkeypatch):
-    """Yield mock client that will be used by the API to interact with the bridge backend"""
+    """Yield mock client"""
     mock = unittest.mock.Mock(
         game=unittest.mock.AsyncMock(),
         join=unittest.mock.AsyncMock(),
@@ -33,7 +34,23 @@ def mock_bridge_client(monkeypatch):
     async def mock_get_bridge_client():
         return mock
 
-    monkeypatch.setattr(api.utils, "get_bridge_client", mock_get_bridge_client)
+    monkeypatch.setattr(
+        api._bridgeprotocol, "get_bridge_client", mock_get_bridge_client
+    )
+    return mock
+
+
+@pytest.fixture
+def mock_event_receiver(monkeypatch):
+    """Yield mock event receiver"""
+    mock = unittest.mock.Mock(get_event=unittest.mock.AsyncMock())
+
+    def mock_get_event_demultiplexer():
+        return api._bridgeprotocol.EventDemultiplexer(mock)
+
+    monkeypatch.setattr(
+        api._bridgeprotocol, "get_event_demultiplexer", mock_get_event_demultiplexer
+    )
     return mock
 
 
@@ -53,6 +70,10 @@ def username(request):
 def username_and_player_uuid(username):
     """Yield a pair containing an username and corresponding player UUID"""
     return username, api.utils.generate_player_uuid(username)
+
+
+def _receive_event_helper(websocket):
+    return bridgeprotocol.BridgeEvent(**websocket.receive_json(mode="binary"))
 
 
 def test_generate_player_uuid():
@@ -183,3 +204,42 @@ def test_play_card_should_fail_if_backend_fails(
     )
     assert res.status_code == fastapi.status.HTTP_400_BAD_REQUEST
     mock_bridge_client.play.assert_awaited_once()
+
+
+@pytest.mark.parametrize("event_type", ["turn", "call", "play"])
+def test_games_websocket_should_return_events(
+    client, mock_event_receiver, game_uuid, event_type
+):
+    event = bridgeprotocol.BridgeEvent(game=game_uuid, type=event_type)
+    mock_event_receiver.get_event.side_effect = itertools.repeat(event)
+    with client.websocket_connect(f"/api/v1/games/{game_uuid}/ws") as websocket:
+        assert _receive_event_helper(websocket) == event
+    mock_event_receiver.get_event.assert_awaited()
+
+
+def test_games_websocket_should_return_multiple_events(
+    client, mock_event_receiver, game_uuid
+):
+    events = [
+        bridgeprotocol.BridgeEvent(game=game_uuid, type=event_type)
+        for event_type in ["event1", "event2"]
+    ]
+    mock_event_receiver.get_event.side_effect = itertools.cycle(events)
+    with client.websocket_connect(f"/api/v1/games/{game_uuid}/ws") as websocket:
+        for event in events:
+            assert _receive_event_helper(websocket) == event
+    mock_event_receiver.get_event.assert_awaited()
+
+
+def test_games_websocket_should_demultiplex_events_from_different_games(
+    client, mock_event_receiver
+):
+    events = [
+        bridgeprotocol.BridgeEvent(game=game_uuid, type="event")
+        for game_uuid in [uuid.uuid4(), uuid.uuid4()]
+    ]
+    mock_event_receiver.get_event.side_effect = itertools.cycle(events)
+    for event in events:
+        with client.websocket_connect(f"/api/v1/games/{event.game}/ws") as websocket:
+            assert _receive_event_helper(websocket) == event
+    mock_event_receiver.get_event.assert_awaited()

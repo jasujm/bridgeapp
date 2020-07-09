@@ -28,6 +28,12 @@ class Settings(BaseSettings):
         regex=TCP_ENDPOINT_RE.pattern,
     )
 
+    backend_event_endpoint: str = Field(
+        "tcp://localhost:5556",
+        title="Bridge backend event endpoint",
+        regex=TCP_ENDPOINT_RE.pattern,
+    )
+
     uuid_namespace: uuid.UUID = Field(
         default_factory=uuid.uuid4,
         title="Root namespace for UUIDs",

@@ -3,15 +3,12 @@ Bridgeapp API utilities
 -----------------------
 """
 
-import threading
 import uuid
 
 from bridgeapp import bridgeprotocol
 from bridgeapp.settings import settings
 
 from . import _bridgeprotocol
-
-_threadlocal = threading.local()
 
 
 PLAYER_UUID_NS = uuid.uuid5(settings.uuid_namespace, "players")
@@ -34,8 +31,17 @@ async def get_bridge_client() -> bridgeprotocol.BridgeClient:
     object is created and returned for each thread calling this
     function.
     """
-    if client := getattr(_threadlocal, "bridge_client", None):
-        return client
-    client = await _bridgeprotocol.create_client()
-    _threadlocal.bridge_client = client
-    return client
+    return await _bridgeprotocol.get_bridge_client()
+
+
+async def get_event(game_uuid: uuid.UUID) -> bridgeprotocol.BridgeEvent:
+    """Get the next event for a given game
+
+    This function returns the next event published by the bridge
+    backend that belongs to the game identified by the argument.
+
+    Parameters:
+        game_uuid: The UUID of the game
+    """
+    event_demultiplexer = _bridgeprotocol.get_event_demultiplexer()
+    return await event_demultiplexer.get_event(game_uuid)
