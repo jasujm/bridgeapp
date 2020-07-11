@@ -26,34 +26,19 @@ services:
     env_file:
     - "./.env.bridge"
   nginx:
-    image: "nginx"
+    image: "jasujm/bridgeapp-nginx"
+    build: "nginx/"
     ports:
     - "80:80"
     - "443:443"
-    entrypoint: >-
-      /bin/bash -c "trap 'kill $$(jobs -p)' EXIT;
-
-      function process_config {
-        envsubst '$$server_name' < /etc/nginx/conf.d/$${1}.conf.in \
-          > /etc/nginx/conf.d/$${1}.conf
-      };
-
-      while :; do
-        sleep 1d;
-        nginx -s reload;
-      done &
-      process_config default;
-      if [ -d /etc/letsencrypt/live/$${server_name} ]; then
-        process_config bridgeapp;
-      fi;
-      nginx -g 'daemon off;'"
     env_file:
     - "./.env.nginx"
     volumes:
     - "frontendwww:/var/www/frontend:ro"
     - "certbotetc:/etc/letsencrypt:ro"
     - "certbotwww:/var/www/certbot:ro"
-    - "./config/nginx:/etc/nginx/conf.d"
+    - "./nginx/conf.d.in:/etc/nginx/conf.d.in:ro"
+    - "./nginx/inc.d:/etc/nginx/inc.d:ro"
   certbot:
     image: "certbot/certbot"
     entrypoint: >-
