@@ -9,7 +9,7 @@ python = "^3.8"
 pyzmq = "^19.0.1"
 more-itertools = "^8.3.0"
 pydantic = "^1.5.1"
-orjson = "^3.1.1"
+orjson = ">=3.3,<3.4"
 fastapi = {extras = ["uvicorn", "orjson"], version = "^0.58.0"}
 uvicorn = "^0.11.5"
 gunicorn = "^20.0.4"
