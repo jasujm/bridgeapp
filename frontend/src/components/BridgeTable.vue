@@ -6,13 +6,14 @@
                 <Bidding :calls="deal.calls" />
             </b-col>
             <b-col lg="8">
-                <CardsDisplay
+                <TableDisplay
                     :selfPosition="self.position"
                     :cards="deal.cards"
                     :trick="deal.tricks[deal.tricks.length - 1]" />
             </b-col>
         </b-row>
         <CallPanel :gameUuid="gameUuid" :allowedCalls="self.allowedCalls" />
+        <CardPanel :gameUuid="gameUuid" :allowedCards="self.allowedCards" />
     </b-container>
 </div>
 </template>
@@ -20,15 +21,17 @@
 <script lang="ts">
 import { Vue, Component, Prop, Watch } from "vue-property-decorator"
 import Bidding from "./Bidding.vue"
-import CardsDisplay from "./CardsDisplay.vue"
+import TableDisplay from "./TableDisplay.vue"
 import CallPanel from "./CallPanel.vue"
+import CardPanel from "./CardPanel.vue"
 import { Deal, Self } from "@/api/types"
 
 @Component({
     components: {
         Bidding,
-        CardsDisplay,
+        TableDisplay,
         CallPanel,
+        CardPanel,
     }
 })
 export default class BridgeTable extends Vue {

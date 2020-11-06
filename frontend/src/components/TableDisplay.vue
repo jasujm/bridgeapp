@@ -1,5 +1,5 @@
 <template>
-<div class="cards-display">
+<div class="table-display">
     <b-container>
         <b-row>
             <b-col lg="4" offset-lg="4">
@@ -56,7 +56,7 @@ import SelfPositionMixin from "./selfposition"
         TrickDisplay,
     }
 })
-export default class CardsDisplay extends mixins(SelfPositionMixin) {
+export default class TableDisplay extends mixins(SelfPositionMixin) {
     @Prop({ default: () => new Cards() }) private readonly cards!: Cards;
     @Prop() private readonly trick?: Trick;
 

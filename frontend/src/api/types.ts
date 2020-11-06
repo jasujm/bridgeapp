@@ -36,7 +36,6 @@ export interface PositionCallPair {
 }
 
 export enum Rank {
-    _1 = "1",
     _2 = "2",
     _3 = "3",
     _4 = "4",
@@ -61,7 +60,7 @@ export enum Suit {
 
 export interface Card {
     rank: Rank;
-    suit: string;
+    suit: Suit;
 }
 
 export class Cards {
@@ -89,4 +88,5 @@ export class Deal {
 export class Self {
     position: Position = Position.south;
     allowedCalls: Array<Call> = [];
+    allowedCards: Array<Card> = [];
 }

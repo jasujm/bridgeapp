@@ -2,7 +2,7 @@
 // FIXME: Validate responses and handle errors
 
 import axios, { AxiosRequestConfig } from "axios"
-import { Deal, Call, Self } from "./types"
+import { Deal, Call, Card, Self } from "./types"
 
 const client = axios.create({
     baseURL: `${process.env.VUE_APP_BRIDGEAPP_API_PREFIX || ""}/api/v1/`
@@ -45,6 +45,14 @@ export default class {
             method: "post",
             url: `/games/${gameUuid}/calls`,
             data: call,
+        });
+    }
+
+    async playCard(gameUuid: string, card: Card) {
+        await this.request({
+            method: "post",
+            url: `/games/${gameUuid}/trick`,
+            data: card,
         });
     }
 
