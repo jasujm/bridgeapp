@@ -3,10 +3,10 @@
     <b-table-simple>
         <b-thead>
             <b-tr>
-                <b-th>North</b-th>
-                <b-th>East</b-th>
-                <b-th>South</b-th>
-                <b-th>West</b-th>
+                <b-th class="north" :class="{ vulnerable: northSouthVulnerable }">North</b-th>
+                <b-th class="east" :class="{ vulnerable: eastWestVulnerable }">East</b-th>
+                <b-th class="south" :class="{ vulnerable: northSouthVulnerable }">South</b-th>
+                <b-th class="west" :class="{ vulnerable: eastWestVulnerable }">West</b-th>
             </b-tr>
         </b-thead>
         <b-tbody>
@@ -21,7 +21,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from "vue-property-decorator"
+    import { Vue, Component, Prop } from "vue-property-decorator"
 import _ from "lodash"
 import CallDisplay from "./CallDisplay.vue"
 import { Position, PositionCallPair } from "@/api/types"
@@ -33,6 +33,8 @@ import { Position, PositionCallPair } from "@/api/types"
 })
 export default class Bidding extends Vue {
     @Prop({ default: () => [] }) private readonly calls!: Array<PositionCallPair>;
+    @Prop({ default: false }) private readonly northSouthVulnerable!: boolean;
+    @Prop({ default: false }) private readonly eastWestVulnerable!: boolean;
 
     private get tabulatedCalls() {
         if (this.calls.length == 0) {
@@ -50,3 +52,9 @@ export default class Bidding extends Vue {
     }
 }
 </script>
+
+<style lang="scss" scoped>
+.vulnerable {
+  color: var(--danger);
+}
+</style>

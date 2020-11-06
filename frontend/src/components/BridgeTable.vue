@@ -3,11 +3,15 @@
     <b-container>
         <b-row>
             <b-col lg="4">
-                <Bidding :calls="deal.calls" />
+                <Bidding
+                    :northSouthVulnerable="deal.vulnerability.northSouth"
+                    :eastWestVulnerable="deal.vulnerability.eastWest"
+                    :calls="deal.calls" />
             </b-col>
             <b-col lg="8">
                 <TableDisplay
                     :selfPosition="self.position"
+                    :positionInTurn="deal.positionInTurn"
                     :cards="deal.cards"
                     :trick="deal.tricks[deal.tricks.length - 1]" />
             </b-col>
@@ -19,7 +23,7 @@
 </template>
 
 <script lang="ts">
-    import { Vue, Component, Prop, Watch } from "vue-property-decorator"
+import { Vue, Component, Prop, Watch } from "vue-property-decorator"
 import Bidding from "./Bidding.vue"
 import TableDisplay from "./TableDisplay.vue"
 import CallPanel from "./CallPanel.vue"

@@ -3,8 +3,9 @@ import { mount } from "@vue/test-utils"
 import BridgeTable from "@/components/BridgeTable.vue"
 import Vuex from "vuex"
 import sinon from "sinon"
-import { Deal, Self } from "@/api/types"
+import { Position, Deal, Self } from "@/api/types"
 import flushPromises from "flush-promises"
+import _ from "lodash"
 
 const gameUuid = "6bac87b3-8e49-4675-bf69-8c0d6a351f40";
 
@@ -52,5 +53,17 @@ describe("BridgeTable.vue", function() {
         expect(stubApi.subscribe).to.be.calledWith(otherUuid);
         expect(stubApi.getDeal).to.be.calledWith(otherUuid);
         expect(stubApi.getSelf).to.be.calledWith(otherUuid);
+    });
+
+    describe("turn", function() {
+        for (const position of _.values(Position)) {
+            it(`should display turn marker for ${position}`, async function() {
+                const deal = new Deal();
+                deal.positionInTurn = position;
+                wrapper.setData({ deal });
+                await wrapper.vm.$nextTick();
+                expect(wrapper.find(`.${position}.turn`).exists()).to.be.true;
+            });
+        }
     });
 });

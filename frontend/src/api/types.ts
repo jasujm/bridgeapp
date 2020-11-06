@@ -79,10 +79,17 @@ export interface Trick {
     cards?: Array<PositionCardPair>;
 }
 
+export interface Vulnerability {
+    northSouth: boolean;
+    eastWest: boolean;
+}
+
 export class Deal {
+    positionInTurn?: Position;
     calls: Array<PositionCallPair> = [];
     cards: Record<Position, Array<Card | null>> = new Cards();
     tricks: Array<Trick> = [];
+    vulnerability: Vulnerability = { northSouth: false, eastWest: false };
 }
 
 export class Self {

@@ -1,6 +1,6 @@
 <template>
 <div class="hand-display">
-    <strong>{{ label }}</strong>
+    <span class="label">{{ label }}</span>
     <ul>
         <li v-for="group in groupedCards" :key="group.suit">
             <CardListDisplay :suit="group.suit" :ranks="group.ranksInSuit" />
@@ -48,8 +48,13 @@ export default class HandDisplay extends Vue {
 </script>
 
 <style lang="scss" scoped>
-.hand-display ul {
-  list-style-type: none;
-  padding-left: 0;
+.hand-display {
+  &.turn .label {
+    font-weight: bolder;
+  }
+  ul {
+    list-style-type: none;
+    padding-left: 0;
+  }
 }
 </style>

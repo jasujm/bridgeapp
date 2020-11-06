@@ -58,4 +58,18 @@ describe("Bidding.vue", function() {
         const wrapper = mount(Bidding, { localVue, propsData });
         expect(wrapper.findAll("tbody tr").length).to.be.equal(2);
     });
+
+    it("should display north south vulnerability", function() {
+        const propsData = { northSouthVulnerable: true };
+        const wrapper = mount(Bidding, { localVue, propsData });
+        expect(wrapper.find(".north.vulnerable").exists()).to.be.true;
+        expect(wrapper.find(".south.vulnerable").exists()).to.be.true;
+    });
+
+    it("should display east west vulnerability", function() {
+        const propsData = { eastWestVulnerable: true };
+        const wrapper = mount(Bidding, { localVue, propsData });
+        expect(wrapper.find(".east.vulnerable").exists()).to.be.true;
+        expect(wrapper.find(".west.vulnerable").exists()).to.be.true;
+    });
 });
