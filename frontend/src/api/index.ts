@@ -35,4 +35,12 @@ export default class {
             url: `/games/${gameUuid}/players`,
         });
     }
+
+    async getDeal(gameUuid: string) {
+        const response = await this.request({
+            method: "get",
+            url: `/games/${gameUuid}`,
+        });
+        return response.data.deal;
+    }
 }

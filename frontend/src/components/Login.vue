@@ -19,7 +19,7 @@
                 </b-form-invalid-feedback>
             </b-form-group>
         </validation-provider>
-        <b-button variant="primary" v-on:click="login()">Login</b-button>
+        <b-button variant="primary" @click="login()">Login</b-button>
     </b-card>
 </div>
 </template>
@@ -30,7 +30,7 @@ import { ValidationMixin } from './validation';
 
 @Component
 export default class Login extends mixins(ValidationMixin) {
-    username = "";
+    private readonly username = "";
 
     login() {
         this.$store.dispatch("login", this.username);
