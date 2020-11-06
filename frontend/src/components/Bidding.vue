@@ -1,22 +1,22 @@
 <template>
 <div class="bidding">
-    <table class="table">
-        <thead>
-            <tr>
-                <th>North</th>
-                <th>East</th>
-                <th>South</th>
-                <th>West</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr v-for="callRow in tabulatedCalls">
-                <td v-for="call in callRow">
+    <b-table-simple>
+        <b-thead>
+            <b-tr>
+                <b-th>North</b-th>
+                <b-th>East</b-th>
+                <b-th>South</b-th>
+                <b-th>West</b-th>
+            </b-tr>
+        </b-thead>
+        <b-tbody>
+            <b-tr v-for="(callRow, index) in tabulatedCalls" :key="index">
+                <b-td v-for="(call, index) in callRow" :key="index">
                     <CallDisplay v-if="call" :type="call.type" :bid="call.bid" />
-                </td>
-            </tr>
-        </tbody>
-    </table>
+                </b-td>
+            </b-tr>
+        </b-tbody>
+    </b-table-simple>
 </div>
 </template>
 
