@@ -28,4 +28,11 @@ export default class {
         });
         return response.data;
     }
+
+    async joinGame(gameUuid: string) {
+        await this.request({
+            method: "post",
+            url: `/games/${gameUuid}/players`,
+        });
+    }
 }

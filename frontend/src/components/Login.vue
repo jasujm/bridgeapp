@@ -7,19 +7,29 @@
             uses it to distinguish players from each other. The username will
             not be saved. All data collected by the server is pseudonymized.
         </b-card-text>
-        <b-form-group label-for="username" label="Username">
-            <b-form-input id="username" v-model="username"></b-form-input>
-        </b-form-group>
+        <validation-provider name="Username" rules="required" v-slot="validationContext">
+            <b-form-group label-for="username" label="Username">
+                <b-form-input
+                    id="username"
+                    v-model="username"
+                    :state="getValidationState(validationContext)"
+                    aria-describedby="username-feedback"></b-form-input>
+                <b-form-invalid-feedback id="username-feedback">
+                    {{ validationContext.errors[0] }}
+                </b-form-invalid-feedback>
+            </b-form-group>
+        </validation-provider>
         <b-button variant="primary" v-on:click="login()">Login</b-button>
     </b-card>
 </div>
 </template>
 
 <script lang="ts">
-import { Component, Vue } from "vue-property-decorator";
+import Component, { mixins } from 'vue-class-component'
+import { ValidationMixin } from './validation';
 
 @Component
-export default class Login extends Vue {
+export default class Login extends mixins(ValidationMixin) {
     username = "";
 
     login() {
