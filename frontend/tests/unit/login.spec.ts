@@ -3,6 +3,7 @@ import { mount } from "@vue/test-utils"
 import Login from "@/components/Login.vue"
 import sinon from "sinon"
 import Vuex from "vuex"
+import flushPromises from "flush-promises"
 
 describe("Login.vue", function() {
     let store: any;
@@ -15,10 +16,11 @@ describe("Login.vue", function() {
         });
     });
 
-    it("should handle user login", function() {
+    it("should handle user login", async function() {
         const wrapper = mount(Login, { localVue, store });
         wrapper.find("#username").setValue("user");
-        wrapper.find("button").trigger("click");
+        await wrapper.find("form").trigger("submit");
+        await flushPromises();
         expect(actions.login).to.be.called;
-    })
+    });
 })

@@ -1,16 +1,16 @@
-import { extend } from 'vee-validate';
-import { required } from 'vee-validate/dist/rules';
+import { extend } from "vee-validate";
+import { required } from "vee-validate/dist/rules";
 import { validate as validateUuid } from "uuid"
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import { ValidationProvider } from 'vee-validate';
+import Vue from "vue"
+import Component from "vue-class-component"
+import { ValidationObserver, ValidationProvider } from "vee-validate";
 
-extend('required', {
+extend("required", {
     ...required,
     message: "The field is required",
 });
 
-extend('uuid', function(value) {
+extend("uuid", function(value: string) {
     if (validateUuid(value)) {
         return true;
     }
@@ -19,6 +19,7 @@ extend('uuid', function(value) {
 
 @Component({
     components: {
+        ValidationObserver,
         ValidationProvider,
     }
 })

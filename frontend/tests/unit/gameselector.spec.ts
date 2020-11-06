@@ -3,6 +3,7 @@ import { mount } from "@vue/test-utils"
 import GameSelector from "@/components/GameSelector.vue"
 import Vuex from "vuex"
 import sinon from "sinon"
+import flushPromises from "flush-promises"
 
 const uuid = "6bac87b3-8e49-4675-bf69-8c0d6a351f40";
 
@@ -14,7 +15,7 @@ describe("GameSelector.vue", function() {
 
     this.beforeEach(function() {
         stubApi = {
-            createGame: sinon.stub().resolves(uuid),
+            createGame: sinon.stub().resolves({ uuid }),
             joinGame: sinon.stub().resolves(),
         }
         state = { username: "user", api: stubApi };
@@ -25,20 +26,23 @@ describe("GameSelector.vue", function() {
     });
 
     it("should create a game when requested", async function() {
-        await wrapper.find("#create-game").trigger("click");
+        await wrapper.find(".btn-secondary").trigger("click");
+        await flushPromises();
         expect(stubApi.createGame).to.be.called;
+        expect(stubApi.joinGame).to.be.calledWith(uuid);
     });
 
     it("should not join a game if UUID is invalid", async function() {
-        await wrapper.find("#join-game").trigger("click");
+        await wrapper.find("form").trigger("submit");
+        await flushPromises();
         expect(stubApi.joinGame).not.to.be.called;
     });
 
     describe("join game", function() {
         this.beforeEach(async function() {
             wrapper.find("#game-uuid").setValue(uuid);
-            await wrapper.find("#join-game").trigger("click");
-            await wrapper.vm.$nextTick();
+            await wrapper.find("form").trigger("submit");
+            await flushPromises();
         });
 
         it("should send API request", async function() {
