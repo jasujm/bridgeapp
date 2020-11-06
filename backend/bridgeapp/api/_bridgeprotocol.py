@@ -48,7 +48,8 @@ class EventDemultiplexer:  # pylint: disable=too-few-public-methods
             event = await self._event_receiver.get_event()
             if futures := self._events_pending.get(event.game):
                 for future in futures:
-                    future.set_result(event)
+                    if not future.cancelled():
+                        future.set_result(event)
                 del self._events_pending[event.game]
                 # Yield to give the receivers chance to renew their subscription
                 await asyncio.sleep(0)

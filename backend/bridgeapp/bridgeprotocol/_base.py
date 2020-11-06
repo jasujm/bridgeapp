@@ -169,6 +169,8 @@ class ClientBase(SocketBase):
                 continue
             tag = frames[1]
             if reply_future := self._replies_pending.pop(tag, None):
+                if reply_future.cancelled():
+                    continue
                 if len(frames) < 3:
                     reply_future.set_exception(
                         exceptions.InvalidMessage(
