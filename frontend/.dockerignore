@@ -3,5 +3,7 @@
 !install.sh
 !package.json
 !package-lock.json
+!tsconfig.json
+!.eslintrc.js
 !public/**
 !src/**
