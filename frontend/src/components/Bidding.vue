@@ -12,7 +12,7 @@
         <tbody>
             <tr v-for="callRow in tabulatedCalls">
                 <td v-for="call in callRow">
-                    <Call v-if="call" :type="call.type" :bid="call.bid" />
+                    <CallDisplay v-if="call" :type="call.type" :bid="call.bid" />
                 </td>
             </tr>
         </tbody>
@@ -23,12 +23,12 @@
 <script lang="ts">
 import { Vue, Component, Prop } from "vue-property-decorator"
 import _ from "lodash"
-import {  Position, PositionCallPair } from "@/api/types"
-import Call from "./Call.vue"
+import CallDisplay from "./CallDisplay.vue"
+import { Position, PositionCallPair } from "@/api/types"
 
 @Component({
     components: {
-        Call,
+        CallDisplay,
     }
 })
 export default class Bidding extends Vue {

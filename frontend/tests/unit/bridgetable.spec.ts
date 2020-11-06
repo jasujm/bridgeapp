@@ -15,6 +15,7 @@ describe("BridgeTable.vue", function() {
     this.beforeEach(async function() {
         stubApi = {
             getDeal: sinon.stub().resolves({}),
+            getSelf: sinon.stub().resolves({}),
         }
         state = { username: "user", api: stubApi };
         store = new Vuex.Store({
@@ -26,6 +27,7 @@ describe("BridgeTable.vue", function() {
 
     it("should fetch game data when mounted", async function() {
         expect(stubApi.getDeal).to.be.calledWith(gameUuid);
+        expect(stubApi.getSelf).to.be.calledWith(gameUuid);
     });
 
     it("should fetch game data when game is changed", async function() {
@@ -33,5 +35,6 @@ describe("BridgeTable.vue", function() {
         wrapper.setProps({ gameUuid: otherUuid });
         await wrapper.vm.$nextTick();
         expect(stubApi.getDeal).to.be.calledWith(otherUuid);
+        expect(stubApi.getSelf).to.be.calledWith(otherUuid);
     });
 });

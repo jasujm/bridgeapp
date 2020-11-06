@@ -38,3 +38,8 @@ export interface PositionCallPair {
 export interface Deal {
     calls: Array<PositionCallPair>;
 }
+
+export interface Self {
+    position: Position;
+    allowedCalls: Array<Call>;
+}

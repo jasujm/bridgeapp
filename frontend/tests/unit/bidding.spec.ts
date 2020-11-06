@@ -28,26 +28,24 @@ describe("Bidding.vue", function() {
         const wrapper = mount(Bidding, { localVue });
         expect(wrapper.find(".call").exists()).to.be.false;
     });
-    it("should display bids", function() {
-        const propsData = makeCalls(CallType.bid, bid);
-        const wrapper = mount(Bidding, { localVue, propsData });
-        expect(wrapper.find(".call.bid.strain-clubs.level-1").exists()).to.be.true;
-    });
-    it("should display passes", function() {
-        const propsData = makeCalls(CallType.pass);
-        const wrapper = mount(Bidding, { localVue, propsData });
-        expect(wrapper.find(".call.pass").exists()).to.be.true;
-    });
-    it("should display doubles", function() {
-        const propsData = makeCalls(CallType.double);
-        const wrapper = mount(Bidding, { localVue, propsData });
-        expect(wrapper.find(".call.double").exists()).to.be.true;
-    });
-    it("should display redoubles", function() {
-        const propsData = makeCalls(CallType.redouble);
-        const wrapper = mount(Bidding, { localVue, propsData });
-        expect(wrapper.find(".call.redouble").exists()).to.be.true;
-    });
+
+    const calls = [
+        {
+            propsData: makeCalls(CallType.bid, bid),
+            expectedClass: ".bid.strain-clubs.level-1",
+        },
+        { propsData: makeCalls(CallType.pass), expectedClass: ".pass" },
+        { propsData: makeCalls(CallType.double), expectedClass: ".double" },
+        { propsData: makeCalls(CallType.redouble), expectedClass: ".redouble" },
+    ]
+
+    for (const { propsData, expectedClass } of calls) {
+        it(`should display ${propsData.calls[0].call.type}`, function() {
+            const wrapper = mount(Bidding, { localVue, propsData });
+            expect(wrapper.find(`.call${expectedClass}`).exists()).to.be.true;
+        });
+    }
+
     it("should tabulate calls", function() {
         const propsData = {
             calls: [
