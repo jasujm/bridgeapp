@@ -1,17 +1,8 @@
-import chai from "chai"
-import { createLocalVue, mount } from "@vue/test-utils"
+import { localVue, expect } from "./common"
+import { mount } from "@vue/test-utils"
 import Login from "@/components/Login.vue"
-import { BootstrapVue } from "bootstrap-vue"
 import sinon from "sinon"
-import sinonChai from "sinon-chai"
 import Vuex from "vuex"
-
-chai.use(sinonChai);
-const expect = chai.expect;
-
-const localVue = createLocalVue()
-localVue.use(BootstrapVue);
-localVue.use(Vuex)
 
 describe("Login.vue", function() {
     let store: any;

@@ -1,10 +1,6 @@
-import chai from "chai"
+import { expect } from "./common"
 import { ActionContext, mutations, actions, getters } from "@/store"
 import { stubInterface } from "ts-sinon"
-import sinonChai from "sinon-chai"
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe("store", function() {
     it("should initially have no user logged in", function() {
