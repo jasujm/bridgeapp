@@ -1,4 +1,8 @@
+// FIXME: Handle HTTP errors
+// FIXME: Validate responses and handle errors
+
 import axios, { AxiosRequestConfig } from "axios"
+import { Deal } from "./types"
 
 const client = axios.create({
     baseURL: `${process.env.VUE_APP_BRIDGEAPP_API_PREFIX || ""}/api/v1/`
@@ -26,7 +30,7 @@ export default class {
             method: "post",
             url: "/games",
         });
-        return response.data;
+        return response.data as string;
     }
 
     async joinGame(gameUuid: string) {
@@ -41,6 +45,6 @@ export default class {
             method: "get",
             url: `/games/${gameUuid}`,
         });
-        return response.data.deal;
+        return response.data.deal as Deal;
     }
 }
