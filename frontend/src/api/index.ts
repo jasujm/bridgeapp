@@ -2,14 +2,21 @@
 // FIXME: Validate responses and handle errors
 
 import axios, { AxiosRequestConfig } from "axios"
-import { Deal, Call, Card, Self } from "./types"
+import { Deal, Call, Card, Self, Event } from "./types"
+
+function defaultWsBaseUrl() {
+    const protocol = window.location.protocol.includes("https") ? "wss:" : "ws:";
+    return `${protocol}//${window.location.hostname}`;
+}
+
+const wsBaseUrl = `${process.env.VUE_APP_BRIDGEAPP_WEBSOCKET_PREFIX || defaultWsBaseUrl()}/api/v1`;
 
 const client = axios.create({
     baseURL: `${process.env.VUE_APP_BRIDGEAPP_API_PREFIX || ""}/api/v1/`
 });
 
 export default class {
-    private username: string | null = null;
+    private username?: string;
 
     private request(config: AxiosRequestConfig) {
         if (this.username) {
@@ -70,5 +77,14 @@ export default class {
             url: `/games/${gameUuid}/self`,
         });
         return response.data as Self;
+    }
+
+    subscribe(gameUuid: string, callback: (event: Event) => unknown) {
+        const ws = new WebSocket(`${wsBaseUrl}/games/${gameUuid}/ws`);
+        ws.onmessage = async function(message) {
+            const text = await message.data.text();
+            callback(JSON.parse(text));
+        };
+        return ws;
     }
 }

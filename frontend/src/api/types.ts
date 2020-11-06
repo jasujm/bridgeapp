@@ -90,3 +90,8 @@ export class Self {
     allowedCalls: Array<Call> = [];
     allowedCards: Array<Card> = [];
 }
+
+export interface Event {
+    game: string;
+    type: string;
+}
