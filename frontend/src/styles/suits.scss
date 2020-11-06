@@ -2,3 +2,10 @@
 @mixin diamonds { content: "\2666"; color: red; }
 @mixin hearts { content: "\2665"; color: red; }
 @mixin spades { content: "\2660"; color: black; }
+
+@mixin suits {
+  &.suit-clubs::before { @include clubs; }
+  &.suit-diamonds::before { @include diamonds; }
+  &.suit-hearts::before { @include hearts; }
+  &.suit-spades::before { @include spades; }
+}

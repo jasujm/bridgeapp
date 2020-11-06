@@ -71,9 +71,19 @@ export class Cards {
     west: Array<Card | null> = [];
 }
 
+export interface PositionCardPair {
+    position: Position;
+    card: Card;
+}
+
+export interface Trick {
+    cards?: Array<PositionCardPair>;
+}
+
 export class Deal {
     calls: Array<PositionCallPair> = [];
     cards: Record<Position, Array<Card | null>> = new Cards();
+    tricks: Array<Trick> = [];
 }
 
 export class Self {

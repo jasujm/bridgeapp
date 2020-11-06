@@ -18,7 +18,10 @@
                     class="lho"
                     :class="lhoPosition" />
             </b-col>
-            <b-col lg="4" offset-lg="4">
+            <b-col lg="4">
+                <TrickDisplay v-if="trick" :trick="trick" />
+            </b-col>
+            <b-col lg="4">
                 <HandDisplay
                     label="RHO"
                     :cards="cardsFor(rhoPosition)"
@@ -30,9 +33,9 @@
             <b-col lg="4" offset-lg="4">
                 <HandDisplay
                     label="Self"
-                    :cards="cardsFor(position)"
+                    :cards="cardsFor(selfPosition)"
                     class="self"
-                    :class="position" />
+                    :class="selfPosition" />
             </b-col>
         </b-row>
     </b-container>
@@ -40,40 +43,25 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from "vue-property-decorator"
-import _ from "lodash"
+import Component, { mixins } from 'vue-class-component'
+import { Prop } from "vue-property-decorator"
 import HandDisplay from "./HandDisplay.vue"
-import { Position, Cards } from "@/api/types"
+import TrickDisplay from "./TrickDisplay.vue"
+import { Position, Cards, Trick } from "@/api/types"
+import SelfPositionMixin from "./selfposition"
 
 @Component({
     components: {
         HandDisplay,
+        TrickDisplay,
     }
 })
-export default class CardsDisplay extends Vue {
-    @Prop({ default: Position.north }) private readonly position!: Position;
-    @Prop({ default: new Cards() }) private readonly cards!: Cards;
+export default class CardsDisplay extends mixins(SelfPositionMixin) {
+    @Prop({ default: () => new Cards() }) private readonly cards!: Cards;
+    @Prop() private readonly trick?: Trick;
 
     private cardsFor(position: Position) {
         return this.cards[position];
-    }
-
-    private clockwise(n: number) {
-        const positions = _.values(Position);
-        const m = positions.indexOf(this.position);
-        return positions[(m + n) % positions.length];
-    }
-
-    private get lhoPosition() {
-        return this.clockwise(1);
-    }
-
-    private get partnerPosition() {
-        return this.clockwise(2);
-    }
-
-    private get rhoPosition() {
-        return this.clockwise(3);
     }
 }
 </script>

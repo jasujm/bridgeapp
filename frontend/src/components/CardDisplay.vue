@@ -1,9 +1,5 @@
 <template>
-<span class="card-list" :class="'suit-' + suit">
-    <span v-for="rank in ranks" :key="rank" :class="'rank-' + rank">
-        {{ rankText(rank) }}
-    </span>
-</span>
+<span class="card-display" :class="cardClasses">{{ rankText(this.rank) }}</span>
 </template>
 
 <script lang="ts">
@@ -13,19 +9,20 @@ import { Rank, Suit } from "@/api/types"
 import RankDisplayMixin from "./rankdisplay"
 
 @Component
-export default class CardDisplay extends mixins(RankDisplayMixin) {
+export default class Bidding extends mixins(RankDisplayMixin) {
+    @Prop() private readonly rank!: Rank;
     @Prop() private readonly suit!: Suit;
-    @Prop() private readonly ranks!: Rank;
+
+    private get cardClasses() {
+        return [`rank-${this.rank}`, `suit-${this.suit}`];
+    }
 }
 </script>
 
 <style lang="scss" scoped>
 @import "../styles/suits.scss";
 
-.card-list {
+.card-display {
   @include suits;
-  .rank {
-    padding-left: 0.25rem;
-  }
 }
 </style>

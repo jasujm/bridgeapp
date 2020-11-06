@@ -6,7 +6,10 @@
                 <Bidding :calls="deal.calls" />
             </b-col>
             <b-col lg="8">
-                <CardsDisplay :position="self.position" :cards="deal.cards" />
+                <CardsDisplay
+                    :selfPosition="self.position"
+                    :cards="deal.cards"
+                    :trick="deal.tricks[deal.tricks.length - 1]" />
             </b-col>
         </b-row>
         <CallPanel :gameUuid="gameUuid" :allowedCalls="self.allowedCalls" />

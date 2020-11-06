@@ -41,10 +41,10 @@ export default class Bidding extends Vue {
 @import "../styles/suits.scss";
 
 .call.bid {
-  &.strain-clubs:after { @include clubs; }
-  &.strain-diamonds:after { @include diamonds; }
-  &.strain-hearts:after { @include hearts; }
-  &.strain-spades:after { @include spades; }
-  &.strain-notrump:after { content: "NT"; }
+  &.strain-clubs::after { @include clubs; }
+  &.strain-diamonds::after { @include diamonds; }
+  &.strain-hearts::after { @include hearts; }
+  &.strain-spades::after { @include spades; }
+  &.strain-notrump::after { content: "NT"; }
 }
 </style>
