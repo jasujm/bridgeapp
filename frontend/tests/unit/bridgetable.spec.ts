@@ -3,6 +3,7 @@ import { mount } from "@vue/test-utils"
 import BridgeTable from "@/components/BridgeTable.vue"
 import Vuex from "vuex"
 import sinon from "sinon"
+import { Deal, Self } from "@/api/types"
 
 const gameUuid = "6bac87b3-8e49-4675-bf69-8c0d6a351f40";
 
@@ -14,8 +15,8 @@ describe("BridgeTable.vue", function() {
 
     this.beforeEach(async function() {
         stubApi = {
-            getDeal: sinon.stub().resolves({}),
-            getSelf: sinon.stub().resolves({}),
+            getDeal: sinon.stub().resolves(new Deal()),
+            getSelf: sinon.stub().resolves(new Self()),
         }
         state = { username: "user", api: stubApi };
         store = new Vuex.Store({

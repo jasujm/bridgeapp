@@ -32,10 +32,10 @@ import { Position, PositionCallPair } from "@/api/types"
     }
 })
 export default class Bidding extends Vue {
-    @Prop() private readonly calls!: Array<PositionCallPair>;
+    @Prop({ default: () => [] }) private readonly calls!: Array<PositionCallPair>;
 
     private get tabulatedCalls() {
-        if (!this.calls || this.calls.length == 0) {
+        if (this.calls.length == 0) {
             return [];
         } else {
             const paddingLeft = _.values(Position).indexOf(this.calls[0].position);

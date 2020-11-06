@@ -1,28 +1,37 @@
 <template>
 <div class="bridge-table">
-    <Bidding :calls="deal.calls" />
-    <CallPanel :gameUuid="gameUuid" :allowedCalls="self.allowedCalls" />
+    <b-container>
+        <b-row>
+            <b-col lg="4">
+                <Bidding :calls="deal.calls" />
+            </b-col>
+            <b-col lg="8">
+                <CardsDisplay :position="self.position" :cards="deal.cards" />
+            </b-col>
+        </b-row>
+        <CallPanel :gameUuid="gameUuid" :allowedCalls="self.allowedCalls" />
+    </b-container>
 </div>
 </template>
 
 <script lang="ts">
 import { Vue, Component, Prop, Watch } from "vue-property-decorator"
 import Bidding from "./Bidding.vue"
+import CardsDisplay from "./CardsDisplay.vue"
 import CallPanel from "./CallPanel.vue"
-import { Deal } from "@/api/types"
+import { Deal, Self } from "@/api/types"
 
 @Component({
     components: {
         Bidding,
+        CardsDisplay,
         CallPanel,
     }
 })
 export default class BridgeTable extends Vue {
     @Prop() private readonly gameUuid!: string;
-    private deal: Deal = {
-        calls: [],
-    };
-    private self = {};
+    private deal = new Deal();
+    private self = new Self();
 
     private async fetchGameState() {
         if (this.gameUuid) {

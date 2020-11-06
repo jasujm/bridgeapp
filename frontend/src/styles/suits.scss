@@ -1,0 +1,4 @@
+@mixin clubs { content: "\2663"; color: black; }
+@mixin diamonds { content: "\2666"; color: red; }
+@mixin hearts { content: "\2665"; color: red; }
+@mixin spades { content: "\2660"; color: black; }

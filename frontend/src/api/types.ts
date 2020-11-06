@@ -35,11 +35,48 @@ export interface PositionCallPair {
     call: Call;
 }
 
-export interface Deal {
-    calls: Array<PositionCallPair>;
+export enum Rank {
+    _1 = "1",
+    _2 = "2",
+    _3 = "3",
+    _4 = "4",
+    _5 = "5",
+    _6 = "6",
+    _7 = "7",
+    _8 = "8",
+    _9 = "9",
+    _10 = "10",
+    jack = "jack",
+    queen = "queen",
+    king = "king",
+    ace = "ace",
 }
 
-export interface Self {
-    position: Position;
-    allowedCalls: Array<Call>;
+export enum Suit {
+    clubs = "clubs",
+    diamonds = "diamonds",
+    hearts = "hearts",
+    spades = "spades",
+}
+
+export interface Card {
+    rank: Rank;
+    suit: string;
+}
+
+export class Cards {
+    north: Array<Card | null> = [];
+    east: Array<Card | null> = [];
+    south: Array<Card | null> = [];
+    west: Array<Card | null> = [];
+}
+
+export class Deal {
+    calls: Array<PositionCallPair> = [];
+    cards: Record<Position, Array<Card | null>> = new Cards();
+}
+
+export class Self {
+    position: Position = Position.south;
+    allowedCalls: Array<Call> = [];
 }

@@ -19,7 +19,7 @@ import { Call } from "@/api/types"
 })
 export default class CallPanel extends Vue {
     @Prop() private readonly gameUuid!: string;
-    @Prop() private readonly allowedCalls!: Array<Call>;
+    @Prop({ default: [] }) private readonly allowedCalls!: Array<Call>;
     private callKey = callKey;
 
     private async makeCall(call: Call) {
