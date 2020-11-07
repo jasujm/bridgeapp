@@ -46,9 +46,7 @@ export default class BridgeTable extends Vue {
     private ws?: WebSocket;
     private timerId!: number;
 
-    private fetchGameState = _.debounce(this._fetchGameState, 50);
-
-    private async _fetchGameState() {
+    async fetchGameStateImpl() {
         if (this.gameUuid) {
             const api = this.$store.state.api;
             [this.deal, this.self] = await Promise.all(
@@ -56,8 +54,9 @@ export default class BridgeTable extends Vue {
             );
         }
     }
+    private fetchGameState = _.debounce(this.fetchGameStateImpl, 50);
 
-    private async _onNewGame() {
+    private async startGame() {
         // TODO: Ideally a more fine-grained subscribe callback to only update
         // what is needed
         this.ws = this.$store.state.api.subscribe(this.gameUuid, this.fetchGameState);
@@ -74,7 +73,7 @@ export default class BridgeTable extends Vue {
     }
 
     async mounted() {
-        await this._onNewGame();
+        await this.startGame();
     }
 
     beforeDestroy() {
@@ -82,9 +81,9 @@ export default class BridgeTable extends Vue {
     }
 
     @Watch("gameUuid")
-    private async onNewGame() {
+    private async gameUuidChanged() {
         this.close();
-        await this._onNewGame();
+        await this.startGame();
     }
 }
 </script>
