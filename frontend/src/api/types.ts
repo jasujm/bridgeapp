@@ -5,6 +5,11 @@ export enum Position {
     west = "west",
 }
 
+export enum Partnership {
+    northSouth = "northSouth",
+    eastWest = "eastWest",
+}
+
 export enum Strain {
     clubs = "clubs",
     diamonds = "diamonds",
@@ -102,3 +107,14 @@ export interface Event {
     game: string;
     type: string;
 }
+
+export interface Score {
+    partnership: Partnership;
+    score: number;
+}
+
+export interface DealEndEvent extends Event {
+    score: Score | null;
+}
+
+export type EventCallback = (event: Event) => void;

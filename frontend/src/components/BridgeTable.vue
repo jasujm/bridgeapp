@@ -28,7 +28,9 @@ import Bidding from "./Bidding.vue"
 import TableDisplay from "./TableDisplay.vue"
 import CallPanel from "./CallPanel.vue"
 import CardPanel from "./CardPanel.vue"
-import { Deal, Self } from "@/api/types"
+import {
+    Deal, Self, Event, DealEndEvent, Score, EventCallback, Position, Partnership
+} from "@/api/types"
 import _ from "lodash"
 
 @Component({
@@ -43,6 +45,7 @@ export default class BridgeTable extends Vue {
     @Prop() private readonly gameUuid!: string;
     private deal = new Deal();
     private self = new Self();
+    private eventHandlers!: Record<string, EventCallback>;
     private ws?: WebSocket;
     private timerId!: number;
 
@@ -56,10 +59,41 @@ export default class BridgeTable extends Vue {
     }
     private fetchGameState = _.debounce(this.fetchGameStateImpl, 50);
 
+    recordScore(event: DealEndEvent) {
+        // TODO: Ideally, there would be a scoresheet component listing deal
+        // history and scores. But needs API support for retrieving past deal
+        // results.
+        const message = (function(score: Score | null, position: Position) {
+            const partnershipOf = {
+                [Position.north]: Partnership.northSouth,
+                [Position.east]: Partnership.eastWest,
+                [Position.south]: Partnership.northSouth,
+                [Position.west]: Partnership.eastWest,
+            };
+            if (score) {
+                const who = (partnershipOf[position] as Partnership) == score.partnership ?
+                    "You score" : "Opponent scores";
+                return `${who} ${score.score} points`;
+            } else {
+                return "Passed out";
+            }
+        })(event.score, this.self.position);
+        this.$bvToast.toast(message, {
+            title: "Deal result",
+            autoHideDelay: 5000,
+        });
+    }
+
+    private handleEvent(event: Event) {
+        const handler = this.eventHandlers[event.type] ||
+            this.eventHandlers.default;
+        handler.call(this, event);
+    }
+
     private async startGame() {
         // TODO: Ideally a more fine-grained subscribe callback to only update
         // what is needed
-        this.ws = this.$store.state.api.subscribe(this.gameUuid, this.fetchGameState);
+        this.ws = this.$store.state.api.subscribe(this.gameUuid, this.handleEvent);
         await this.fetchGameState();
         this.timerId = setInterval(this.fetchGameState, 5000);
     }
@@ -69,6 +103,13 @@ export default class BridgeTable extends Vue {
         this.fetchGameState.cancel();
         if (this.ws) {
             this.ws.close();
+        }
+    }
+
+    created() {
+        this.eventHandlers = {
+            default: this.fetchGameState,
+            dealend: this.recordScore as EventCallback,
         }
     }
 

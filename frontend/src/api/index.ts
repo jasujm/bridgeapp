@@ -2,7 +2,7 @@
 // FIXME: Validate responses and handle errors
 
 import axios, { AxiosRequestConfig } from "axios"
-import { Deal, Call, Card, Self, Event } from "./types"
+import { Deal, Call, Card, Self, EventCallback } from "./types"
 
 function defaultWsBaseUrl() {
     const protocol = window.location.protocol.includes("https") ? "wss:" : "ws:";
@@ -79,7 +79,7 @@ export default class {
         return response.data as Self;
     }
 
-    subscribe(gameUuid: string, callback: (event: Event) => unknown) {
+    subscribe(gameUuid: string, callback: EventCallback) {
         const ws = new WebSocket(`${wsBaseUrl}/games/${gameUuid}/ws`);
         ws.onmessage = async function(message) {
             const text = await message.data.text();
