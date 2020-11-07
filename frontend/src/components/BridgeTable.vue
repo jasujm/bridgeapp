@@ -51,8 +51,9 @@ export default class BridgeTable extends Vue {
     private async _fetchGameState() {
         if (this.gameUuid) {
             const api = this.$store.state.api;
-            this.deal = await api.getDeal(this.gameUuid);
-            this.self = await api.getSelf(this.gameUuid);
+            [this.deal, this.self] = await Promise.all(
+                [api.getDeal(this.gameUuid), api.getSelf(this.gameUuid)]
+            );
         }
     }
 
