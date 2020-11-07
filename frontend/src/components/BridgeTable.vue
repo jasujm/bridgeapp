@@ -44,6 +44,7 @@ export default class BridgeTable extends Vue {
     private deal = new Deal();
     private self = new Self();
     private ws?: WebSocket;
+    private timerId!: number;
 
     private fetchGameState = _.debounce(this._fetchGameState, 50);
 
@@ -60,10 +61,11 @@ export default class BridgeTable extends Vue {
         // what is needed
         this.ws = this.$store.state.api.subscribe(this.gameUuid, this.fetchGameState);
         await this.fetchGameState();
-        setInterval(this.fetchGameState, 5000);
+        this.timerId = setInterval(this.fetchGameState, 5000);
     }
 
     private close() {
+        clearTimeout(this.timerId);
         this.fetchGameState.cancel();
         if (this.ws) {
             this.ws.close();
