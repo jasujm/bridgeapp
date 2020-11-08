@@ -10,19 +10,19 @@ import _ from "lodash"
 const gameUuid = "6bac87b3-8e49-4675-bf69-8c0d6a351f40";
 
 describe("BridgeTable.vue", function() {
-    let stubApi: any;
+    let fakeApi: any;
     let store: any;
     let state: any;
     let wrapper: any;
     let clock: any;
 
     this.beforeEach(async function() {
-        stubApi = {
-            getDeal: sinon.stub().resolves(new Deal()),
-            getSelf: sinon.stub().resolves(new Self()),
-            subscribe: sinon.stub(),
+        fakeApi = {
+            getDeal: sinon.fake.resolves(new Deal()),
+            getSelf: sinon.fake.resolves(new Self()),
+            subscribe: sinon.fake(),
         }
-        state = { username: "user", api: stubApi };
+        state = { username: "user", api: fakeApi };
         store = new Vuex.Store({
             state,
         });
@@ -36,9 +36,9 @@ describe("BridgeTable.vue", function() {
     });
 
     it("should fetch game data when mounted", async function() {
-        expect(stubApi.subscribe).to.be.calledWith(gameUuid);
-        expect(stubApi.getDeal).to.be.calledWith(gameUuid);
-        expect(stubApi.getSelf).to.be.calledWith(gameUuid);
+        expect(fakeApi.subscribe).to.be.calledWith(gameUuid);
+        expect(fakeApi.getDeal).to.be.calledWith(gameUuid);
+        expect(fakeApi.getSelf).to.be.calledWith(gameUuid);
     });
 
     it("should fetch game data when game is changed", async function() {
@@ -50,9 +50,9 @@ describe("BridgeTable.vue", function() {
         await flushPromises();
         clock.tick(100);
         await flushPromises();
-        expect(stubApi.subscribe).to.be.calledWith(otherUuid);
-        expect(stubApi.getDeal).to.be.calledWith(otherUuid);
-        expect(stubApi.getSelf).to.be.calledWith(otherUuid);
+        expect(fakeApi.subscribe).to.be.calledWith(otherUuid);
+        expect(fakeApi.getDeal).to.be.calledWith(otherUuid);
+        expect(fakeApi.getSelf).to.be.calledWith(otherUuid);
     });
 
     describe("turn", function() {

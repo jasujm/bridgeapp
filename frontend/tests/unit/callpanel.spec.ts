@@ -24,15 +24,15 @@ describe("CallPanel.vue", function() {
         { type: CallType.redouble },
         { type: CallType.bid, bid },
     ]
-    let stubApi: any;
+    let fakeApi: any;
     let store: any;
     let state: any;
 
     this.beforeEach(function() {
-        stubApi = {
-            makeCall: sinon.stub().resolves(),
+        fakeApi = {
+            makeCall: sinon.fake.resolves(null),
         }
-        state = { username: "user", api: stubApi };
+        state = { username: "user", api: fakeApi };
         store = new Vuex.Store({
             state,
         });
@@ -55,7 +55,7 @@ describe("CallPanel.vue", function() {
                 it("should make call when the button is pressed", async function() {
                     const button = wrapper.find("button");
                     await button.trigger("click");
-                    expect(stubApi.makeCall).to.be.calledWith(gameUuid, call);
+                    expect(fakeApi.makeCall).to.be.calledWith(gameUuid, call);
                 });
             });
         }
@@ -65,7 +65,7 @@ describe("CallPanel.vue", function() {
             propsData.gameUuid = "";
             const wrapper = mount(CallPanel, { localVue, store, propsData });
             await wrapper.find("button").trigger("click");
-            expect(stubApi.makeCall).not.to.be.called;
+            expect(fakeApi.makeCall).not.to.be.called;
         });
     });
 });

@@ -8,17 +8,17 @@ import flushPromises from "flush-promises"
 const uuid = "6bac87b3-8e49-4675-bf69-8c0d6a351f40";
 
 describe("GameSelector.vue", function() {
-    let stubApi: any;
+    let fakeApi: any;
     let store: any;
     let state: any;
     let wrapper: any;
 
     this.beforeEach(function() {
-        stubApi = {
-            createGame: sinon.stub().resolves({ uuid }),
-            joinGame: sinon.stub().resolves(),
+        fakeApi = {
+            createGame: sinon.fake.resolves({ uuid }),
+            joinGame: sinon.fake.resolves(null),
         }
-        state = { username: "user", api: stubApi };
+        state = { username: "user", api: fakeApi };
         store = new Vuex.Store({
             state,
         });
@@ -28,14 +28,14 @@ describe("GameSelector.vue", function() {
     it("should create a game when requested", async function() {
         await wrapper.find(".btn-secondary").trigger("click");
         await flushPromises();
-        expect(stubApi.createGame).to.be.called;
-        expect(stubApi.joinGame).to.be.calledWith(uuid);
+        expect(fakeApi.createGame).to.be.called;
+        expect(fakeApi.joinGame).to.be.calledWith(uuid);
     });
 
     it("should not join a game if UUID is invalid", async function() {
         await wrapper.find("form").trigger("submit");
         await flushPromises();
-        expect(stubApi.joinGame).not.to.be.called;
+        expect(fakeApi.joinGame).not.to.be.called;
     });
 
     describe("join game", function() {
@@ -46,7 +46,7 @@ describe("GameSelector.vue", function() {
         });
 
         it("should send API request", async function() {
-            expect(stubApi.joinGame).to.be.calledWith(uuid);
+            expect(fakeApi.joinGame).to.be.calledWith(uuid);
         });
 
         it("should emit an event", async function() {

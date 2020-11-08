@@ -15,15 +15,15 @@ const allowedCards = [
 ];
 
 describe("CardPanel.vue", function() {
-    let stubApi: any;
+    let fakeApi: any;
     let store: any;
     let state: any;
 
     this.beforeEach(function() {
-        stubApi = {
-            playCard: sinon.stub().resolves(),
+        fakeApi = {
+            playCard: sinon.fake.resolves(null),
         }
-        state = { username: "user", api: stubApi };
+        state = { username: "user", api: fakeApi };
         store = new Vuex.Store({
             state,
         });
@@ -48,7 +48,7 @@ describe("CardPanel.vue", function() {
         it("should play card when the button is pressed", async function() {
             const button = wrapper.find("button");
             await button.trigger("click");
-            expect(stubApi.playCard).to.be.calledWith(gameUuid, _.last(allowedCards));
+            expect(fakeApi.playCard).to.be.calledWith(gameUuid, _.last(allowedCards));
         });
     });
 
@@ -56,6 +56,6 @@ describe("CardPanel.vue", function() {
         const propsData = { allowedCards };
         const wrapper = mount(CardPanel, { localVue, store, propsData });
         await wrapper.find("button").trigger("click");
-        expect(stubApi.playCard).not.to.be.called;
+        expect(fakeApi.playCard).not.to.be.called;
     });
 });
