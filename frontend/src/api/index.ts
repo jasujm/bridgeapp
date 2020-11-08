@@ -2,7 +2,7 @@
 // FIXME: Validate responses and handle errors
 
 import axios, { AxiosRequestConfig } from "axios"
-import { Deal, Call, Card, Self, EventCallback } from "./types"
+import { Deal, Call, Card, Self, Event, EventHandlers } from "./types"
 
 function defaultWsBaseUrl() {
     const protocol = window.location.protocol.includes("https") ? "wss:" : "ws:";
@@ -79,11 +79,18 @@ export default class {
         return response.data as Self;
     }
 
-    subscribe(gameUuid: string, callback: EventCallback) {
+    subscribe(gameUuid: string, handlers: EventHandlers) {
         const ws = new WebSocket(`${wsBaseUrl}/games/${gameUuid}/ws`);
         ws.onmessage = async function(message) {
             const text = await message.data.text();
-            callback(JSON.parse(text));
+            const event = JSON.parse(text) as Event;
+            // FIXME: Validating, type-safe approach is needed here
+            // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+            // @ts-ignore
+            const handler = handlers[event.type];
+            if (handler) {
+                handler(event);
+            }
         };
         return ws;
     }

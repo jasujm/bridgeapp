@@ -113,8 +113,39 @@ export interface Score {
     score: number;
 }
 
+export type DealEvent = Event;
+
+export interface TurnEvent extends Event {
+    position: Position;
+}
+
+export interface CallEvent extends Event {
+    position: Position;
+    call: Call;
+}
+
+export interface PlayEvent extends Event {
+    position: Position;
+    card: Card;
+}
+
+export interface DummyEvent extends Event {
+    position: Position;
+    cards: Array<Card>;
+}
+
+export type TrickEvent = Event;
+
 export interface DealEndEvent extends Event {
     score: Score | null;
 }
 
-export type EventCallback = (event: Event) => void;
+export interface EventHandlers {
+    deal?: (event: DealEvent) => void;
+    turn?: (event: TurnEvent) => void;
+    call?: (event: CallEvent) => void;
+    play?: (event: PlayEvent) => void;
+    dummy?: (event: DummyEvent) => void;
+    trick?: (event: TrickEvent) => void;
+    dealend?: (event: DealEndEvent) => void;
+}
