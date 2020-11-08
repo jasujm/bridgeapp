@@ -99,7 +99,7 @@ export default class BridgeTable extends Vue {
     }
 
     private close() {
-        clearTimeout(this.timerId);
+        clearInterval(this.timerId);
         this.fetchGameState.cancel();
         if (this.ws) {
             this.ws.close();
