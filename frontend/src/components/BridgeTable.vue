@@ -13,7 +13,7 @@
                     :selfPosition="self.position"
                     :positionInTurn="deal.positionInTurn"
                     :cards="deal.cards"
-                    :trick="deal.tricks[deal.tricks.length - 1]" />
+                    :trick="displayTrick" />
             </b-col>
         </b-row>
         <CallPanel :gameUuid="gameUuid" :allowedCalls="self.allowedCalls" />
@@ -39,6 +39,7 @@ import {
     Score,
     Position,
     Partnership,
+    Trick,
 } from "@/api/types"
 import _ from "lodash"
 
@@ -54,6 +55,7 @@ export default class BridgeTable extends Vue {
     @Prop() private readonly gameUuid!: string;
     private deal = new Deal();
     private self = new Self();
+    private displayTrick: Trick = {};
     private ws?: WebSocket;
     private timerId!: number;
 
@@ -173,6 +175,7 @@ export default class BridgeTable extends Vue {
 
     async mounted() {
         await this.startGame();
+        this.displayTrick = this.lastTrick;
     }
 
     beforeDestroy() {
@@ -183,6 +186,19 @@ export default class BridgeTable extends Vue {
     private async gameUuidChanged() {
         this.close();
         await this.startGame();
+    }
+
+    private get lastTrick() {
+        return _.last(this.deal.tricks) || {};
+    }
+
+    @Watch("lastTrick")
+    private async trickChanged() {
+        // This visually retains the old trick for two seconds after new trick
+        // is started
+        const trick = this.lastTrick;
+        const delay = _.isEmpty(trick.cards) ? 2000 : 0;
+        _.delay(() => this.displayTrick = trick, delay);
     }
 }
 </script>
