@@ -1,5 +1,6 @@
 <template>
 <span class="card-list" :class="'suit-' + suit">
+    <SuitDisplay :suit="suit" />
     <span v-for="rank in ranks" :key="rank" :class="'rank-' + rank">
         {{ rankText(rank) }}
     </span>
@@ -10,22 +11,16 @@
 import Component, { mixins } from "vue-class-component"
 import { Prop } from "vue-property-decorator"
 import { Rank, Suit } from "@/api/types"
+import SuitDisplay from "./SuitDisplay.vue"
 import RankDisplayMixin from "./rankdisplay"
 
-@Component
+@Component({
+    components: {
+        SuitDisplay
+    }
+})
 export default class CardDisplay extends mixins(RankDisplayMixin) {
     @Prop() private readonly suit!: Suit;
     @Prop() private readonly ranks!: Rank;
 }
 </script>
-
-<style lang="scss" scoped>
-@import "../styles/suits.scss";
-
-.card-list {
-  @include suits;
-  .rank {
-    padding-left: 0.25rem;
-  }
-}
-</style>

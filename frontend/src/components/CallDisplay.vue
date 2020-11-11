@@ -1,12 +1,23 @@
 <template>
-<span class="call" :class="callClasses">{{ callText }}</span>
+<span class="call" :class="callClasses">
+    {{ callText }}
+    <template v-if="this.bid">
+        <span v-if="this.bid.strain == 'notrump'" class="notrump">NT</span>
+        <SuitDisplay v-else :suit="this.bid.strain" />
+    </template>
+</span>
 </template>
 
 <script lang="ts">
 import { Vue, Component, Prop } from "vue-property-decorator"
 import { CallType, Bid } from "@/api/types"
+import SuitDisplay from "./SuitDisplay.vue"
 
-@Component
+@Component({
+    components: {
+        SuitDisplay
+    }
+})
 export default class Bidding extends Vue {
     @Prop() private readonly type!: CallType;
     @Prop() private readonly bid?: Bid;
@@ -36,15 +47,3 @@ export default class Bidding extends Vue {
     }
 }
 </script>
-
-<style lang="scss" scoped>
-@import "../styles/suits.scss";
-
-.call.bid {
-  &.strain-clubs::after { @include clubs; }
-  &.strain-diamonds::after { @include diamonds; }
-  &.strain-hearts::after { @include hearts; }
-  &.strain-spades::after { @include spades; }
-  &.strain-notrump::after { content: "NT"; }
-}
-</style>

@@ -1,5 +1,5 @@
 <template>
-<div class="hand-display">
+<div class="hand">
     <span class="label">{{ label }}</span>
     <ul>
         <li v-for="group in groupedCards" :key="group.suit">
@@ -48,7 +48,7 @@ export default class HandDisplay extends Vue {
 </script>
 
 <style lang="scss" scoped>
-.hand-display {
+.hand {
   &.turn .label {
     font-weight: bolder;
   }

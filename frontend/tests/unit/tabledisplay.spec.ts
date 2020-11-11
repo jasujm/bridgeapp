@@ -19,6 +19,6 @@ describe("TableDisplay.vue", function() {
     it("should display trick if it exists", function() {
         const propsData = { trick: { cards: [], winner: null } };
         const wrapper = mount(TableDisplay, { localVue, propsData });
-        expect(wrapper.find(".trick-display").exists()).to.be.true;
+        expect(wrapper.find(".trick").exists()).to.be.true;
     });
 });

@@ -12,7 +12,7 @@
 </template>
 
 <script lang="ts">
-    import { Vue, Component, Prop } from "vue-property-decorator"
+import { Vue, Component, Prop } from "vue-property-decorator"
 import CardDisplay from "./CardDisplay.vue"
 import { Card, Suit, Rank } from "@/api/types"
 import _ from "lodash"

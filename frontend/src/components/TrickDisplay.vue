@@ -1,5 +1,5 @@
 <template>
-<div class="trick-display">
+<div class="trick">
     <b-container>
         <b-row>
             <b-col cols="4" offset="4">
