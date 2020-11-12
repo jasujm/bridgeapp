@@ -1,6 +1,3 @@
-"""
-Bridge API
-----------
-"""
+"""REST API"""
 
 from ._base import subapp

@@ -1,4 +1,4 @@
-"""Bridge event receiver"""
+"""Event receiver"""
 
 import asyncio
 import uuid
@@ -30,8 +30,3 @@ class BridgeEventReceiver(_base.EventReceiverBase):
     def _create_event(tag: str, **kwargs) -> BridgeEvent:
         game, type = tag.split(":")
         return BridgeEvent(game=uuid.UUID(game), type=type, **kwargs)
-
-    async def subscribe(game_uuid: uuid.UUID):
-        while True:
-            yield BridgeEvent(game=game_uuid, type="dummy")
-            await asyncio.sleep(1)

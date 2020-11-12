@@ -1,9 +1,6 @@
 """
-Model definitions
------------------
-
-The :mod:`models` module contains the model definitions needed across
-the application.
+Models
+......
 """
 
 import enum

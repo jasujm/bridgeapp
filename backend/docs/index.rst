@@ -3,6 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+=====================================
 Welcome to bridgeapp's documentation!
 =====================================
 
@@ -11,6 +12,7 @@ Welcome to bridgeapp's documentation!
    :caption: Contents:
 
 
+==================
 Indices and tables
 ==================
 
@@ -19,24 +21,53 @@ Indices and tables
 * :ref:`search`
 
 
+==================================
 Lightweight contract bridge webapp
 ==================================
 
-.. include:: ../README.rst
+.. include:: ../../README.rst
 
 
+================
 Module reference
 ================
 
-.. automodule:: bridgeapp.bridgeprotocol
+Model definitions
+-----------------
+
+The :mod:`models` module contains the model definitions needed across the
+application.
+
+.. automodule:: bridgeapp.models
+   :members:
+
+Bridge protocol implementation
+------------------------------
+
+Classes and utilities for communicating with the bridge backend server.
+
+Bridge client
+.............
+
+The :class:`BridgeClient` class is the main class used for sending commands and
+receiving replied from the server.
 
 .. autoclass:: bridgeapp.bridgeprotocol.BridgeClient
    :members:
-   :inherited-members:
+
+Events
+......
+
+:class:`BridgeEventReceiver` is used to receive asynchronous events
+(:class:`BridgeEvent` instances) from the server
+
+.. autoclass:: bridgeapp.bridgeprotocol.BridgeEvent
 
 .. autoclass:: bridgeapp.bridgeprotocol.BridgeEventReceiver
    :members:
-   :inherited-members:
+
+Miscellaneous
+.............
 
 .. automodule:: bridgeapp.bridgeprotocol.exceptions
    :members:
@@ -44,8 +75,12 @@ Module reference
 .. automodule:: bridgeapp.bridgeprotocol.utils
    :members:
 
+REST API
+--------
 
-Settings
-========
+The implementation of the REST API. The API allows HTTP and WebSocket clients to
+communicate with a bridge backend server which uses the low level bridge
+protocol.
 
-.. pydantic:: bridgeapp.settings.Settings
+.. automodule:: bridgeapp.api.utils
+   :members:

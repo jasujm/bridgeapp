@@ -1,6 +1,6 @@
 """
-Bridgeapp API utilities
------------------------
+API utilities
+.............
 """
 
 import contextlib

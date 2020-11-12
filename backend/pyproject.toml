@@ -24,7 +24,6 @@ sphinx-rtd-theme = "^0.4.3"
 click = "^7.1.2"
 coverage = "^5.1"
 click-log = "^0.3.2"
-sphinx-pydantic = "^0.1.1"
 uvicorn = "^0.11.5"
 
 [build-system]

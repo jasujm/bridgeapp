@@ -1,6 +1,6 @@
 """
-Bridge API games endpoints
---------------------------
+Games endpoints
+...............
 """
 
 import asyncio
