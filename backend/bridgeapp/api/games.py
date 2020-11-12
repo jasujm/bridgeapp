@@ -44,10 +44,10 @@ async def post_games(
     client = await utils.get_bridge_client()
     try:
         game_uuid = await client.game()
-    except bridgeprotocol.CommandFailure:
+    except bridgeprotocol.CommandFailure as ex:
         raise fastapi.HTTPException(
             status_code=fastapi.status.HTTP_400_BAD_REQUEST, detail="Error"
-        )
+        ) from ex
     response.headers["Location"] = request.url_for("game_details", game_uuid=game_uuid)
     return models.Game(uuid=game_uuid).dict(exclude_unset=True)
 
@@ -69,10 +69,10 @@ async def get_game_details(
     client = await utils.get_bridge_client()
     try:
         deal = await client.get_deal(game=game_uuid, player=player_uuid)
-    except bridgeprotocol.CommandFailure:
+    except bridgeprotocol.CommandFailure as ex:
         raise fastapi.HTTPException(
             status_code=fastapi.status.HTTP_400_BAD_REQUEST, detail="Error"
-        )
+        ) from ex
     return models.Game(uuid=game_uuid, deal=deal)
 
 
@@ -92,10 +92,10 @@ async def get_game_self(
     client = await utils.get_bridge_client()
     try:
         return await client.get_self(game=game_uuid, player=player_uuid)
-    except bridgeprotocol.CommandFailure:
+    except bridgeprotocol.CommandFailure as ex:
         raise fastapi.HTTPException(
             status_code=fastapi.status.HTTP_400_BAD_REQUEST, detail="Error"
-        )
+        ) from ex
 
 
 @router.post(
@@ -114,10 +114,10 @@ async def post_game_players(
     client = await utils.get_bridge_client()
     try:
         await client.join(game=game_uuid, player=player_uuid)
-    except bridgeprotocol.CommandFailure:
+    except bridgeprotocol.CommandFailure as ex:
         raise fastapi.HTTPException(
             status_code=fastapi.status.HTTP_400_BAD_REQUEST, detail="Error"
-        )
+        ) from ex
 
 
 @router.post(
@@ -139,10 +139,10 @@ async def post_game_calls(
     client = await utils.get_bridge_client()
     try:
         await client.call(game=game_uuid, player=player_uuid, call=call)
-    except bridgeprotocol.CommandFailure:
+    except bridgeprotocol.CommandFailure as ex:
         raise fastapi.HTTPException(
             status_code=fastapi.status.HTTP_400_BAD_REQUEST, detail="Error"
-        )
+        ) from ex
 
 
 @router.post(
@@ -164,10 +164,10 @@ async def post_game_trick(
     client = await utils.get_bridge_client()
     try:
         await client.play(game=game_uuid, player=player_uuid, card=card)
-    except bridgeprotocol.CommandFailure:
+    except bridgeprotocol.CommandFailure as ex:
         raise fastapi.HTTPException(
             status_code=fastapi.status.HTTP_400_BAD_REQUEST, detail="Error"
-        )
+        ) from ex
 
 
 @router.websocket("/{game_uuid}/ws")
@@ -180,10 +180,13 @@ async def games_websocket(
     """
     loop = asyncio.get_running_loop()
     with utils.subscribe_events(game_uuid) as producer:
+
         def _create_event_task():
             return loop.create_task(producer.get_event())
+
         def _create_recv_task():
             return loop.create_task(websocket.receive_bytes())
+
         await websocket.accept()
         event_task = _create_event_task()
         recv_task = _create_recv_task()

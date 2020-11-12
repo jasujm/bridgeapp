@@ -207,8 +207,10 @@ class ClientBase(SocketBase):
             return factory(reply[key])
         except exceptions.ProtocolError:
             raise
-        except Exception:
-            raise exceptions.InvalidMessage(f"Unexpected reply to {command}: {reply!r}")
+        except Exception as ex:
+            raise exceptions.InvalidMessage(
+                f"Unexpected reply to {command}: {reply!r}"
+            ) from ex
 
 
 class EventReceiverBase(SocketBase):
