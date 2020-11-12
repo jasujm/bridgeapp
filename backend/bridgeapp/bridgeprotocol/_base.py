@@ -21,7 +21,7 @@ RawArgumentsInput = typing.Mapping[bytes, bytes]
 RawArgumentsOutput = typing.Dict[bytes, bytes]
 
 
-class CurveKeys(pydantic.BaseModel):
+class CurveKeys(pydantic.BaseModel):  # pylint: disable=no-member,too-few-public-methods
     """Keys needed to establish a secure ZeroMQ connection"""
 
     serverkey: str
