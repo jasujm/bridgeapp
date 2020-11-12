@@ -179,39 +179,33 @@ async def games_websocket(
     parameter.
     """
     loop = asyncio.get_running_loop()
-
-    def _create_event_task():
-        return loop.create_task(utils.get_event(game_uuid))
-
-    def _create_recv_task():
-        return loop.create_task(websocket.receive_bytes())
-
-    await websocket.accept()
-    event_task = _create_event_task()
-    recv_task = _create_recv_task()
-    try:
-        # Multiplex messages from the client and events received from
-        # upstream. We don't care about what the client sends (except
-        # if the client disconnects then break from the loop), and we
-        # always send upstream events to the client.
-        while True:
-            done, _ = await asyncio.wait(
-                [event_task, recv_task], return_when=asyncio.FIRST_COMPLETED
-            )
-            if event_task in done:
-                # Create new task for retrieving events before sending
-                # the old event. Otherwise there is a chance to lose
-                # events if this coroutine is suspended and receiving
-                # events isn't pending.
-                new_event_task = _create_event_task()
-                await websocket.send_bytes(orjson.dumps(await event_task, default=dict))
-                event_task = new_event_task
-            if recv_task in done:
-                await recv_task
-                recv_task = _create_recv_task()
-    except ws.WebSocketDisconnect:
-        pass
-    finally:
-        event_task.cancel()
-        recv_task.cancel()
-        await websocket.close()
+    with utils.subscribe_events(game_uuid) as producer:
+        def _create_event_task():
+            return loop.create_task(producer.get_event())
+        def _create_recv_task():
+            return loop.create_task(websocket.receive_bytes())
+        await websocket.accept()
+        event_task = _create_event_task()
+        recv_task = _create_recv_task()
+        pending = {event_task, recv_task}
+        try:
+            while True:
+                done, pending = await asyncio.wait(
+                    pending, return_when=asyncio.FIRST_COMPLETED
+                )
+                if event_task in done:
+                    await websocket.send_bytes(
+                        orjson.dumps(await event_task, default=dict)
+                    )
+                    event_task = _create_event_task()
+                    pending.add(event_task)
+                if recv_task in done:
+                    await recv_task
+                    recv_task = _create_recv_task()
+                    pending.add(recv_task)
+        except ws.WebSocketDisconnect:
+            pass
+        finally:
+            event_task.cancel()
+            recv_task.cancel()
+            await websocket.close()

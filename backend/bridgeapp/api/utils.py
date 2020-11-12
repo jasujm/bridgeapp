@@ -3,6 +3,7 @@ Bridgeapp API utilities
 -----------------------
 """
 
+import contextlib
 import uuid
 
 from bridgeapp import bridgeprotocol
@@ -34,14 +35,29 @@ async def get_bridge_client() -> bridgeprotocol.BridgeClient:
     return await _bridgeprotocol.get_bridge_client()
 
 
-async def get_event(game_uuid: uuid.UUID) -> bridgeprotocol.BridgeEvent:
-    """Get the next event for a given game
+@contextlib.contextmanager
+def subscribe_events(game_uuid: uuid.UUID):
+    """Subscribe to events from a game
 
-    This function returns the next event published by the bridge
-    backend that belongs to the game identified by the argument.
+    The return value of this function can be used as a context manager that
+    yields an event producer object. It exposes `get_event()` coroutine that can
+    be used to get events about the game.
+
+    .. code-block:: python
+
+       with get_event_producer(uuid) as producer:
+           while interested_in_events():
+               consume(await producer.get_event())
 
     Parameters:
         game_uuid: The UUID of the game
+
+    Returns:
+        An event producer used to retrieve events about the given game
     """
     event_demultiplexer = _bridgeprotocol.get_event_demultiplexer()
-    return await event_demultiplexer.get_event(game_uuid)
+    producer = event_demultiplexer.subscribe(game_uuid)
+    try:
+        yield producer
+    finally:
+        event_demultiplexer.unsubscribe(producer)

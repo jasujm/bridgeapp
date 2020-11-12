@@ -14,7 +14,26 @@ _ctx = zmq.asyncio.Context()
 _threadlocal = threading.local()
 
 
-class EventDemultiplexer:  # pylint: disable=too-few-public-methods
+class _EventProducer:
+    def __init__(self, game_uuid: uuid.UUID):
+        self._queue = asyncio.Queue()
+        self._game_uuid = game_uuid
+
+    def produce(self, event: bridgeprotocol.BridgeEvent):
+        """Produce an event about the game"""
+        self._queue.put_nowait(event)
+
+    async def get_event(self) -> bridgeprotocol.BridgeEvent:
+        """Get the next event about the game"""
+        return await self._queue.get()
+
+    @property
+    def game_uuid(self):
+        """The UUID of the game"""
+        return self._game_uuid
+
+
+class EventDemultiplexer:
     """Demultiplexer for game events"""
 
     def __init__(self, event_receiver: bridgeprotocol.BridgeEventReceiver):
@@ -23,35 +42,30 @@ class EventDemultiplexer:  # pylint: disable=too-few-public-methods
             event_receiver: The underlying event receiver
         """
         self._event_receiver = event_receiver
-        self._events_pending = defaultdict(list)
+        self._producers = defaultdict(list)
 
-    async def get_event(self, game_uuid: uuid.UUID) -> bridgeprotocol.BridgeEvent:
-        """Get the next event for a given game
+    def subscribe(self, game_uuid: uuid.UUID):
+        """Subscribe to events about a game"""
+        if not self._producers:
+            loop = asyncio.get_running_loop()
+            loop.create_task(self._produce_events())
+        producer = _EventProducer(game_uuid)
+        self._producers[game_uuid].append(producer)
+        return producer
 
-        Parameters:
-            game_uuid: The UUID of the game
+    def unsubscribe(self, producer: _EventProducer):
+        """Unsubscribe from events about a game"""
+        producers_for_game = self._producers[producer.game_uuid]
+        producers_for_game.remove(producer)
+        if not producers_for_game:
+            del self._producers[producer.game_uuid]
 
-        Returns:
-            The next event from the underlying event received belonging to the
-            given game
-        """
-        loop = asyncio.get_running_loop()
-        future = loop.create_future()
-        create_receive_task = not self._events_pending
-        self._events_pending[game_uuid].append(future)
-        if create_receive_task:
-            loop.create_task(self._receive_events())
-        return await future
-
-    async def _receive_events(self):
-        while self._events_pending:
+    async def _produce_events(self):
+        while self._producers:
             event = await self._event_receiver.get_event()
-            if futures := self._events_pending.get(event.game):
-                for future in futures:
-                    if not future.cancelled():
-                        future.set_result(event)
-                del self._events_pending[event.game]
-                # Yield to give the receivers chance to renew their subscription
+            if producers := self._producers.get(event.game):
+                for producer in producers[:]:
+                    producer.produce(event)
                 await asyncio.sleep(0)
 
 
