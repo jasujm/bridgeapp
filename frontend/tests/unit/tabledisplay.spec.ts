@@ -21,4 +21,10 @@ describe("TableDisplay.vue", function() {
         const wrapper = mount(TableDisplay, { localVue, propsData });
         expect(wrapper.find(".trick").exists()).to.be.true;
     });
+    it("should denote declarer", function() {
+        const propsData = { declarer: Position.east };
+        const wrapper = mount(TableDisplay, { localVue, propsData });
+        expect(wrapper.find(".declarer.east").exists()).to.be.true;
+        expect(wrapper.find(".dummy.west").exists()).to.be.true;
+    });
 });

@@ -96,6 +96,12 @@ describe("BridgeTable.vue", function() {
             expect(wrapper.vm.deal.calls).to.deep.include({ position, call });
         });
 
+        it("should record declarer on bidding event", async function() {
+            const declarer = Position.south;
+            handlers.bidding!({ game: gameUuid, type: "bidding", declarer });
+            expect(wrapper.vm.deal.declarer).to.be.equal(declarer);
+        });
+
         describe("play", function() {
             const position = Position.west;
             const card = { rank: Rank.jack, suit: Suit.diamonds };

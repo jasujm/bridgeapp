@@ -12,6 +12,7 @@
                 <TableDisplay
                     :selfPosition="self.position"
                     :positionInTurn="deal.positionInTurn"
+                    :declarer="deal.declarer"
                     :cards="deal.cards"
                     :trick="displayTrick" />
             </b-col>
@@ -23,7 +24,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Watch } from "vue-property-decorator"
+    import { Vue, Component, Prop, Watch } from "vue-property-decorator"
 import Bidding from "./Bidding.vue"
 import TableDisplay from "./TableDisplay.vue"
 import CallPanel from "./CallPanel.vue"
@@ -33,6 +34,7 @@ import {
     Self,
     TurnEvent,
     CallEvent,
+    BiddingEvent,
     PlayEvent,
     DummyEvent,
     DealEndEvent,
@@ -79,6 +81,10 @@ export default class BridgeTable extends Vue {
 
     private addCall({ position, call }: CallEvent) {
         this.deal.calls.push({ position, call });
+    }
+
+    private completeBidding({ declarer }: BiddingEvent) {
+        this.deal.declarer = declarer;
     }
 
     private playCard({ position, card }: PlayEvent) {
@@ -154,6 +160,7 @@ export default class BridgeTable extends Vue {
                 deal: this.fetchDealState.bind(this),
                 turn: this.handleTurn.bind(this),
                 call: this.addCall.bind(this),
+                bidding: this.completeBidding.bind(this),
                 play: this.playCard.bind(this),
                 dummy: this.revealDummy.bind(this),
                 trick: this.completeTrick.bind(this),

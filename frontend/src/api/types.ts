@@ -92,6 +92,7 @@ export interface Vulnerability {
 export class Deal {
     positionInTurn?: Position;
     calls: Array<PositionCallPair> = [];
+    declarer: Position | null = null;
     cards: Record<Position, Array<Card | null>> = new Cards();
     tricks: Array<Trick> = [];
     vulnerability: Vulnerability = { northSouth: false, eastWest: false };
@@ -124,6 +125,10 @@ export interface CallEvent extends Event {
     call: Call;
 }
 
+export interface BiddingEvent extends Event {
+    declarer: Position;
+}
+
 export interface PlayEvent extends Event {
     position: Position;
     card: Card;
@@ -144,6 +149,7 @@ export interface EventHandlers {
     deal?: (event: DealEvent) => void;
     turn?: (event: TurnEvent) => void;
     call?: (event: CallEvent) => void;
+    bidding?: (event: BiddingEvent) => void;
     play?: (event: PlayEvent) => void;
     dummy?: (event: DummyEvent) => void;
     trick?: (event: TrickEvent) => void;

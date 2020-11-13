@@ -1,37 +1,31 @@
 <template>
 <div class="trick">
-    <b-container>
-        <b-row>
-            <b-col cols="4" offset="4">
-                <CardDisplay
-                    v-if="partnerPosition in cards"
-                    :rank="cards[partnerPosition].rank"
-                    :suit="cards[partnerPosition].suit" />
-            </b-col>
-        </b-row>
-        <b-row>
-            <b-col cols="4">
-                <CardDisplay
-                    v-if="lhoPosition in cards"
-                    :rank="cards[lhoPosition].rank"
-                    :suit="cards[lhoPosition].suit" />
-            </b-col>
-            <b-col cols="4" offset="4">
-                <CardDisplay
-                    v-if="rhoPosition in cards"
-                    :rank="cards[rhoPosition].rank"
-                    :suit="cards[rhoPosition].suit" />
-            </b-col>
-        </b-row>
-        <b-row>
-            <b-col cols="4" offset="4">
-                <CardDisplay
-                    v-if="selfPosition in cards"
-                    :rank="cards[selfPosition].rank"
-                    :suit="cards[selfPosition].suit" />
-            </b-col>
-        </b-row>
-    </b-container>
+    <div class="partner">
+        <CardDisplay
+            v-if="partnerPosition in cards"
+            :rank="cards[partnerPosition].rank"
+            :suit="cards[partnerPosition].suit" />
+    </div>
+    <div class="opponents">
+        <div class="lho">
+            <CardDisplay
+                v-if="lhoPosition in cards"
+                :rank="cards[lhoPosition].rank"
+                :suit="cards[lhoPosition].suit" />
+        </div>
+        <div class="rho">
+            <CardDisplay
+                v-if="rhoPosition in cards"
+                :rank="cards[rhoPosition].rank"
+                :suit="cards[rhoPosition].suit" />
+        </div>
+    </div>
+    <div class="self">
+        <CardDisplay
+            v-if="selfPosition in cards"
+            :rank="cards[selfPosition].rank"
+            :suit="cards[selfPosition].suit" />
+    </div>
 </div>
 </template>
 
@@ -63,4 +57,21 @@ export default class TrickDisplay extends mixins(SelfPositionMixin) {
 </script>
 
 <style lang="scss" scoped>
+.trick {
+  display: flex;
+  flex-direction: column;
+
+  .self, .partner {
+    display: flex;
+    justify-content: center;
+    min-height: 1rem;
+  }
+
+  .opponents {
+    display: flex;
+    flex-grow: 10;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
 </style>
