@@ -49,8 +49,8 @@ Classes and utilities for communicating with the bridge backend server.
 Bridge client
 .............
 
-The :class:`BridgeClient` class is the main class used for sending commands and
-receiving replied from the server.
+The :class:`bridgeapp.bridgeprotocol.BridgeClient` class is the main class used
+for sending commands and receiving replied from the server.
 
 .. autoclass:: bridgeapp.bridgeprotocol.BridgeClient
    :members:
@@ -58,8 +58,9 @@ receiving replied from the server.
 Events
 ......
 
-:class:`BridgeEventReceiver` is used to receive asynchronous events
-(:class:`BridgeEvent` instances) from the server
+:class:`bridgeapp.bridgeprotocol.BridgeEventReceiver` is used to receive
+asynchronous events (:class:`bridgeapp.bridgeprotocol.BridgeEvent` instances)
+from the server
 
 .. autoclass:: bridgeapp.bridgeprotocol.BridgeEvent
 

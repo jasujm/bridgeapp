@@ -148,8 +148,6 @@ export default class BridgeTable extends Vue {
     }
 
     private async startGame() {
-        // TODO: Ideally a more fine-grained subscribe callback to only update
-        // what is needed
         this.ws = this.$store.state.api.subscribe(
             this.gameUuid,
             {
