@@ -1,0 +1,21 @@
+@import "~bootstrap/scss/functions";
+@import "~bootstrap/scss/variables";
+@import "~bootstrap/scss/mixins";
+
+@mixin bulletless-list {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+@mixin inline-list {
+  li {
+    display: inline;
+    margin-right: ($spacer * 0.5);
+  }
+}
+
+@mixin inline-list-down($bp-name: sm) {
+  @include media-breakpoint-down($bp-name) {
+    @include inline-list;
+  }
+}

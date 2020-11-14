@@ -81,7 +81,8 @@ export interface PositionCardPair {
 }
 
 export interface Trick {
-    cards?: Array<PositionCardPair>;
+    cards: Array<PositionCardPair>;
+    winner?: Position;
 }
 
 export interface Vulnerability {
@@ -126,7 +127,7 @@ export interface CallEvent extends Event {
 }
 
 export interface BiddingEvent extends Event {
-    declarer: Position;
+    declarer: Position | null;
 }
 
 export interface PlayEvent extends Event {
@@ -139,7 +140,9 @@ export interface DummyEvent extends Event {
     cards: Array<Card>;
 }
 
-export type TrickEvent = Event;
+export interface TrickEvent extends Event {
+    winner: Position;
+}
 
 export interface DealEndEvent extends Event {
     score: Score | null;

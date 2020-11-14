@@ -7,6 +7,10 @@
                     :northSouthVulnerable="deal.vulnerability.northSouth"
                     :eastWestVulnerable="deal.vulnerability.eastWest"
                     :calls="deal.calls" />
+                <TricksWonDisplay
+                    v-if="deal.declarer"
+                    :selfPosition="self.position"
+                    :tricks="deal.tricks" />
             </b-col>
             <b-col lg="8">
                 <TableDisplay
@@ -26,6 +30,7 @@
 <script lang="ts">
     import { Vue, Component, Prop, Watch } from "vue-property-decorator"
 import Bidding from "./Bidding.vue"
+import TricksWonDisplay from "./TricksWonDisplay.vue"
 import TableDisplay from "./TableDisplay.vue"
 import CallPanel from "./CallPanel.vue"
 import CardPanel from "./CardPanel.vue"
@@ -37,6 +42,7 @@ import {
     BiddingEvent,
     PlayEvent,
     DummyEvent,
+    TrickEvent,
     DealEndEvent,
     Score,
     Position,
@@ -48,6 +54,7 @@ import _ from "lodash"
 @Component({
     components: {
         Bidding,
+        TricksWonDisplay,
         TableDisplay,
         CallPanel,
         CardPanel,
@@ -57,7 +64,7 @@ export default class BridgeTable extends Vue {
     @Prop() private readonly gameUuid!: string;
     private deal = new Deal();
     private self = new Self();
-    private displayTrick: Trick = {};
+    private displayTrick: Trick | null = null;
     private ws?: WebSocket;
     private timerId!: number;
 
@@ -83,8 +90,15 @@ export default class BridgeTable extends Vue {
         this.deal.calls.push({ position, call });
     }
 
+    private addTrick() {
+        this.deal.tricks.push({ cards: [] });
+    }
+
     private completeBidding({ declarer }: BiddingEvent) {
         this.deal.declarer = declarer;
+        if (declarer) {
+            this.addTrick();
+        }
     }
 
     private playCard({ position, card }: PlayEvent) {
@@ -110,11 +124,15 @@ export default class BridgeTable extends Vue {
         this.deal.cards[position] = cards;
     }
 
-    private completeTrick() {
+    private completeTrick({ winner }: TrickEvent) {
         // TODO: Ideally the event itself would include the information if this
         // is the last trick. But needs API support.
+        const lastTrick = _.last(this.deal.tricks);
+        if (lastTrick) {
+            lastTrick.winner = winner;
+        }
         if (this.deal.tricks.length < 13) {
-            this.deal.tricks.push({ cards: [] });
+            this.addTrick();
         }
     }
 
@@ -194,7 +212,7 @@ export default class BridgeTable extends Vue {
     }
 
     private get lastTrick() {
-        return _.last(this.deal.tricks) || {};
+        return _.last(this.deal.tricks) || null;
     }
 
     @Watch("lastTrick")
@@ -202,7 +220,7 @@ export default class BridgeTable extends Vue {
         // This visually retains the old trick for two seconds after new trick
         // is started
         const trick = this.lastTrick;
-        const delay = _.isEmpty(trick.cards) ? 2000 : 0;
+        const delay = (!trick || _.isEmpty(trick.cards)) ? 2000 : 0;
         _.delay(() => this.displayTrick = trick, delay);
     }
 }

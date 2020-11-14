@@ -61,7 +61,6 @@ describe("BridgeTable.vue", function() {
 
     describe("events", function() {
         let handlers: EventHandlers;
-        const trickCards = { cards: [] };
 
         this.beforeEach(function() {
             handlers = fakeApi.subscribe.getCall(0).lastArg;
@@ -102,12 +101,18 @@ describe("BridgeTable.vue", function() {
             expect(wrapper.vm.deal.declarer).to.be.equal(declarer);
         });
 
+        it("should open the first trick on bidding event", async function() {
+            const declarer = Position.south;
+            handlers.bidding!({ game: gameUuid, type: "bidding", declarer });
+            expect(wrapper.vm.deal.tricks.length).to.be.equal(1);
+        });
+
         describe("play", function() {
             const position = Position.west;
             const card = { rank: Rank.jack, suit: Suit.diamonds };
 
             this.beforeEach(function() {
-                deal.tricks.push(trickCards);
+                deal.tricks.push({ cards: [] });
                 deal.cards.west.push(card);
                 wrapper.setData({ deal });
             });
@@ -137,16 +142,28 @@ describe("BridgeTable.vue", function() {
             expect(wrapper.vm.deal.cards.east).to.be.deep.equal(cards);
         });
 
-        it("should add a new trick on trick event", function() {
-            handlers.trick!({ game: gameUuid, type: "trick" });
-            expect(wrapper.vm.deal.tricks).to.have.deep.members([trickCards]);
-        });
+        describe("trick", function() {
+            const winner = Position.west;
 
-        it("should not add a new trick if there are 13", function() {
-            deal.tricks = Array(13).fill(trickCards);
-            wrapper.setData({ deal });
-            handlers.trick!({ game: gameUuid, type: "trick" });
-            expect(wrapper.vm.deal.tricks.length).to.be.equal(13);
+            it("should add a new trick on trick event", function() {
+                handlers.trick!({ game: gameUuid, type: "trick", winner });
+                expect(wrapper.vm.deal.tricks).to.have.deep.members([{ cards: [] }]);
+            });
+
+            it("should record the winner of the previous trick", function() {
+                deal.tricks = [{ cards: [] }];
+                wrapper.setData({ deal });
+                handlers.trick!({ game: gameUuid, type: "trick", winner });
+                expect(wrapper.vm.deal.tricks[0].winner).to.be.equal(winner);
+            });
+
+            it("should not add a new trick if there are 13", function() {
+                deal.tricks = Array(13).fill({ cards: [] });
+                wrapper.setData({ deal });
+                handlers.trick!({ game: gameUuid, type: "trick", winner });
+                expect(wrapper.vm.deal.tricks.length).to.be.equal(13);
+            });
+
         });
     });
 });

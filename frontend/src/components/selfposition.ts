@@ -1,26 +1,20 @@
 import { Vue, Component, Prop } from "vue-property-decorator"
 import { Position } from "@/api/types"
-import _ from "lodash"
+import { clockwise } from "@/utils"
 
 @Component
 export default class SelfPositionMixin extends Vue {
     @Prop({ default: Position.north }) protected readonly selfPosition!: Position;
 
-    protected clockwise(n: number) {
-        const positions = _.values(Position);
-        const m = positions.indexOf(this.selfPosition);
-        return positions[(m + n) % positions.length];
-    }
-
     protected get lhoPosition() {
-        return this.clockwise(1);
+        return clockwise(this.selfPosition, 1);
     }
 
     protected get partnerPosition() {
-        return this.clockwise(2);
+        return clockwise(this.selfPosition, 2);
     }
 
     protected get rhoPosition() {
-        return this.clockwise(3);
+        return clockwise(this.selfPosition, 3);
     }
 }

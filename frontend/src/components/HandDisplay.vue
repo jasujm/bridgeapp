@@ -48,9 +48,7 @@ export default class HandDisplay extends Vue {
 </script>
 
 <style lang="scss" scoped>
-@import "~bootstrap/scss/functions";
-@import "~bootstrap/scss/variables";
-@import "~bootstrap/scss/mixins";
+@import "../styles/mixins";
 
 .hand {
   &.turn .label {
@@ -58,17 +56,14 @@ export default class HandDisplay extends Vue {
   }
 
   ul {
-    list-style-type: none;
-    padding-left: 0;
+    @include bulletless-list;
   }
 
   &.self, &.partner {
     text-align: center;
-    @include media-breakpoint-down(sm) {
-      li {
-        display: inline;
-        margin-right: ($spacer * 0.5);
-      }
+
+    ul {
+      @include inline-list-down;
     }
   }
 

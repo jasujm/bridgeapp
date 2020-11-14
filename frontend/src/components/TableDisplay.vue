@@ -50,13 +50,7 @@ import HandDisplay from "./HandDisplay.vue"
 import TrickDisplay from "./TrickDisplay.vue"
 import { Position, Cards, Trick } from "@/api/types"
 import SelfPositionMixin from "./selfposition"
-
-const partnerPositions = {
-    north: Position.south,
-    east: Position.west,
-    south: Position.north,
-    west: Position.east,
-}
+import { partnerFor } from "@/utils"
 
 @Component({
     components: {
@@ -98,7 +92,7 @@ export default class TableDisplay extends mixins(SelfPositionMixin) {
         }
         if (position == this.declarer) {
             classes.push("declarer");
-        } else if (partnerPositions[position] == this.declarer) {
+        } else if (partnerFor(position) == this.declarer) {
             classes.push("dummy");
         }
         return classes;
