@@ -49,8 +49,8 @@ describe("CallPanel.vue", function() {
                 });
 
                 it("should have button if allowed", function() {
-                    const button = wrapper.find(`button .call.${call.type}`);
-                    expect(button.exists()).to.be.true;
+                    const button = wrapper.find("button .call");
+                    expect(button.classes()).to.include(`type-${call.type}`);
                 });
                 it("should make call when the button is pressed", async function() {
                     const button = wrapper.find("button");

@@ -7,8 +7,13 @@
                     :northSouthVulnerable="deal.vulnerability.northSouth"
                     :eastWestVulnerable="deal.vulnerability.eastWest"
                     :calls="deal.calls" />
+                <BiddingResult
+                    v-if="deal.declarer && deal.contract"
+                    :selfPosition="self.position"
+                    :declarer="deal.declarer"
+                    :contract="deal.contract" />
                 <TricksWonDisplay
-                    v-if="deal.declarer"
+                    v-if="deal.declarer && deal.contract"
                     :selfPosition="self.position"
                     :tricks="deal.tricks" />
             </b-col>
@@ -30,6 +35,7 @@
 <script lang="ts">
     import { Vue, Component, Prop, Watch } from "vue-property-decorator"
 import Bidding from "./Bidding.vue"
+import BiddingResult from "./BiddingResult.vue"
 import TricksWonDisplay from "./TricksWonDisplay.vue"
 import TableDisplay from "./TableDisplay.vue"
 import CallPanel from "./CallPanel.vue"
@@ -54,6 +60,7 @@ import _ from "lodash"
 @Component({
     components: {
         Bidding,
+        BiddingResult,
         TricksWonDisplay,
         TableDisplay,
         CallPanel,
@@ -94,8 +101,9 @@ export default class BridgeTable extends Vue {
         this.deal.tricks.push({ cards: [] });
     }
 
-    private completeBidding({ declarer }: BiddingEvent) {
+    private completeBidding({ declarer, contract }: BiddingEvent) {
         this.deal.declarer = declarer;
+        this.deal.contract = contract;
         if (declarer) {
             this.addTrick();
         }

@@ -1,7 +1,7 @@
 <template>
 <span class="card-display" :class="cardClasses">
     <SuitDisplay :suit="suit" />
-    {{ rankText(this.rank) }}
+    <span class="rank" :class="rankClass(rank)">{{ rankText(this.rank) }}</span>
 </span>
 </template>
 

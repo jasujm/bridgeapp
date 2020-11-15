@@ -40,6 +40,17 @@ export interface PositionCallPair {
     call: Call;
 }
 
+export enum Doubling {
+    undoubled = "undoubled",
+    doubled = "doubled",
+    redoubled = "redoubled",
+}
+
+export interface Contract {
+    bid: Bid;
+    doubling: Doubling;
+}
+
 export enum Rank {
     _2 = "2",
     _3 = "3",
@@ -94,6 +105,7 @@ export class Deal {
     positionInTurn?: Position;
     calls: Array<PositionCallPair> = [];
     declarer: Position | null = null;
+    contract: Contract | null = null;
     cards: Record<Position, Array<Card | null>> = new Cards();
     tricks: Array<Trick> = [];
     vulnerability: Vulnerability = { northSouth: false, eastWest: false };
@@ -128,6 +140,7 @@ export interface CallEvent extends Event {
 
 export interface BiddingEvent extends Event {
     declarer: Position | null;
+    contract: Contract | null;
 }
 
 export interface PlayEvent extends Event {

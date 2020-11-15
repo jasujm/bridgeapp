@@ -1,7 +1,7 @@
 <template>
 <span class="card-list" :class="'suit-' + suit">
     <SuitDisplay :suit="suit" />
-    <span v-for="rank in ranks" :key="rank" :class="'rank-' + rank">
+    <span v-for="rank in ranks" :key="rank" class="rank" :class="rankClass(rank)">
         {{ rankText(rank) }}
     </span>
 </span>

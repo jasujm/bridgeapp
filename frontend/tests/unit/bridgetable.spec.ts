@@ -3,7 +3,7 @@ import { mount } from "@vue/test-utils"
 import BridgeTable from "@/components/BridgeTable.vue"
 import Vuex from "vuex"
 import sinon from "sinon"
-import { Position, Rank, Suit, Deal, Self, EventHandlers, CallType } from "@/api/types"
+import { Position, Rank, Suit, Deal, Self, EventHandlers, CallType, Strain, Doubling } from "@/api/types"
 import flushPromises from "flush-promises"
 import _ from "lodash"
 
@@ -95,17 +95,30 @@ describe("BridgeTable.vue", function() {
             expect(wrapper.vm.deal.calls).to.deep.include({ position, call });
         });
 
-        it("should record declarer on bidding event", async function() {
+        describe("bidding", function() {
             const declarer = Position.south;
-            handlers.bidding!({ game: gameUuid, type: "bidding", declarer });
-            expect(wrapper.vm.deal.declarer).to.be.equal(declarer);
-        });
+            const contract = {
+                bid: { level: 2, strain: Strain.notrump },
+                doubling: Doubling.undoubled,
+            };
 
-        it("should open the first trick on bidding event", async function() {
-            const declarer = Position.south;
-            handlers.bidding!({ game: gameUuid, type: "bidding", declarer });
-            expect(wrapper.vm.deal.tricks.length).to.be.equal(1);
-        });
+            this.beforeEach(function() {
+                handlers.bidding!(
+                    { game: gameUuid, type: "bidding", declarer, contract });
+            });
+
+            it("should record declarer on bidding event", function() {
+                expect(wrapper.vm.deal.declarer).to.be.equal(declarer);
+            });
+
+            it("should record contract on bidding event", function() {
+                expect(wrapper.vm.deal.contract).to.be.deep.equal(contract);
+            })
+
+            it("should open the first trick on bidding event", function() {
+                expect(wrapper.vm.deal.tricks.length).to.be.equal(1);
+            });
+        })
 
         describe("play", function() {
             const position = Position.west;

@@ -32,11 +32,11 @@ describe("Bidding.vue", function() {
     const calls = [
         {
             propsData: makeCalls(CallType.bid, bid),
-            expectedClass: ".bid.strain-clubs.level-1",
+            expectedClass: ".type-bid .bid.strain-clubs.level-1",
         },
-        { propsData: makeCalls(CallType.pass), expectedClass: ".pass" },
-        { propsData: makeCalls(CallType.double), expectedClass: ".double" },
-        { propsData: makeCalls(CallType.redouble), expectedClass: ".redouble" },
+        { propsData: makeCalls(CallType.pass), expectedClass: ".type-pass" },
+        { propsData: makeCalls(CallType.double), expectedClass: ".type-double" },
+        { propsData: makeCalls(CallType.redouble), expectedClass: ".type-redouble" },
     ]
 
     for (const { propsData, expectedClass } of calls) {
