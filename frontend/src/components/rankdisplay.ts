@@ -11,17 +11,10 @@ const rankTexts: Partial<Record<Rank, string>> = {
 @Component
 export default class RankDisplayMixin extends Vue {
     protected rankClass(rank: Rank) {
-        if (rank.match(/^\d+/)) {
-            return `_${rank}`;
-        }
-        return rank;
+        return rank.replace(/^(?=\d)/, "_");
     }
 
     protected rankText(rank: Rank) {
-        const text = rankTexts[rank];
-        if (text) {
-            return text;
-        }
-        return rank;
+        return rankTexts[rank] || rank;
     }
 }

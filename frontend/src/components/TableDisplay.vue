@@ -52,6 +52,13 @@ import { Position, Cards, Trick } from "@/api/types"
 import SelfPositionMixin from "./selfposition"
 import { partnerFor } from "@/utils"
 
+const positionLabels = {
+    north: "N",
+    east: "E",
+    south: "S",
+    west: "W",
+};
+
 @Component({
     components: {
         HandDisplay,
@@ -68,21 +75,8 @@ export default class TableDisplay extends mixins(SelfPositionMixin) {
         return this.cards[position];
     }
 
-    private positionLabel(position: Position) {
-        switch (position) {
-            case Position.north:
-                return "N";
-            case Position.east:
-                return "E";
-            case Position.south:
-                return "S";
-            case Position.west:
-                return "W";
-        }
-    }
-
     private handLabel(seat: string, position: Position) {
-        return `${seat} (${this.positionLabel(position)})`;
+        return `${seat} (${positionLabels[position]})`;
     }
 
     private handClasses(position: Position) {
