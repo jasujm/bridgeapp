@@ -536,6 +536,23 @@ class TestBridgeClientGetDealCommand:
 
 
 @pytest.mark.asyncio
+async def test_null_deal(server, client, game_and_player):
+    assert (
+        await _command_helper(
+            server,
+            client,
+            client.get_deal(**game_and_player),
+            expected_command=b"get",
+            expected_command_args=dict(
+                **game_and_player, get=["pubstate", "privstate"]
+            ),
+            reply_args={"get": {"pubstate": None, "privstate": None}},
+        )
+        is None
+    )
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "self_",
     [

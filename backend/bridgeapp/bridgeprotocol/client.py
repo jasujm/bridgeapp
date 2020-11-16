@@ -116,6 +116,8 @@ class BridgeClient(_base.ClientBase):
     def _create_deal(get):
         pubstate = get["pubstate"]
         privstate = get["privstate"]
+        if pubstate is None:
+            return None
         assert isinstance(pubstate, dict)
         assert isinstance(privstate, dict)
         state = utils.merge_patch(pubstate, privstate)

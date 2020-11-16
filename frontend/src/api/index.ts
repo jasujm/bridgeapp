@@ -68,7 +68,7 @@ export default class {
             method: "get",
             url: `/games/${gameUuid}`,
         });
-        return response.data.deal as Deal;
+        return response.data.deal as Deal | null;
     }
 
     async getSelf(gameUuid: string) {

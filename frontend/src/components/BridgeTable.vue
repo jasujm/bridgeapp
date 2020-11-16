@@ -33,7 +33,7 @@
 </template>
 
 <script lang="ts">
-    import { Vue, Component, Prop, Watch } from "vue-property-decorator"
+import { Vue, Component, Prop, Watch } from "vue-property-decorator"
 import Bidding from "./Bidding.vue"
 import BiddingResult from "./BiddingResult.vue"
 import TricksWonDisplay from "./TricksWonDisplay.vue"
@@ -78,7 +78,7 @@ export default class BridgeTable extends Vue {
     private async fetchDealState() {
         if (this.gameUuid) {
             const api = this.$store.state.api;
-            this.deal = await api.getDeal(this.gameUuid);
+            this.deal = await api.getDeal(this.gameUuid) || new Deal();
         }
     }
 
