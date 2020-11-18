@@ -21,6 +21,9 @@ services:
       bridge --config /etc/bridge/config.lua
     volumes:
     - "./config/bridge:/etc/bridge:ro"
+    - "bridgedata:/var/lib/bridge:rw"
+    environment:
+    - "bridge_data_dir=/var/lib/bridge"
     env_file:
     - "./.env.bridge"
   nginx:
@@ -51,6 +54,7 @@ services:
     depends_on:
     - "nginx"
 volumes:
+  bridgedata:
   frontendwww:
   certbotetc:
   certbotwww:
