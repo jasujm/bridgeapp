@@ -11,6 +11,8 @@ import more_itertools as mi
 TCP_ENDPOINT_RE = re.compile(r"^tcp://(.+):(\d+)$")
 """Regular expression matching ZeroMQ TCP endpoint"""
 
+ERROR_STATUS_RE = re.compile(r"^ERR:(.*)$")
+
 
 def endpoints(control_endpoint: str):
     """Get a tuple containing control and event endpoints to a server
@@ -78,6 +80,12 @@ def flatten_arguments(args):
     return mi.flatten(args.items())
 
 
-def is_status_successful(status):
+def is_status_successful(status: bytes):
     """Determine if a status frame indicates successful reply"""
     return status.startswith(b"OK")
+
+
+def get_error_code(status: bytes):
+    """Return error code in a status frame"""
+    m = ERROR_STATUS_RE.match(status.decode())
+    return m and m.group(1)

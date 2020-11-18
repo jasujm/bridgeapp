@@ -163,6 +163,21 @@ async def test_failed_command_should_raise_exception(
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("error_code", [b"CODE", b"FAIL"])
+async def test_failed_command_should_raise_exception_with_error_code(
+    server, raw_command, error_code
+):
+    tag, task = raw_command
+    await server.reply(tag, b"ERR:" + error_code, {})
+    with pytest.raises(bridgeprotocol.CommandFailure):
+        try:
+            await task
+        except bridgeprotocol.CommandFailure as ex:
+            assert ex.code == error_code.decode()
+            raise
+
+
+@pytest.mark.asyncio
 async def test_client_with_curve(zmq_ctx, tmpdir, curve_keys):
     command = b"command"
     with mocks.MockBridgeServer(
@@ -606,6 +621,22 @@ class TestBridgeClientGetSelfCommand:
                 expected_command_args=dict(**game_and_player, get=["self"]),
                 reply_args={"get": {"self": "invalid"}},
             )
+
+
+@pytest.mark.asyncio
+async def test_bridge_client_retry_handshake(server, client, join_kwargs):
+    task = asyncio.create_task(client.join(**join_kwargs))
+    tag, server_command, server_command_arguments = await server.get_command()
+    assert server_command == b"join"
+    await server.reply(tag, b"ERR:UNK", {})
+    tag, server_command, server_command_arguments = await server.get_command()
+    assert server_command == b"bridgehlo"
+    await server.reply(tag, b"OK", {})
+    tag, server_command, server_command_arguments = await server.get_command()
+    assert server_command == b"join"
+    reply_args = {"game": join_kwargs["game"]}
+    await server.reply(tag, b"OK", client._serialize_all(reply_args))
+    return await task
 
 
 @pytest.mark.asyncio

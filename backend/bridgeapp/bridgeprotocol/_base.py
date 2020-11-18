@@ -187,7 +187,10 @@ class ClientBase(SocketBase):
                     )
                 elif not utils.is_status_successful(status):
                     reply_future.set_exception(
-                        exceptions.CommandFailure("Command returned with failure")
+                        exceptions.CommandFailure(
+                            "Command returned with failure",
+                            utils.get_error_code(status),
+                        )
                     )
                 else:
                     reply_future.set_result(utils.group_arguments(reply_arguments))

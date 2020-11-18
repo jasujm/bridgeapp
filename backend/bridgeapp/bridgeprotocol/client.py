@@ -1,5 +1,7 @@
 """Bridge client"""
 
+import asyncio
+import functools
 import typing
 import uuid
 
@@ -8,10 +10,27 @@ import zmq.asyncio
 
 from .. import models
 
-from . import _base, utils
+from . import _base, utils, exceptions
 
 
 OptionalUuid = typing.Optional[uuid.UUID]
+
+
+_ERROR_CODE_UNKNOWN = "UNK"
+
+
+def _retries_handshake(func):
+    @functools.wraps(func)
+    async def wrapped(self, *args, **kwargs):
+        while True:
+            try:
+                return await func(self, *args, **kwargs)
+            except exceptions.CommandFailure as ex:
+                if ex.code != _ERROR_CODE_UNKNOWN:
+                    raise
+            await self.hello()
+
+    return wrapped
 
 
 class BridgeClient(_base.ClientBase):
@@ -49,10 +68,34 @@ class BridgeClient(_base.ClientBase):
             client.close()
             raise
 
+    def __init__(
+        self,
+        ctx: zmq.asyncio.Context,
+        endpoint: str,
+        *,
+        curve_keys: typing.Optional[_base.CurveKeys] = None,
+    ):
+        """
+        Parameters:
+            ctx: The ZeroMQ context
+            endpoint: The server endpoint
+            curvekeys: If given, the CURVE keys that will be used to establish
+                       the connection to the backend
+        """
+        super().__init__(ctx, endpoint, curve_keys=curve_keys)
+        self._handshake_pending = False
+        self._handshake_lock = asyncio.Lock()
+
     async def hello(self):
         """Perform handshake with the server"""
-        await self.command("bridgehlo", version="0.1", role="client")
+        # Just one caller should perform the handshake at one time
+        self._handshake_pending = True
+        async with self._handshake_lock:
+            if self._handshake_pending:
+                await self.command("bridgehlo", version="0.1", role="client")
+                self._handshake_pending = False
 
+    @_retries_handshake
     async def game(
         self, *, game: OptionalUuid = None, args: typing.Optional[typing.Mapping] = None
     ) -> uuid.UUID:
@@ -60,6 +103,7 @@ class BridgeClient(_base.ClientBase):
         reply = await self.command("game", game=game, args=args)
         return self._convert_reply_safe(uuid.UUID, reply, "game", command="game")
 
+    @_retries_handshake
     async def join(
         self,
         *,
@@ -71,6 +115,7 @@ class BridgeClient(_base.ClientBase):
         reply = await self.command("join", game=game, player=player, position=position)
         return self._convert_reply_safe(uuid.UUID, reply, "game", command="join")
 
+    @_retries_handshake
     async def get(
         self, *, game: uuid.UUID, player: OptionalUuid = None, get: typing.List[str]
     ):
@@ -78,6 +123,7 @@ class BridgeClient(_base.ClientBase):
         reply = await self.command("get", game=game, player=player, get=get)
         return self._convert_reply_safe(lambda r: r, reply, "get", command="get")
 
+    @_retries_handshake
     async def get_deal(self, *, game: uuid.UUID, player: OptionalUuid = None):
         """Get the deal state from the server"""
         reply = await self.command(
@@ -85,6 +131,7 @@ class BridgeClient(_base.ClientBase):
         )
         return self._convert_reply_safe(self._create_deal, reply, "get", command="get")
 
+    @_retries_handshake
     async def get_self(self, *, game: uuid.UUID, player: OptionalUuid = None):
         """Get the player state from the server"""
         reply = await self.command("get", game=game, player=player, get=["self"])
@@ -92,12 +139,14 @@ class BridgeClient(_base.ClientBase):
             self._create_player_state, reply, "get", command="get"
         )
 
+    @_retries_handshake
     async def call(
         self, *, game: uuid.UUID, player: OptionalUuid = None, call: models.Call
     ):
         """Send call command to the server"""
         await self.command("call", game=game, player=player, call=call)
 
+    @_retries_handshake
     async def play(
         self, *, game: uuid.UUID, player: OptionalUuid = None, card: models.CardType
     ):
