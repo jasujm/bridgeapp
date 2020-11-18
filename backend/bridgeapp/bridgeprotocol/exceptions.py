@@ -23,4 +23,5 @@ class CommandFailure(ProtocolError):
 
     @property
     def code(self) -> typing.Optional[str]:
+        """Error code of the failure"""
         return self._code
