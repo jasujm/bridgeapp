@@ -10,6 +10,7 @@ import _ from "lodash"
 const gameUuid = "6bac87b3-8e49-4675-bf69-8c0d6a351f40";
 
 describe("BridgeTable.vue", function() {
+    let clock: any;
     let fakeApi: any;
     let self: Self;
     let deal: Deal;
@@ -18,6 +19,7 @@ describe("BridgeTable.vue", function() {
     let wrapper: any;
 
     this.beforeEach(async function() {
+        clock = sinon.useFakeTimers();
         self = new Self();
         deal = new Deal();
         fakeApi = {
@@ -30,6 +32,12 @@ describe("BridgeTable.vue", function() {
             state,
         });
         wrapper = mount(BridgeTable, { localVue, store, propsData: { gameUuid } });
+        await flushPromises();
+        clock.tick(200);
+    });
+
+    this.afterEach(function() {
+        clock.restore();
     });
 
     it("should fetch game data when mounted", async function() {
@@ -42,6 +50,7 @@ describe("BridgeTable.vue", function() {
         const otherUuid = "1e994843-c6e8-4751-9151-b23d44814b8e"
         wrapper.setProps({ gameUuid: otherUuid });
         await flushPromises();
+        clock.tick(200);
         expect(fakeApi.subscribe).to.be.calledWith(otherUuid);
         expect(fakeApi.getDeal).to.be.calledWith(otherUuid);
         expect(fakeApi.getSelf).to.be.calledWith(otherUuid);

@@ -2,6 +2,7 @@
 // FIXME: Validate responses and handle errors
 
 import axios, { AxiosRequestConfig } from "axios"
+import ReconnectingWebSocket from "reconnecting-websocket"
 import { Deal, Call, Card, Self, Event, EventHandlers } from "./types"
 
 function defaultWsBaseUrl() {
@@ -83,7 +84,12 @@ export default class {
     }
 
     subscribe(gameUuid: string, handlers: EventHandlers) {
-        const ws = new WebSocket(`${wsBaseUrl}/games/${gameUuid}/ws`);
+        const ws = new ReconnectingWebSocket(`${wsBaseUrl}/games/${gameUuid}/ws`);
+        ws.onopen = function(event) {
+            if (handlers.open) {
+                handlers.open(event);
+            }
+        };
         ws.onmessage = async function(message) {
             const text = await message.data.text();
             const event = JSON.parse(text) as Event;

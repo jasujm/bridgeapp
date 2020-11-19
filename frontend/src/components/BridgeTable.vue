@@ -42,6 +42,7 @@ import CallPanel from "./CallPanel.vue"
 import CardPanel from "./CardPanel.vue"
 import {
     Deal,
+    DealCounterPair,
     Self,
     Event,
     TurnEvent,
@@ -84,32 +85,40 @@ export default class BridgeTable extends Vue {
     private eventCounter: number = Number.NEGATIVE_INFINITY;
     private eventCallbacks: Array<EventCallback> = [];
 
-    private async fetchDealState() {
+    private _fetchDealState() {
         if (this.gameUuid) {
             const api = this.$store.state.api;
-            const { deal, counter } = await api.getDeal(this.gameUuid);
-            this.deal = deal || new Deal();
-            this.dealCounter = counter;
-            // Apply the queued events whose counter value is higher than the
-            // current counter value
-            for (const cb of this.eventCallbacks) {
-                if (cb.counter > counter) {
-                    cb.callback();
+            api.getDeal(this.gameUuid).then(
+                ({ deal, counter }: DealCounterPair) => {
+                    this.deal = deal || new Deal();
+                    this.dealCounter = counter;
+                    // Apply the queued events whose counter value is higher than the
+                    // current counter value
+                    for (const cb of this.eventCallbacks) {
+                        if (counter && cb.counter > counter) {
+                            cb.callback();
+                        }
+                    }
+                    this.eventCallbacks.splice(0, this.eventCallbacks.length);
                 }
-            }
-            this.eventCallbacks.splice(0, this.eventCallbacks.length);
+            );
         }
     }
 
-    private async fetchSelfState() {
+    private fetchDealState = _.debounce(this._fetchDealState, 50, { trailing: true })
+
+    private _fetchSelfState() {
         if (this.gameUuid) {
             const api = this.$store.state.api;
-            this.self = await api.getSelf(this.gameUuid);
+            api.getSelf(this.gameUuid).then((self: Self) => this.self = self);
         }
     }
 
-    private async fetchGameState() {
-        await Promise.all([this.fetchDealState(), this.fetchSelfState()]);
+    private fetchSelfState = _.debounce(this._fetchSelfState, 50, { trailing: true })
+
+    private fetchGameState() {
+        this.fetchDealState();
+        this.fetchSelfState();
     }
 
     private addCall({ position, call }: CallEvent) {
@@ -188,17 +197,17 @@ export default class BridgeTable extends Vue {
         });
     }
 
-    private async handleTurn({ position }: TurnEvent) {
+    private handleTurn({ position }: TurnEvent) {
         this.deal.positionInTurn = position;
         if (position == this.self.position) {
-            await this.fetchSelfState();
+            this.fetchSelfState();
         } else {
             this.self.allowedCalls = [];
             this.self.allowedCards = [];
         }
     }
 
-    private async startGame() {
+    private startGame() {
         const wrap = (callback: (event: Event) => void) => {
             return (event: Event) => {
                 if (event.counter > this.eventCounter) {
@@ -212,7 +221,7 @@ export default class BridgeTable extends Vue {
                         this.eventCallbacks.push({
                             counter: event.counter,
                             callback: invokeCallback,
-                    });
+                        });
                     }
                 } else {
                     // Event counter wrapped, refresh state and start over
@@ -225,6 +234,7 @@ export default class BridgeTable extends Vue {
         this.ws = this.$store.state.api.subscribe(
             this.gameUuid,
             {
+                open: this.fetchGameState.bind(this),
                 deal: wrap(this.fetchDealState),  // @ts-ignore
                 turn: wrap(this.handleTurn),  // @ts-ignore
                 call: wrap(this.addCall),  // @ts-ignore
@@ -232,10 +242,10 @@ export default class BridgeTable extends Vue {
                 play: wrap(this.playCard),  // @ts-ignore
                 dummy: wrap(this.revealDummy),  // @ts-ignore
                 trick: wrap(this.completeTrick),  // @ts-ignore
-                dealend: wrap(this.recordScore.bind),  // @ts-ignore
+                dealend: wrap(this.recordScore),  // @ts-ignore
             }
         );
-        await this.fetchGameState();
+        this.fetchGameState();
         this.timerId = setInterval(this.fetchGameState, 10000);
     }
 
@@ -246,8 +256,8 @@ export default class BridgeTable extends Vue {
         }
     }
 
-    async mounted() {
-        await this.startGame();
+    mounted() {
+        this.startGame();
         this.displayTrick = this.lastTrick;
     }
 
@@ -256,9 +266,9 @@ export default class BridgeTable extends Vue {
     }
 
     @Watch("gameUuid")
-    private async gameUuidChanged() {
+    private gameUuidChanged() {
         this.close();
-        await this.startGame();
+        this.startGame();
     }
 
     private get lastTrick() {
@@ -266,7 +276,7 @@ export default class BridgeTable extends Vue {
     }
 
     @Watch("lastTrick")
-    private async trickChanged() {
+    private trickChanged() {
         // This visually retains the old trick for two seconds after new trick
         // is started
         const trick = this.lastTrick;

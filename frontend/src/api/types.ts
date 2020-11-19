@@ -1,3 +1,5 @@
+import { Event as WsEvent } from "reconnecting-websocket";
+
 export enum Position {
     north = "north",
     east = "east",
@@ -111,6 +113,11 @@ export class Deal {
     vulnerability: Vulnerability = { northSouth: false, eastWest: false };
 }
 
+export interface DealCounterPair {
+    deal: Deal | null;
+    counter: number | null;
+}
+
 export class Self {
     position: Position = Position.south;
     allowedCalls: Array<Call> = [];
@@ -163,6 +170,7 @@ export interface DealEndEvent extends Event {
 }
 
 export interface EventHandlers {
+    open?: (event: WsEvent) => void;
     deal?: (event: DealEvent) => void;
     turn?: (event: TurnEvent) => void;
     call?: (event: CallEvent) => void;
