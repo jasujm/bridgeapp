@@ -68,13 +68,17 @@ to a known value to ensure consistent UUID generation across runs.""",
     )
 
     @property
-    def curve_keys(self) -> CurveKeys:
+    def curve_keys(self) -> typing.Optional[CurveKeys]:
         """Return curve keys from the settings"""
-        return CurveKeys(
-            serverkey=self.curve_serverkey,
-            publickey=self.curve_publickey,
-            secretkey=self.curve_secretkey,
-        )
+        if self.curve_serverkey is not None:
+            assert self.curve_publickey is not None
+            assert self.curve_secretkey is not None
+            return CurveKeys(
+                serverkey=self.curve_serverkey,
+                publickey=self.curve_publickey,
+                secretkey=self.curve_secretkey,
+            )
+        return None
 
     @root_validator
     def _check_curve_keys(cls, values):
