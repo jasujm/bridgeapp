@@ -68,7 +68,10 @@ export default class {
             method: "get",
             url: `/games/${gameUuid}`,
         });
-        return response.data.deal as Deal | null;
+        return {
+            deal: response.data.deal as Deal | null,
+            counter: Number(response.headers["x-counter"]) || null,
+        };
     }
 
     async getSelf(gameUuid: string) {
@@ -85,7 +88,6 @@ export default class {
             const text = await message.data.text();
             const event = JSON.parse(text) as Event;
             // FIXME: Validating, type-safe approach is needed here
-            // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
             // @ts-ignore
             const handler = handlers[event.type];
             if (handler) {

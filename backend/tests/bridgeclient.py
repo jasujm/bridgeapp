@@ -45,7 +45,7 @@ async def _wreak_havoc(client: bridgeprotocol.BridgeClient, game_uuid: uuid.UUID
 
 
 async def _get_turn_from_deal(client, game, player):
-    deal = await client.get_deal(game=game, player=player)
+    deal, _ = await client.get_deal(game=game, player=player)
     return deal.positionInTurn
 
 

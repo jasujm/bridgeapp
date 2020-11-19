@@ -43,6 +43,7 @@ import CardPanel from "./CardPanel.vue"
 import {
     Deal,
     Self,
+    Event,
     TurnEvent,
     CallEvent,
     BiddingEvent,
@@ -56,6 +57,11 @@ import {
     Trick,
 } from "@/api/types"
 import _ from "lodash"
+
+interface EventCallback {
+    counter: number;
+    callback: () => void;
+}
 
 @Component({
     components: {
@@ -74,11 +80,24 @@ export default class BridgeTable extends Vue {
     private displayTrick: Trick | null = null;
     private ws?: WebSocket;
     private timerId!: number;
+    private dealCounter: number | null = Number.POSITIVE_INFINITY;
+    private eventCounter: number = Number.NEGATIVE_INFINITY;
+    private eventCallbacks: Array<EventCallback> = [];
 
     private async fetchDealState() {
         if (this.gameUuid) {
             const api = this.$store.state.api;
-            this.deal = await api.getDeal(this.gameUuid) || new Deal();
+            const { deal, counter } = await api.getDeal(this.gameUuid);
+            this.deal = deal || new Deal();
+            this.dealCounter = counter;
+            // Apply the queued events whose counter value is higher than the
+            // current counter value
+            for (const cb of this.eventCallbacks) {
+                if (cb.counter > counter) {
+                    cb.callback();
+                }
+            }
+            this.eventCallbacks.splice(0, this.eventCallbacks.length);
         }
     }
 
@@ -180,17 +199,40 @@ export default class BridgeTable extends Vue {
     }
 
     private async startGame() {
+        const wrap = (callback: (event: Event) => void) => {
+            return (event: Event) => {
+                if (event.counter > this.eventCounter) {
+                    // Queue events if their counter is not larger than the biggest
+                    // known deal counter
+                    this.eventCounter = event.counter;
+                    const invokeCallback = () => callback.call(this, event);
+                    if (this.dealCounter === null || event.counter > this.dealCounter) {
+                        invokeCallback();
+                    } else if (this.dealCounter >= event.counter) {
+                        this.eventCallbacks.push({
+                            counter: event.counter,
+                            callback: invokeCallback,
+                    });
+                    }
+                } else {
+                    // Event counter wrapped, refresh state and start over
+                    this.dealCounter = Number.POSITIVE_INFINITY;
+                    this.eventCounter = Number.NEGATIVE_INFINITY;
+                    this.fetchGameState();
+                }
+            }
+        };
         this.ws = this.$store.state.api.subscribe(
             this.gameUuid,
             {
-                deal: this.fetchDealState.bind(this),
-                turn: this.handleTurn.bind(this),
-                call: this.addCall.bind(this),
-                bidding: this.completeBidding.bind(this),
-                play: this.playCard.bind(this),
-                dummy: this.revealDummy.bind(this),
-                trick: this.completeTrick.bind(this),
-                dealend: this.recordScore.bind(this),
+                deal: wrap(this.fetchDealState),  // @ts-ignore
+                turn: wrap(this.handleTurn),  // @ts-ignore
+                call: wrap(this.addCall),  // @ts-ignore
+                bidding: wrap(this.completeBidding),  // @ts-ignore
+                play: wrap(this.playCard),  // @ts-ignore
+                dummy: wrap(this.revealDummy),  // @ts-ignore
+                trick: wrap(this.completeTrick),  // @ts-ignore
+                dealend: wrap(this.recordScore.bind),  // @ts-ignore
             }
         );
         await this.fetchGameState();

@@ -24,6 +24,7 @@ application.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=[api.games.COUNTER_HEADER],
 )
 
 application.mount(settings.api_v1_prefix, api.subapp)

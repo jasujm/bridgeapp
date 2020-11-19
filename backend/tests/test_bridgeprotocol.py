@@ -470,19 +470,19 @@ class TestBridgeClientGetDealCommand:
             deal.cards.east = copy.deepcopy(cards_east)
         pubstate = pubstate.dict()
         pubstate["deal"] = str(pubstate.pop("uuid"))
-        assert (
-            await _command_helper(
-                server,
-                client,
-                client.get_deal(**game_and_player),
-                expected_command=b"get",
-                expected_command_args=dict(
-                    **game_and_player, get=["pubstate", "privstate"]
-                ),
-                reply_args={"get": {"pubstate": pubstate, "privstate": privstate}},
-            )
-            == deal
-        )
+        assert await _command_helper(
+            server,
+            client,
+            client.get_deal(**game_and_player),
+            expected_command=b"get",
+            expected_command_args=dict(
+                **game_and_player, get=["pubstate", "privstate"]
+            ),
+            reply_args={
+                "get": {"pubstate": pubstate, "privstate": privstate},
+                "counter": 123,
+            },
+        ) == (deal, 123)
 
     async def test_missing_pubstate_should_lead_to_failure(
         self, server, client, game_and_player, pubstate, privstate
@@ -496,7 +496,7 @@ class TestBridgeClientGetDealCommand:
                 expected_command_args=dict(
                     **game_and_player, get=["pubstate", "privstate"]
                 ),
-                reply_args={"get": {"privstate": privstate}},
+                reply_args={"get": {"privstate": privstate}, "counter": 123},
             )
 
     async def test_invalid_pubstate_should_lead_to_failure(
@@ -512,7 +512,10 @@ class TestBridgeClientGetDealCommand:
                 expected_command_args=dict(
                     **game_and_player, get=["pubstate", "privstate"]
                 ),
-                reply_args={"get": {"pubstate": pubstate, "privstate": privstate}},
+                reply_args={
+                    "get": {"pubstate": pubstate, "privstate": privstate},
+                    "counter": 123,
+                },
             )
 
     async def test_missing_privstate_should_lead_to_failure(
@@ -529,7 +532,7 @@ class TestBridgeClientGetDealCommand:
                 expected_command_args=dict(
                     **game_and_player, get=["pubstate", "privstate"]
                 ),
-                reply_args={"get": {"pubstate": pubstate}},
+                reply_args={"get": {"pubstate": pubstate, "counter": 123}},
             )
 
     async def test_invalid_privstate_should_lead_to_failure(
@@ -546,25 +549,60 @@ class TestBridgeClientGetDealCommand:
                 expected_command_args=dict(
                     **game_and_player, get=["pubstate", "privstate"]
                 ),
-                reply_args={"get": {"pubstate": pubstate, "privstate": "invalid"}},
+                reply_args={
+                    "get": {"pubstate": pubstate, "privstate": "invalid"},
+                    "counter": 123,
+                },
+            )
+
+    async def test_missing_counter_should_lead_to_failure(
+        self, server, client, game_and_player, pubstate, privstate
+    ):
+        pubstate = pubstate.dict()
+        pubstate["deal"] = str(pubstate.pop("uuid"))
+        with pytest.raises(bridgeprotocol.InvalidMessage):
+            await _command_helper(
+                server,
+                client,
+                client.get_deal(**game_and_player),
+                expected_command=b"get",
+                expected_command_args=dict(
+                    **game_and_player, get=["pubstate", "privstate"]
+                ),
+                reply_args={"get": {"pubstate": pubstate, "privstate": privstate}},
+            )
+
+    async def test_invalid_counter_should_lead_to_failure(
+        self, server, client, game_and_player, pubstate, privstate
+    ):
+        pubstate = pubstate.dict()
+        pubstate["deal"] = str(pubstate.pop("uuid"))
+        with pytest.raises(bridgeprotocol.InvalidMessage):
+            await _command_helper(
+                server,
+                client,
+                client.get_deal(**game_and_player),
+                expected_command=b"get",
+                expected_command_args=dict(
+                    **game_and_player, get=["pubstate", "privstate"]
+                ),
+                reply_args={
+                    "get": {"pubstate": pubstate, "privstate": privstate},
+                    "counter": "invalid",
+                },
             )
 
 
 @pytest.mark.asyncio
 async def test_null_deal(server, client, game_and_player):
-    assert (
-        await _command_helper(
-            server,
-            client,
-            client.get_deal(**game_and_player),
-            expected_command=b"get",
-            expected_command_args=dict(
-                **game_and_player, get=["pubstate", "privstate"]
-            ),
-            reply_args={"get": {"pubstate": None, "privstate": None}},
-        )
-        is None
-    )
+    assert await _command_helper(
+        server,
+        client,
+        client.get_deal(**game_and_player),
+        expected_command=b"get",
+        expected_command_args=dict(**game_and_player, get=["pubstate", "privstate"]),
+        reply_args={"get": {"pubstate": None, "privstate": None}, "counter": 123},
+    ) == (None, 123)
 
 
 @pytest.mark.asyncio

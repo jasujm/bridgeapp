@@ -14,6 +14,9 @@ from bridgeapp import bridgeprotocol, models as base_models
 
 from . import models, utils
 
+COUNTER_HEADER = "X-Counter"
+"""Header containing the running counter of game state"""
+
 router = fastapi.APIRouter()
 security = fastapi.security.HTTPBasic()
 
@@ -57,9 +60,21 @@ async def post_games(
     name="game_details",
     summary="Get information about a game",
     response_model=models.Game,
+    responses={
+        200: {
+            "headers": {
+                COUNTER_HEADER: {
+                    "schema": {"type": "integer"},
+                    "description": "Running counter that can be used to synchronize event stream",
+                }
+            }
+        }
+    },
 )
 async def get_game_details(
-    game_uuid: uuid.UUID, player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid)
+    response: fastapi.Response,
+    game_uuid: uuid.UUID,
+    player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid),
 ):
     """
     The response contains a representation of the game from the point of
@@ -68,7 +83,8 @@ async def get_game_details(
     """
     client = await utils.get_bridge_client()
     try:
-        deal = await client.get_deal(game=game_uuid, player=player_uuid)
+        deal, counter = await client.get_deal(game=game_uuid, player=player_uuid)
+        response.headers[COUNTER_HEADER] = str(counter)
     except bridgeprotocol.CommandFailure as ex:
         raise fastapi.HTTPException(
             status_code=fastapi.status.HTTP_400_BAD_REQUEST, detail="Error"

@@ -63,11 +63,12 @@ describe("BridgeTable.vue", function() {
         let handlers: EventHandlers;
 
         this.beforeEach(function() {
+            wrapper.setData({ dealCounter: null });
             handlers = fakeApi.subscribe.getCall(0).lastArg;
         });
 
         it("should update deal status on deal event", async function() {
-            handlers.deal!({ game: gameUuid, type: "deal" });
+            handlers.deal!({ game: gameUuid, type: "deal", counter: 1 });
             expect(fakeApi.getDeal).to.be.called;
         });
 
@@ -76,13 +77,17 @@ describe("BridgeTable.vue", function() {
             self.allowedCalls = [{ type: CallType.pass }];
             self.allowedCards = [{ rank: Rank._2, suit: Suit.clubs }];
             // Self has turn... fetch new actions
-            handlers.turn!({ game: gameUuid, type: "turn", position: Position.south });
+            handlers.turn!(
+                { game: gameUuid, type: "turn", position: Position.south, counter: 1 }
+            );
             expect(fakeApi.getSelf).to.be.called;
             expect(wrapper.vm.deal.positionInTurn).to.be.equal(Position.south);
             expect(wrapper.vm.self.allowedCalls).to.be.equal(self.allowedCalls);
             expect(wrapper.vm.self.allowedCards).to.be.equal(self.allowedCards);
             // Someone else has turn... clear the actions
-            handlers.turn!({ game: gameUuid, type: "turn", position: Position.north });
+            handlers.turn!(
+                { game: gameUuid, type: "turn", position: Position.north, counter: 2 }
+            );
             expect(wrapper.vm.deal.positionInTurn).to.be.equal(Position.north);
             expect(wrapper.vm.self.allowedCalls).to.be.empty;
             expect(wrapper.vm.self.allowedCards).to.be.empty;
@@ -91,7 +96,9 @@ describe("BridgeTable.vue", function() {
         it("should add call on call event", async function() {
             const position = Position.east;
             const call = { type: CallType.pass };
-            handlers.call!({ game: gameUuid, type: "call", position, call });
+            handlers.call!(
+                { game: gameUuid, type: "call", position, call, counter: 1 }
+            );
             expect(wrapper.vm.deal.calls).to.deep.include({ position, call });
         });
 
@@ -104,7 +111,8 @@ describe("BridgeTable.vue", function() {
 
             this.beforeEach(function() {
                 handlers.bidding!(
-                    { game: gameUuid, type: "bidding", declarer, contract });
+                    { game: gameUuid, type: "bidding", declarer, contract, counter: 1 }
+                );
             });
 
             it("should record declarer on bidding event", function() {
@@ -131,19 +139,19 @@ describe("BridgeTable.vue", function() {
             });
 
             it("should add the played card to the trick", function() {
-                handlers.play!({ game: gameUuid, type: "play", position, card });
+                handlers.play!({ game: gameUuid, type: "play", position, card, counter: 1 });
                 expect(wrapper.vm.deal.tricks[0].cards).to.deep.include({ position, card });
             });
 
             it("should remove the played card from the hand", function() {
-                handlers.play!({ game: gameUuid, type: "play", position, card });
+                handlers.play!({ game: gameUuid, type: "play", position, card, counter: 1 });
                 expect(wrapper.vm.deal.cards.west).to.be.empty;
             });
 
             it("should remove the played card from the hand even if unknown", function() {
                 deal.cards.west[0] = null;
                 wrapper.setData({ deal });
-                handlers.play!({ game: gameUuid, type: "play", position, card });
+                handlers.play!({ game: gameUuid, type: "play", position, card, counter: 1 });
                 expect(wrapper.vm.deal.cards.west).to.be.empty;
             });
         });
@@ -151,7 +159,7 @@ describe("BridgeTable.vue", function() {
         it("should reveal dummy on dummy event", function() {
             const position = Position.east;
             const cards = [{ rank: Rank.queen, suit: Suit.hearts }];
-            handlers.dummy!({ game: gameUuid, type: "dummy", position, cards });
+            handlers.dummy!({ game: gameUuid, type: "dummy", position, cards, counter: 1 });
             expect(wrapper.vm.deal.cards.east).to.be.deep.equal(cards);
         });
 
@@ -159,21 +167,21 @@ describe("BridgeTable.vue", function() {
             const winner = Position.west;
 
             it("should add a new trick on trick event", function() {
-                handlers.trick!({ game: gameUuid, type: "trick", winner });
+                handlers.trick!({ game: gameUuid, type: "trick", winner, counter: 1 });
                 expect(wrapper.vm.deal.tricks).to.have.deep.members([{ cards: [] }]);
             });
 
             it("should record the winner of the previous trick", function() {
                 deal.tricks = [{ cards: [] }];
                 wrapper.setData({ deal });
-                handlers.trick!({ game: gameUuid, type: "trick", winner });
+                handlers.trick!({ game: gameUuid, type: "trick", winner, counter: 1 });
                 expect(wrapper.vm.deal.tricks[0].winner).to.be.equal(winner);
             });
 
             it("should not add a new trick if there are 13", function() {
                 deal.tricks = Array(13).fill({ cards: [] });
                 wrapper.setData({ deal });
-                handlers.trick!({ game: gameUuid, type: "trick", winner });
+                handlers.trick!({ game: gameUuid, type: "trick", winner, counter: 1 });
                 expect(wrapper.vm.deal.tricks.length).to.be.equal(13);
             });
 

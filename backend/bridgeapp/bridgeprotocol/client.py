@@ -124,12 +124,25 @@ class BridgeClient(_base.ClientBase):
         return self._convert_reply_safe(lambda r: r, reply, "get", command="get")
 
     @_retries_handshake
-    async def get_deal(self, *, game: uuid.UUID, player: OptionalUuid = None):
-        """Get the deal state from the server"""
+    async def get_deal(
+        self, *, game: uuid.UUID, player: OptionalUuid = None
+    ) -> typing.Tuple[models.Deal, int]:
+        """Get the deal state from the server
+
+        Parameters:
+            game: The UUID of the game
+            player: The player requesting deal information
+
+        Returns:
+            A tuple containing the deal state, and the running counter, respectively
+        """
         reply = await self.command(
             "get", game=game, player=player, get=["pubstate", "privstate"]
         )
-        return self._convert_reply_safe(self._create_deal, reply, "get", command="get")
+        return (
+            self._convert_reply_safe(self._create_deal, reply, "get", command="get"),
+            self._convert_reply_safe(int, reply, "counter", command="get"),
+        )
 
     @_retries_handshake
     async def get_self(self, *, game: uuid.UUID, player: OptionalUuid = None):

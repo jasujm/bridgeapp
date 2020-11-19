@@ -120,6 +120,7 @@ export class Self {
 export interface Event {
     game: string;
     type: string;
+    counter: number;
 }
 
 export interface Score {

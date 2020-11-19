@@ -39,7 +39,7 @@ class Settings(BaseSettings):
         description="""
 The public key of the bridge backend server. If this is set together with the
 client keys, use ZeroMQ CURVE mechanism to connect securely with the bridge
-backend."""
+backend.""",
     )
 
     curve_publickey: typing.Optional[str] = Field(
@@ -47,7 +47,7 @@ backend."""
         description="""
 The public key of the bridge client. If this is set together with the client
 keys, use ZeroMQ CURVE mechanism to connect securely with the bridge backend.
-"""
+""",
     )
 
     curve_secretkey: typing.Optional[str] = Field(
@@ -55,7 +55,7 @@ keys, use ZeroMQ CURVE mechanism to connect securely with the bridge backend.
         description="""
 The secret key of the bridge client. If this is set together with the client
 keys, use ZeroMQ CURVE mechanism to connect securely with the bridge backend.
-"""
+""",
     )
 
     uuid_namespace: uuid.UUID = Field(
@@ -82,8 +82,13 @@ to a known value to ensure consistent UUID generation across runs.""",
 
     @root_validator
     def _check_curve_keys(cls, values):
-        keys = [values.get(k) for k in ("curve_serverkey", "curve_publickey", "curve_secretkey")]
-        if not all(key is None for key in keys) and not all(key is not None for key in keys):
+        keys = [
+            values.get(k)
+            for k in ("curve_serverkey", "curve_publickey", "curve_secretkey")
+        ]
+        if not all(key is None for key in keys) and not all(
+            key is not None for key in keys
+        ):
             raise ValueError("Either all or none of the curve keys must be defined")
         return values
 
