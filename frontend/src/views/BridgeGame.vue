@@ -1,0 +1,43 @@
+<template>
+<div class="bridge-game">
+    <GameSelector ref="selector" @game-joined="updateGame($event)" />
+    <BridgeTable ref="table" v-if="hasGame" :gameUuid="this.$route.params.gameUuid" />
+</div>
+</template>
+
+<script lang="ts">
+import { Vue, Component, Ref } from "vue-property-decorator"
+import GameSelector from "@/components/GameSelector.vue"
+import BridgeTable from "@/components/BridgeTable.vue"
+
+@Component({
+    components: {
+        GameSelector,
+        BridgeTable,
+    }
+})
+export default class BridgeGame extends Vue {
+    @Ref() readonly selector!: GameSelector;
+    @Ref() readonly table!: BridgeTable;
+
+    private updateGame(gameUuid: string) {
+        if (gameUuid != this.$route.params.gameUuid) {
+            this.$router.push({ name: "games", params: { gameUuid }});
+        }
+        if (this.table) {
+            this.table.refresh();
+        }
+    }
+
+    private get hasGame() {
+        return Boolean(this.$route.params.gameUuid);
+    }
+
+    mounted() {
+        const gameUuid = this.$route.params.gameUuid;
+        if (gameUuid) {
+            this.selector.setUuid(gameUuid);
+        }
+    }
+}
+</script>

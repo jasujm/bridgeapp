@@ -42,6 +42,10 @@ import { ValidationMixin } from "./validation"
 export default class GameSelector extends mixins(ValidationMixin) {
     private uuid = "";
 
+    setUuid(uuid: string) {
+        this.uuid = uuid;
+    }
+
     async createGame() {
         const response = await this.$store.state.api.createGame();
         this.uuid = response.uuid;

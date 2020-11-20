@@ -85,6 +85,10 @@ export default class BridgeTable extends Vue {
     private eventCounter: number = Number.NEGATIVE_INFINITY;
     private eventCallbacks: Array<EventCallback> = [];
 
+    refresh() {
+        this.fetchGameState();
+    }
+
     private _fetchDealState() {
         if (this.gameUuid) {
             const api = this.$store.state.api;

@@ -10,8 +10,8 @@
             abruptly disappears.
         </b-alert>
         <main>
-            <BridgeGame v-if="$store.getters.isLoggedIn" />
-            <Login v-else />
+            <Login v-if="!$store.getters.isLoggedIn" />
+            <RouterView v-else />
         </main>
         <footer>
             <small>
@@ -26,12 +26,10 @@
 
 <script lang="ts">
 import { Component, Vue } from "vue-property-decorator";
-import BridgeGame from "./components/BridgeGame.vue";
 import Login from "./components/Login.vue";
 
 @Component({
   components: {
-    BridgeGame,
     Login,
   },
 })
