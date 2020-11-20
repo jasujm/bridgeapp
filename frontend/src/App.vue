@@ -10,7 +10,7 @@
         </b-alert>
         <main>
             <Login v-if="!$store.getters.isLoggedIn" />
-            <RouterView v-else />
+            <RouterView />
         </main>
         <footer>
             <small>

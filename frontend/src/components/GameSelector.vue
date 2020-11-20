@@ -1,9 +1,10 @@
 <template>
 <div class="game-selector">
     <p>
-        Hello, {{ $store.state.username }}! Let's play bridge. Please enter the
-        UUID of the game and click “Join”. Or to create a new game (whose UUID
-        you can share with your three friends), click “+”.
+        <span v-if="$store.state.username">Hello, {{ $store.state.username }}!</span>
+        Please enter the UUID of the game and click “Join”. Or
+        to create a new game (whose UUID you can share with your three friends),
+        click “+”.
     </p>
     <validation-observer v-slot="{ handleSubmit }" slim>
         <b-form @submit.prevent="handleSubmit(joinGame)">
