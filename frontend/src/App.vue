@@ -3,11 +3,12 @@
     <div class="container">
         <header>
             <h1>Play contract bridge</h1>
+            <b-alert show variant="warning">
+                This app is still work in progress. Although playable, there are
+                obvious quirks. I may also reset the app and data without a
+                prior warning.
+            </b-alert>
         </header>
-        <b-alert show variant="warning">
-            This app is still work in progress. Although playable, there are
-            obvious quirks.
-        </b-alert>
         <main>
             <Login v-if="!$store.getters.isLoggedIn" />
             <RouterView />
