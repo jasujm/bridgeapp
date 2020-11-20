@@ -1,5 +1,8 @@
 <template>
 <div class="bridge-table">
+    <b-alert :show="self.position === null" variant="info">
+        You have not joined this game. You can do so with the “Join” button.
+    </b-alert>
     <b-container>
         <b-row>
             <b-col lg="4">

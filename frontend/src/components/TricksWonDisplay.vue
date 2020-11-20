@@ -16,7 +16,6 @@ import Component, { mixins } from 'vue-class-component'
 import { Prop } from "vue-property-decorator"
 import { Position, Trick } from "@/api/types"
 import SelfPositionMixin from "./selfposition"
-import { clockwise, partnerFor } from "@/utils"
 import _ from "lodash"
 
 @Component
@@ -24,11 +23,11 @@ export default class TricksWonDisplay extends mixins(SelfPositionMixin) {
     @Prop({ default: () => [] }) private readonly tricks!: Array<Trick>;
 
     private get ourPositions() {
-        return [this.selfPosition, partnerFor(this.selfPosition)];
+        return [this.playerPosition, this.partnerPosition];
     }
 
     private get theirPositions() {
-        return [clockwise(this.selfPosition, 1), clockwise(this.selfPosition, 3)];
+        return [this.lhoPosition, this.rhoPosition];
     }
 
     private tricksWon(positions: Array<Position | undefined>) {

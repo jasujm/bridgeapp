@@ -18,13 +18,6 @@ import { Position, Contract } from "@/api/types"
 import SelfPositionMixin from "./selfposition"
 import BidDisplay from "./BidDisplay.vue"
 
-const positionTexts = {
-    north: "North",
-    east: "East",
-    west: "West",
-    south: "South",
-};
-
 const doublingTexts = {
     undoubled: "",
     doubled: "X",
@@ -41,7 +34,7 @@ export default class ContractDisplay extends mixins(SelfPositionMixin) {
     @Prop() private readonly contract!: Contract;
 
     private get declarerText() {
-        return positionTexts[this.declarer];
+        return this.positionText(this.declarer);
     }
 
     private get doublingText() {

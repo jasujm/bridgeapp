@@ -34,10 +34,10 @@
     <b-row>
         <b-col md="4" offset-md="4">
             <HandDisplay
-                :label="handLabel('Self', selfPosition)"
-                :cards="cardsFor(selfPosition)"
+                :label="handLabel('You', playerPosition)"
+                :cards="cardsFor(playerPosition)"
                 class="self"
-                :class="handClasses(selfPosition)" />
+                :class="handClasses(playerPosition)" />
         </b-col>
     </b-row>
 </div>
@@ -51,13 +51,6 @@ import TrickDisplay from "./TrickDisplay.vue"
 import { Position, Cards, Trick } from "@/api/types"
 import SelfPositionMixin from "./selfposition"
 import { partnerFor } from "@/utils"
-
-const positionLabels = {
-    north: "N",
-    east: "E",
-    south: "S",
-    west: "W",
-};
 
 @Component({
     components: {
@@ -76,7 +69,11 @@ export default class TableDisplay extends mixins(SelfPositionMixin) {
     }
 
     private handLabel(seat: string, position: Position) {
-        return `${seat} (${positionLabels[position]})`;
+        if (this.joined) {
+            return `${seat} (${this.positionAbbrev(position)})`;
+        } else {
+            return this.positionText(position);
+        }
     }
 
     private handClasses(position: Position) {

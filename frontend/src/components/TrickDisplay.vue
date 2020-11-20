@@ -22,9 +22,9 @@
     </div>
     <div class="self">
         <CardDisplay
-            v-if="selfPosition in cards"
-            :rank="cards[selfPosition].rank"
-            :suit="cards[selfPosition].suit" />
+            v-if="playerPosition in cards"
+            :rank="cards[playerPosition].rank"
+            :suit="cards[playerPosition].suit" />
     </div>
 </div>
 </template>
