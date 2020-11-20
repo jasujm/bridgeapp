@@ -5,9 +5,8 @@
             <h1>Play contract bridge</h1>
         </header>
         <b-alert show variant="warning">
-            This app is still very much work in progress. Although sort of
-            playable, don’t get surprised if there are issues, or if your game
-            abruptly disappears.
+            This app is still work in progress. Although playable, there are
+            obvious quirks.
         </b-alert>
         <main>
             <Login v-if="!$store.getters.isLoggedIn" />

@@ -21,13 +21,6 @@ Indices and tables
 * :ref:`search`
 
 
-==================================
-Lightweight contract bridge webapp
-==================================
-
-.. include:: ../../README.rst
-
-
 ================
 Module reference
 ================
