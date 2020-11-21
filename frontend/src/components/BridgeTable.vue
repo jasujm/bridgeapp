@@ -36,13 +36,15 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Watch } from "vue-property-decorator"
+import Component, { mixins } from "vue-class-component"
+import { Prop, Watch } from "vue-property-decorator"
 import Bidding from "./Bidding.vue"
 import BiddingResult from "./BiddingResult.vue"
 import TricksWonDisplay from "./TricksWonDisplay.vue"
 import TableDisplay from "./TableDisplay.vue"
 import CallPanel from "./CallPanel.vue"
 import CardPanel from "./CardPanel.vue"
+import PartnershipMixin from "./partnership"
 import {
     Deal,
     DealCounterPair,
@@ -57,9 +59,9 @@ import {
     DealEndEvent,
     Score,
     Position,
-    Partnership,
     Trick,
 } from "@/api/types"
+import { partnershipFor } from "@/utils.ts"
 import _ from "lodash"
 
 interface EventCallback {
@@ -77,7 +79,7 @@ interface EventCallback {
         CardPanel,
     }
 })
-export default class BridgeTable extends Vue {
+export default class BridgeTable extends mixins(PartnershipMixin) {
     @Prop() private readonly gameUuid!: string;
     private deal = new Deal();
     private self = new Self();
@@ -183,24 +185,14 @@ export default class BridgeTable extends Vue {
         // TODO: Ideally, there would be a scoresheet component listing deal
         // history and scores. But needs API support for retrieving past deal
         // results.
-        const message = (function(score: Score | null, position: Position | null) {
-            const partnershipTexts = {
-                northSouth: "North–South",
-                eastWest: "East–West",
-            };
-            const partnershipOf = {
-                north: Partnership.northSouth,
-                east: Partnership.eastWest,
-                south: Partnership.northSouth,
-                west: Partnership.eastWest,
-            };
+        const message = ((score: Score | null, position: Position | null) => {
             if (score) {
                 if (position) {
-                    const who = (partnershipOf[position] as Partnership) == score.partnership ?
+                    const who = partnershipFor(position) == score.partnership ?
                         "You score" : "Opponent scores";
                     return `${who} ${score.score} points`;
                 } else {
-                    return `${partnershipTexts[score.partnership]} scores ${score.score} points`;
+                    return `${this.partnershipText(score.partnership)} scores ${score.score} points`;
                 }
             } else {
                 return "Passed out";
