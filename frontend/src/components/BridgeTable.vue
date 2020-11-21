@@ -183,7 +183,11 @@ export default class BridgeTable extends Vue {
         // TODO: Ideally, there would be a scoresheet component listing deal
         // history and scores. But needs API support for retrieving past deal
         // results.
-        const message = (function(score: Score | null, position: Position) {
+        const message = (function(score: Score | null, position: Position | null) {
+            const partnershipTexts = {
+                northSouth: "North–South",
+                eastWest: "East–West",
+            };
             const partnershipOf = {
                 north: Partnership.northSouth,
                 east: Partnership.eastWest,
@@ -191,9 +195,13 @@ export default class BridgeTable extends Vue {
                 west: Partnership.eastWest,
             };
             if (score) {
-                const who = (partnershipOf[position] as Partnership) == score.partnership ?
-                    "You score" : "Opponent scores";
-                return `${who} ${score.score} points`;
+                if (position) {
+                    const who = (partnershipOf[position] as Partnership) == score.partnership ?
+                        "You score" : "Opponent scores";
+                    return `${who} ${score.score} points`;
+                } else {
+                    return `${partnershipTexts[score.partnership]} scores ${score.score} points`;
+                }
             } else {
                 return "Passed out";
             }

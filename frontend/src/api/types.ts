@@ -119,7 +119,7 @@ export interface DealCounterPair {
 }
 
 export class Self {
-    position: Position = Position.south;
+    position: Position | null = null;
     allowedCalls: Array<Call> = [];
     allowedCards: Array<Card> = [];
 }
