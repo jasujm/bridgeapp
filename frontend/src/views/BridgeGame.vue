@@ -1,5 +1,6 @@
 <template>
 <div class="bridge-game">
+    <b-alert variant="info" :show="!$store.getters.isLoggedIn">Login to get started.</b-alert>
     <GameSelector ref="selector" @game-joined="updateGame($event)" />
     <BridgeTable ref="table" v-if="hasGame" :gameUuid="this.$route.params.gameUuid" />
 </div>

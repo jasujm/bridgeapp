@@ -21,6 +21,7 @@ describe("GameSelector.vue", function() {
         state = { username: "user", api: fakeApi };
         store = new Vuex.Store({
             state,
+            getters: { isLoggedIn: () => true },
         });
         wrapper = mount(GameSelector, { localVue, store });
     });

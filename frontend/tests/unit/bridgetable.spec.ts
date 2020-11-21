@@ -30,6 +30,7 @@ describe("BridgeTable.vue", function() {
         state = { username: "user", api: fakeApi };
         store = new Vuex.Store({
             state,
+            getters: { isLoggedIn: () => true },
         });
         wrapper = mount(BridgeTable, { localVue, store, propsData: { gameUuid } });
         await flushPromises();

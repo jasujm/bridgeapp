@@ -83,7 +83,7 @@ export default class BridgeTable extends Vue {
     private self = new Self();
     private displayTrick: Trick | null = null;
     private ws?: WebSocket;
-    private timerId!: number;
+    private timerId?: number;
     private dealCounter: number | null = Number.POSITIVE_INFINITY;
     private eventCounter: number = Number.NEGATIVE_INFINITY;
     private eventCallbacks: Array<EventCallback> = [];
@@ -215,6 +215,7 @@ export default class BridgeTable extends Vue {
     }
 
     private startGame() {
+        this.close();
         const wrap = (callback: (event: Event) => void) => {
             return (event: Event) => {
                 if (event.counter > this.eventCounter) {
@@ -257,15 +258,12 @@ export default class BridgeTable extends Vue {
     }
 
     private close() {
-        clearInterval(this.timerId);
+        if (this.timerId) {
+            clearInterval(this.timerId);
+        }
         if (this.ws) {
             this.ws.close();
         }
-    }
-
-    mounted() {
-        this.startGame();
-        this.displayTrick = this.lastTrick;
     }
 
     beforeDestroy() {
@@ -274,8 +272,17 @@ export default class BridgeTable extends Vue {
 
     @Watch("gameUuid")
     private gameUuidChanged() {
-        this.close();
-        this.startGame();
+        if (this.$store.getters.isLoggedIn) {
+            this.startGame();
+        }
+    }
+
+    @Watch("$store.getters.isLoggedIn", { immediate: true })
+    private loggedIn(value: boolean) {
+        if (value) {
+            this.startGame();
+            this.displayTrick = this.lastTrick;
+        }
     }
 
     private get lastTrick() {

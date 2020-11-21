@@ -1,16 +1,16 @@
 <template>
 <div id="app">
+    <b-alert show variant="warning">
+        This app is still work in progress. Although playable, there are
+        obvious quirks. I may also reset the app and data without a
+        prior warning.
+    </b-alert>
     <div class="container">
         <header>
+            <Login class="float-right" />
             <h1>Play contract bridge</h1>
-            <b-alert show variant="warning">
-                This app is still work in progress. Although playable, there are
-                obvious quirks. I may also reset the app and data without a
-                prior warning.
-            </b-alert>
         </header>
         <main>
-            <Login v-if="!$store.getters.isLoggedIn" />
             <RouterView />
         </main>
         <footer>

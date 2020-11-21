@@ -9,7 +9,7 @@
     <validation-observer v-slot="{ handleSubmit }" slim>
         <b-form @submit.prevent="handleSubmit(joinGame)">
             <validation-provider name="UUID" rules="required|uuid" v-slot="validationContext">
-                <b-form-group>
+                <b-form-group :disabled="!$store.getters.isLoggedIn">
                     <b-input-group>
                         <b-button
                             variant="secondary"
