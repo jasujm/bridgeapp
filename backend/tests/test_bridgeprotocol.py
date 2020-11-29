@@ -163,18 +163,24 @@ async def test_failed_command_should_raise_exception(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("error_code", [b"CODE", b"FAIL"])
+@pytest.mark.parametrize(
+    "error",
+    [
+        (b"NF", bridgeprotocol.NotFoundError),
+        (b"AE", bridgeprotocol.AlreadyExistsError),
+        (b"NA", bridgeprotocol.NotAuthorizedError),
+        (b"SR", bridgeprotocol.SeatReservedError),
+        (b"RV", bridgeprotocol.RuleViolationError),
+    ],
+)
 async def test_failed_command_should_raise_exception_with_error_code(
-    server, raw_command, error_code
+    server, raw_command, error
 ):
     tag, task = raw_command
+    error_code, exception_type = error
     await server.reply(tag, b"ERR:" + error_code, {})
-    with pytest.raises(bridgeprotocol.CommandFailure):
-        try:
-            await task
-        except bridgeprotocol.CommandFailure as ex:
-            assert ex.code == error_code.decode()
-            raise
+    with pytest.raises(exception_type):
+        await task
 
 
 @pytest.mark.asyncio

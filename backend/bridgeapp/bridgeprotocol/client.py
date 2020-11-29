@@ -16,7 +16,14 @@ from . import _base, utils, exceptions
 OptionalUuid = typing.Optional[uuid.UUID]
 
 
-_ERROR_CODE_UNKNOWN = "UNK"
+_STATUS_EXCEPTION_MAP = {
+    "UNK": exceptions.UnknownClientError("Unknown client"),
+    "NF": exceptions.NotFoundError("Game not found"),
+    "AE": exceptions.AlreadyExistsError("Game already exists"),
+    "NA": exceptions.NotAuthorizedError("Not authorized"),
+    "SR": exceptions.SeatReservedError("Seat already reserved"),
+    "RV": exceptions.RuleViolationError("Rule violation"),
+}
 
 
 def _retries_handshake(func):
@@ -25,10 +32,8 @@ def _retries_handshake(func):
         while True:
             try:
                 return await func(self, *args, **kwargs)
-            except exceptions.CommandFailure as ex:
-                if ex.code != _ERROR_CODE_UNKNOWN:
-                    raise
-            await self.hello()
+            except exceptions.UnknownClientError:
+                await self.hello()
 
     return wrapped
 
@@ -189,3 +194,9 @@ class BridgeClient(_base.ClientBase):
     @staticmethod
     def _create_player_state(get):
         return models.PlayerState(**get["self"])
+
+    def _create_command_failure_exception(self, status: bytes):
+        code = utils.get_error_code(status)
+        if ex := _STATUS_EXCEPTION_MAP.get(code):
+            return ex
+        return super()._create_command_failure_exception(status)

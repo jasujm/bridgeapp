@@ -3,25 +3,38 @@ Exceptions
 ,,,,,,,,,,
 """
 
-import typing
-
 
 class ProtocolError(Exception):
     """Generic protocol error"""
 
 
 class InvalidMessage(ProtocolError):
-    """Error signaling invalid message received from the server"""
+    """Error indicating invalid message received from the server"""
 
 
 class CommandFailure(ProtocolError):
-    """Error signaling failed command"""
+    """Error indicating failed command"""
 
-    def __init__(self, message=None, code=None):
-        super().__init__(message)
-        self._code: typing.Optional[str] = code
 
-    @property
-    def code(self) -> typing.Optional[str]:
-        """Error code of the failure"""
-        return self._code
+class UnknownClientError(CommandFailure):
+    """Error indicating failure due to missing handshake"""
+
+
+class NotFoundError(CommandFailure):
+    """Error indicating game not found"""
+
+
+class AlreadyExistsError(CommandFailure):
+    """Error indicating a game couldn't be created because it already exists"""
+
+
+class NotAuthorizedError(CommandFailure):
+    """Error indicating an action wasn't authorized"""
+
+
+class SeatReservedError(CommandFailure):
+    """Error indicating joining a game failed due to seat being reserved"""
+
+
+class RuleViolationError(CommandFailure):
+    """Error indicating action being against the rules of contract bridge"""

@@ -187,10 +187,7 @@ class ClientBase(SocketBase):
                     )
                 elif not utils.is_status_successful(status):
                     reply_future.set_exception(
-                        exceptions.CommandFailure(
-                            "Command returned with failure",
-                            utils.get_error_code(status),
-                        )
+                        self._create_command_failure_exception(status)
                     )
                 else:
                     reply_future.set_result(utils.group_arguments(reply_arguments))
@@ -214,6 +211,22 @@ class ClientBase(SocketBase):
             raise exceptions.InvalidMessage(
                 f"Unexpected reply to {command}: {reply!r}"
             ) from ex
+
+    @staticmethod
+    def _create_command_failure_exception(status: bytes):
+        """Create exception object for command failure
+
+        The exception returned will be raised by the :meth:`command()` method on
+        failed reply.
+
+        Parameters:
+            status: The status code
+
+        Returns:
+            An exception instance to be raised to signal failure
+        """
+        del status
+        return exceptions.CommandFailure("Command returned with failure")
 
 
 class EventReceiverBase(SocketBase):
