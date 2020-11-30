@@ -8,8 +8,9 @@ The models in this module extend the base models.
 # Don't care about warning related to pydantic conventions
 # pylint: disable=no-self-argument,no-self-use,too-few-public-methods,missing-class-docstring,no-member
 
-
 import typing
+
+import pydantic
 
 from bridgeapp import models as base_models
 
@@ -22,3 +23,9 @@ class Game(base_models.Game):
     """
 
     deal: typing.Optional[base_models.Deal]
+
+
+class Error(pydantic.BaseModel):
+    """Error details"""
+
+    detail: str

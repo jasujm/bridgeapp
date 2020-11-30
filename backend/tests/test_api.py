@@ -88,15 +88,6 @@ def test_create_game(client, mock_bridge_client, game_uuid, username):
     assert api.models.Game(**res.json()) == api.models.Game(uuid=game_uuid)
 
 
-def test_create_game_should_fail_if_backend_fails(
-    client, mock_bridge_client, game_uuid, username
-):
-    mock_bridge_client.game.side_effect = bridgeprotocol.CommandFailure
-    res = client.post("/api/v1/games", auth=(username, "secret"))
-    assert res.status_code == fastapi.status.HTTP_400_BAD_REQUEST
-    mock_bridge_client.game.assert_awaited_once()
-
-
 def test_read_game(client, mock_bridge_client, game_uuid, username_and_player_uuid):
     username, player_uuid = username_and_player_uuid
     deal = models.Deal(uuid=uuid.uuid4())
@@ -109,12 +100,12 @@ def test_read_game(client, mock_bridge_client, game_uuid, username_and_player_uu
     )
 
 
-def test_read_game_should_fail_if_backend_fails(
+def test_read_game_should_fail_if_game_not_found(
     client, mock_bridge_client, game_uuid, username
 ):
-    mock_bridge_client.get_deal.side_effect = bridgeprotocol.CommandFailure
+    mock_bridge_client.get_deal.side_effect = bridgeprotocol.NotFoundError
     res = client.get(f"/api/v1/games/{game_uuid}", auth=(username, "secret"))
-    assert res.status_code == fastapi.status.HTTP_400_BAD_REQUEST
+    assert res.status_code == fastapi.status.HTTP_404_NOT_FOUND
     mock_bridge_client.get_deal.assert_awaited_once()
 
 
@@ -129,12 +120,12 @@ def test_read_self(client, mock_bridge_client, game_uuid, username_and_player_uu
     )
 
 
-def test_read_game_should_fail_if_backend_fails(
+def test_read_self_should_fail_if_game_not_found(
     client, mock_bridge_client, game_uuid, username
 ):
-    mock_bridge_client.get_self.side_effect = bridgeprotocol.CommandFailure
+    mock_bridge_client.get_self.side_effect = bridgeprotocol.NotFoundError
     res = client.get(f"/api/v1/games/{game_uuid}/self", auth=(username, "secret"))
-    assert res.status_code == fastapi.status.HTTP_400_BAD_REQUEST
+    assert res.status_code == fastapi.status.HTTP_404_NOT_FOUND
     mock_bridge_client.get_self.assert_awaited_once()
 
 
@@ -146,12 +137,20 @@ def test_add_player(client, mock_bridge_client, game_uuid, username_and_player_u
     mock_bridge_client.join.assert_awaited_once_with(game=game_uuid, player=player_uuid)
 
 
+@pytest.mark.parametrize(
+    "error",
+    [
+        (bridgeprotocol.NotFoundError, fastapi.status.HTTP_404_NOT_FOUND),
+        (bridgeprotocol.SeatReservedError, fastapi.status.HTTP_409_CONFLICT),
+    ],
+)
 def test_add_player_should_fail_if_backend_fails(
-    client, mock_bridge_client, game_uuid, username
+    client, mock_bridge_client, game_uuid, username, error
 ):
-    mock_bridge_client.join.side_effect = bridgeprotocol.CommandFailure
+    exception_class, status_code = error
+    mock_bridge_client.join.side_effect = exception_class
     res = client.post(f"/api/v1/games/{game_uuid}/players", auth=(username, "secret"))
-    assert res.status_code == fastapi.status.HTTP_400_BAD_REQUEST
+    assert res.status_code == status_code
     mock_bridge_client.join.assert_awaited_once()
 
 
@@ -170,15 +169,35 @@ def test_make_call(client, mock_bridge_client, game_uuid, username_and_player_uu
     )
 
 
-def test_make_call_should_fail_if_backend_fails(
+def test_make_call_should_fail_if_game_not_found(
     client, mock_bridge_client, game_uuid, username
 ):
     call = models.Call(type=models.CallType.pass_)
-    mock_bridge_client.call.side_effect = bridgeprotocol.CommandFailure
+    mock_bridge_client.call.side_effect = bridgeprotocol.NotFoundError
     res = client.post(
         f"/api/v1/games/{game_uuid}/calls", auth=(username, "secret"), data=call.json()
     )
-    assert res.status_code == fastapi.status.HTTP_400_BAD_REQUEST
+    assert res.status_code == fastapi.status.HTTP_404_NOT_FOUND
+    mock_bridge_client.call.assert_awaited_once()
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        (bridgeprotocol.NotFoundError, fastapi.status.HTTP_404_NOT_FOUND),
+        (bridgeprotocol.RuleViolationError, fastapi.status.HTTP_409_CONFLICT),
+    ],
+)
+def test_make_call_should_fail_if_backend_fails(
+    client, mock_bridge_client, game_uuid, username, error
+):
+    exception_class, status_code = error
+    call = models.Call(type=models.CallType.pass_)
+    mock_bridge_client.call.side_effect = exception_class
+    res = client.post(
+        f"/api/v1/games/{game_uuid}/calls", auth=(username, "secret"), data=call.json()
+    )
+    assert res.status_code == status_code
     mock_bridge_client.call.assert_awaited_once()
 
 
@@ -195,15 +214,35 @@ def test_play_card(client, mock_bridge_client, game_uuid, username_and_player_uu
     )
 
 
-def test_play_card_should_fail_if_backend_fails(
+def test_play_card_should_fail_if_game_not_found(
     client, mock_bridge_client, game_uuid, username
 ):
     card = models.CardType(rank=models.Rank.seven, suit=models.Suit.diamonds)
-    mock_bridge_client.play.side_effect = bridgeprotocol.CommandFailure
+    mock_bridge_client.play.side_effect = bridgeprotocol.NotFoundError
     res = client.post(
         f"/api/v1/games/{game_uuid}/trick", auth=(username, "secret"), data=card.json()
     )
-    assert res.status_code == fastapi.status.HTTP_400_BAD_REQUEST
+    assert res.status_code == fastapi.status.HTTP_404_NOT_FOUND
+    mock_bridge_client.play.assert_awaited_once()
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        (bridgeprotocol.NotFoundError, fastapi.status.HTTP_404_NOT_FOUND),
+        (bridgeprotocol.SeatReservedError, fastapi.status.HTTP_409_CONFLICT),
+    ],
+)
+def test_play_card_should_fail_if_backend_fails(
+    client, mock_bridge_client, game_uuid, username, error
+):
+    exception_class, status_code = error
+    card = models.CardType(rank=models.Rank.seven, suit=models.Suit.diamonds)
+    mock_bridge_client.play.side_effect = exception_class
+    res = client.post(
+        f"/api/v1/games/{game_uuid}/trick", auth=(username, "secret"), data=card.json()
+    )
+    assert res.status_code == status_code
     mock_bridge_client.play.assert_awaited_once()
 
 

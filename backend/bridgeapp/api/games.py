@@ -10,12 +10,17 @@ import fastapi
 import orjson
 import starlette.websockets as ws
 
-from bridgeapp import bridgeprotocol, models as base_models
+from bridgeapp import models as base_models
 
 from . import models, utils
 
 COUNTER_HEADER = "X-Counter"
 """Header containing the running counter of game state"""
+
+_GAME_NOT_FOUND_RESPONSE = {
+    "model": models.Error,
+    "description": "Game not found",
+}
 
 router = fastapi.APIRouter()
 security = fastapi.security.HTTPBasic()
@@ -45,12 +50,7 @@ async def post_games(
     the game and return it in the response body.
     """
     client = await utils.get_bridge_client()
-    try:
-        game_uuid = await client.game()
-    except bridgeprotocol.CommandFailure as ex:
-        raise fastapi.HTTPException(
-            status_code=fastapi.status.HTTP_400_BAD_REQUEST, detail="Error"
-        ) from ex
+    game_uuid = await client.game()
     response.headers["Location"] = request.url_for("game_details", game_uuid=game_uuid)
     return models.Game(uuid=game_uuid).dict(exclude_unset=True)
 
@@ -61,14 +61,15 @@ async def post_games(
     summary="Get information about a game",
     response_model=models.Game,
     responses={
-        200: {
+        fastapi.status.HTTP_200_OK: {
             "headers": {
                 COUNTER_HEADER: {
                     "schema": {"type": "integer"},
                     "description": "Running counter that can be used to synchronize event stream",
                 }
             }
-        }
+        },
+        fastapi.status.HTTP_404_NOT_FOUND: _GAME_NOT_FOUND_RESPONSE,
     },
 )
 async def get_game_details(
@@ -82,13 +83,8 @@ async def get_game_details(
     public information will be retrieved.
     """
     client = await utils.get_bridge_client()
-    try:
-        deal, counter = await client.get_deal(game=game_uuid, player=player_uuid)
-        response.headers[COUNTER_HEADER] = str(counter)
-    except bridgeprotocol.CommandFailure as ex:
-        raise fastapi.HTTPException(
-            status_code=fastapi.status.HTTP_400_BAD_REQUEST, detail="Error"
-        ) from ex
+    deal, counter = await client.get_deal(game=game_uuid, player=player_uuid)
+    response.headers[COUNTER_HEADER] = str(counter)
     return models.Game(uuid=game_uuid, deal=deal)
 
 
@@ -97,6 +93,7 @@ async def get_game_details(
     name="game_self",
     summary="Get information about the authenticated player",
     response_model=base_models.PlayerState,
+    responses={fastapi.status.HTTP_404_NOT_FOUND: _GAME_NOT_FOUND_RESPONSE},
 )
 async def get_game_self(
     game_uuid: uuid.UUID, player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid)
@@ -106,12 +103,7 @@ async def get_game_self(
     within the game, including position and available moves.
     """
     client = await utils.get_bridge_client()
-    try:
-        return await client.get_self(game=game_uuid, player=player_uuid)
-    except bridgeprotocol.CommandFailure as ex:
-        raise fastapi.HTTPException(
-            status_code=fastapi.status.HTTP_400_BAD_REQUEST, detail="Error"
-        ) from ex
+    return await client.get_self(game=game_uuid, player=player_uuid)
 
 
 @router.post(
@@ -119,6 +111,13 @@ async def get_game_self(
     name="game_players",
     summary="Add a player to a game",
     status_code=fastapi.status.HTTP_204_NO_CONTENT,
+    responses={
+        fastapi.status.HTTP_404_NOT_FOUND: _GAME_NOT_FOUND_RESPONSE,
+        fastapi.status.HTTP_409_CONFLICT: {
+            "model": models.Error,
+            "description": "Cannot join the game",
+        },
+    },
 )
 async def post_game_players(
     game_uuid: uuid.UUID, player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid),
@@ -128,12 +127,7 @@ async def post_game_players(
     identified by the parameter.
     """
     client = await utils.get_bridge_client()
-    try:
-        await client.join(game=game_uuid, player=player_uuid)
-    except bridgeprotocol.CommandFailure as ex:
-        raise fastapi.HTTPException(
-            status_code=fastapi.status.HTTP_400_BAD_REQUEST, detail="Error"
-        ) from ex
+    await client.join(game=game_uuid, player=player_uuid)
 
 
 @router.post(
@@ -141,6 +135,13 @@ async def post_game_players(
     name="game_calls",
     summary="Add a call to the current bidding",
     status_code=fastapi.status.HTTP_204_NO_CONTENT,
+    responses={
+        fastapi.status.HTTP_404_NOT_FOUND: _GAME_NOT_FOUND_RESPONSE,
+        fastapi.status.HTTP_409_CONFLICT: {
+            "model": models.Error,
+            "description": "Making the call would violate the rules",
+        },
+    },
 )
 async def post_game_calls(
     game_uuid: uuid.UUID,
@@ -153,12 +154,7 @@ async def post_game_calls(
     the bidding phase of a deal, following the laws of contract bridge.
     """
     client = await utils.get_bridge_client()
-    try:
-        await client.call(game=game_uuid, player=player_uuid, call=call)
-    except bridgeprotocol.CommandFailure as ex:
-        raise fastapi.HTTPException(
-            status_code=fastapi.status.HTTP_400_BAD_REQUEST, detail="Error"
-        ) from ex
+    await client.call(game=game_uuid, player=player_uuid, call=call)
 
 
 @router.post(
@@ -166,6 +162,13 @@ async def post_game_calls(
     name="game_trick",
     summary="Add a card to the current trick",
     status_code=fastapi.status.HTTP_204_NO_CONTENT,
+    responses={
+        fastapi.status.HTTP_404_NOT_FOUND: _GAME_NOT_FOUND_RESPONSE,
+        fastapi.status.HTTP_409_CONFLICT: {
+            "model": models.Error,
+            "description": "Playing the card would violate the rules",
+        },
+    },
 )
 async def post_game_trick(
     game_uuid: uuid.UUID,
@@ -178,12 +181,7 @@ async def post_game_trick(
     of a deal, following the laws of contract bridge.
     """
     client = await utils.get_bridge_client()
-    try:
-        await client.play(game=game_uuid, player=player_uuid, card=card)
-    except bridgeprotocol.CommandFailure as ex:
-        raise fastapi.HTTPException(
-            status_code=fastapi.status.HTTP_400_BAD_REQUEST, detail="Error"
-        ) from ex
+    await client.play(game=game_uuid, player=player_uuid, card=card)
 
 
 @router.websocket("/{game_uuid}/ws")
