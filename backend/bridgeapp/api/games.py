@@ -59,6 +59,9 @@ async def post_games(
     "/{game_uuid}",
     name="game_details",
     summary="Get information about a game",
+    description="""The response contains a representation of the game from the point of view of
+    the authenticated player. If the player is not in the game, only public
+    information will be retrieved.""",
     response_model=models.Game,
     responses={
         fastapi.status.HTTP_200_OK: {
@@ -77,11 +80,7 @@ async def get_game_details(
     game_uuid: uuid.UUID,
     player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid),
 ):
-    """
-    The response contains a representation of the game from the point of
-    view of the authenticated player. If the player is not in the game, only
-    public information will be retrieved.
-    """
+    """Handle getting game details"""
     client = await utils.get_bridge_client()
     deal, counter = await client.get_deal(game=game_uuid, player=player_uuid)
     response.headers[COUNTER_HEADER] = str(counter)
@@ -92,16 +91,15 @@ async def get_game_details(
     "/{game_uuid}/self",
     name="game_self",
     summary="Get information about the authenticated player",
+    description="""The response contains information about the authenticated player itself
+    within the game, including position and available moves.""",
     response_model=base_models.PlayerState,
     responses={fastapi.status.HTTP_404_NOT_FOUND: _GAME_NOT_FOUND_RESPONSE},
 )
 async def get_game_self(
     game_uuid: uuid.UUID, player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid)
 ):
-    """
-    The response contains information about the authenticated player itself
-    within the game, including position and available moves.
-    """
+    """Handle getting self details"""
     client = await utils.get_bridge_client()
     return await client.get_self(game=game_uuid, player=player_uuid)
 
@@ -110,6 +108,7 @@ async def get_game_self(
     "/{game_uuid}/players",
     name="game_players",
     summary="Add a player to a game",
+    description="""Make the authenticated player join the game, if there are seats available.""",
     status_code=fastapi.status.HTTP_204_NO_CONTENT,
     responses={
         fastapi.status.HTTP_404_NOT_FOUND: _GAME_NOT_FOUND_RESPONSE,
@@ -122,10 +121,7 @@ async def get_game_self(
 async def post_game_players(
     game_uuid: uuid.UUID, player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid),
 ):
-    """
-    This call causes the authenticated user to be added as a player to the game
-    identified by the parameter.
-    """
+    """Handle adding player to a game"""
     client = await utils.get_bridge_client()
     await client.join(game=game_uuid, player=player_uuid)
 
@@ -134,6 +130,9 @@ async def post_game_players(
     "/{game_uuid}/calls",
     name="game_calls",
     summary="Add a call to the current bidding",
+    description="""Make a call as the authenticated player. Making call is only possible during
+    the bidding phase of a deal, if the player has turn, and the call is
+    legal.""",
     status_code=fastapi.status.HTTP_204_NO_CONTENT,
     responses={
         fastapi.status.HTTP_404_NOT_FOUND: _GAME_NOT_FOUND_RESPONSE,
@@ -148,11 +147,7 @@ async def post_game_calls(
     call: base_models.Call,
     player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid),
 ):
-    """
-    This call causes the authenticated user to make a call (no pun
-    intended) in the ongoing bidding. The call is only possible during
-    the bidding phase of a deal, following the laws of contract bridge.
-    """
+    """Handle adding call to a bidding"""
     client = await utils.get_bridge_client()
     await client.call(game=game_uuid, player=player_uuid, call=call)
 
@@ -161,6 +156,9 @@ async def post_game_calls(
     "/{game_uuid}/trick",
     name="game_trick",
     summary="Add a card to the current trick",
+    description="""Play a card the authenticated player. Playing card is only possible possible
+    during the playing phase of a deal, if the player has turn, and playing the
+    card is legal.""",
     status_code=fastapi.status.HTTP_204_NO_CONTENT,
     responses={
         fastapi.status.HTTP_404_NOT_FOUND: _GAME_NOT_FOUND_RESPONSE,
@@ -175,11 +173,7 @@ async def post_game_trick(
     card: base_models.CardType,
     player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid),
 ):
-    """
-    This call causes the authenticated user to play the card to the
-    current trick. The call is only possible during the playing phase
-    of a deal, following the laws of contract bridge.
-    """
+    """Handle adding card to a trick"""
     client = await utils.get_bridge_client()
     await client.play(game=game_uuid, player=player_uuid, card=card)
 
@@ -188,10 +182,7 @@ async def post_game_trick(
 async def games_websocket(
     game_uuid: uuid.UUID, websocket: ws.WebSocket,
 ):
-    """
-    Open a websocket that publishes events for the game identified by the
-    parameter.
-    """
+    """Open a websocket publishing events about a game"""
     loop = asyncio.get_running_loop()
     with utils.subscribe_events(game_uuid) as producer:
 
