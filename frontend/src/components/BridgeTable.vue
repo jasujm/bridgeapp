@@ -110,7 +110,7 @@ export default class BridgeTable extends mixins(PartnershipMixin) {
                     }
                     this.eventCallbacks.splice(0, this.eventCallbacks.length);
                 }
-            );
+            ).catch((err: Error) => this.$store.dispatch("reportError", err));
         }
     }
 
@@ -119,7 +119,9 @@ export default class BridgeTable extends mixins(PartnershipMixin) {
     private _fetchSelfState() {
         if (this.gameUuid) {
             const api = this.$store.state.api;
-            api.getSelf(this.gameUuid).then((self: Self) => this.self = self);
+            api.getSelf(this.gameUuid).then(
+                (self: Self) => this.self = self
+            ).catch((err: Error) => this.$store.dispatch("reportError", err));
         }
     }
 

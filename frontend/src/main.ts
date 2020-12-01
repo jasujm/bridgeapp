@@ -5,6 +5,9 @@ import router from "./router"
 import { BootstrapVue } from "bootstrap-vue"
 
 Vue.config.productionTip = false
+Vue.config.errorHandler = function(err, vm) {
+    vm.$store.dispatch("reportError", err);
+};
 
 import "bootstrap/dist/css/bootstrap.css"
 import "bootstrap-vue/dist/bootstrap-vue.css"

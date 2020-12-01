@@ -1,9 +1,17 @@
-// FIXME: Handle HTTP errors
 // FIXME: Validate responses and handle errors
 
-import axios, { AxiosRequestConfig } from "axios"
+import axios, { AxiosRequestConfig, AxiosError } from "axios"
 import ReconnectingWebSocket from "reconnecting-websocket"
-import { Deal, Call, Card, Self, Event, EventHandlers } from "./types"
+import {
+    Deal,
+    Call,
+    Card,
+    Self,
+    Event,
+    EventHandlers,
+    ErrorSeverity,
+    ErrorMessage,
+} from "./types"
 
 function defaultWsBaseUrl() {
     const protocol = window.location.protocol.includes("https") ? "wss:" : "ws:";
@@ -13,7 +21,8 @@ function defaultWsBaseUrl() {
 const wsBaseUrl = `${process.env.VUE_APP_BRIDGEAPP_WEBSOCKET_PREFIX || defaultWsBaseUrl()}/api/v1`;
 
 const client = axios.create({
-    baseURL: `${process.env.VUE_APP_BRIDGEAPP_API_PREFIX || ""}/api/v1/`
+    baseURL: `${process.env.VUE_APP_BRIDGEAPP_API_PREFIX || ""}/api/v1/`,
+    timeout: 3000,
 });
 
 export default class {
@@ -102,4 +111,27 @@ export default class {
         };
         return ws;
     }
+}
+
+export function getErrorMessage(err: Error) {
+    const axiosError = err as AxiosError;
+    if (axiosError.isAxiosError) {
+        const response = axiosError.response;
+        if (response) {
+            const detail = response.data.detail;
+            // 404 and 409 are due to user actions, and less severe
+            // Other errors are bugs in the frontend or backend code
+            const severity = [404, 409].includes(response.status) ?
+                ErrorSeverity.warning : ErrorSeverity.danger;
+            if (response.data.detail) {
+                return new ErrorMessage(detail, severity);
+            } else {
+                return new ErrorMessage("Server error")
+            }
+        } else {
+            // timeout
+            return new ErrorMessage("Lost connection to the server");
+        }
+    }
+    return null;
 }

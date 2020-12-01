@@ -180,3 +180,12 @@ export interface EventHandlers {
     trick?: (event: TrickEvent) => void;
     dealend?: (event: DealEndEvent) => void;
 }
+
+export enum ErrorSeverity {
+    danger = "danger",
+    warning = "warning",
+}
+
+export class ErrorMessage {
+    constructor(readonly message = "", readonly severity: ErrorSeverity = ErrorSeverity.danger) { }
+}
