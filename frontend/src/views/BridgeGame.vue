@@ -1,6 +1,6 @@
 <template>
 <div class="bridge-game">
-    <b-alert :variant="errorVariant" :show="showError">{{ errorMessage }}</b-alert>
+    <ErrorDisplay :severity="$store.state.error.severity" :message="$store.state.error.message" />
     <b-alert variant="info" :show="!$store.getters.isLoggedIn">Login to get started.</b-alert>
     <GameSelector ref="selector" @game-joined="updateGame($event)" />
     <BridgeTable ref="table" v-if="hasGame" :gameUuid="this.$route.params.gameUuid" />
@@ -9,11 +9,13 @@
 
 <script lang="ts">
 import { Vue, Component, Ref } from "vue-property-decorator"
+import ErrorDisplay from "@/components/ErrorDisplay.vue"
 import GameSelector from "@/components/GameSelector.vue"
 import BridgeTable from "@/components/BridgeTable.vue"
 
 @Component({
     components: {
+        ErrorDisplay,
         GameSelector,
         BridgeTable,
     }
@@ -33,18 +35,6 @@ export default class BridgeGame extends Vue {
 
     private get hasGame() {
         return Boolean(this.$route.params.gameUuid);
-    }
-
-    private get showError() {
-        return this.$store.state.error.message != "";
-    }
-
-    private get errorVariant() {
-        return this.$store.state.error.severity;
-    }
-
-    private get errorMessage() {
-        return this.$store.state.error.message;
     }
 
     mounted() {
