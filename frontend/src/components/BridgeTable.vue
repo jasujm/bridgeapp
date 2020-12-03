@@ -29,8 +29,8 @@
                     :trick="displayTrick" />
             </b-col>
         </b-row>
-        <CallPanel :gameUuid="gameUuid" :allowedCalls="self.allowedCalls" />
-        <CardPanel :gameUuid="gameUuid" :allowedCards="self.allowedCards" />
+        <CallPanel :allowedCalls="self.allowedCalls" @call="makeCall($event)" />
+        <CardPanel :allowedCards="self.allowedCards" @play="playCard($event)" />
     </b-container>
 </div>
 </template>
@@ -38,6 +38,7 @@
 <script lang="ts">
 import Component, { mixins } from "vue-class-component"
 import { Prop, Watch } from "vue-property-decorator"
+import { AxiosError } from "axios"
 import Bidding from "./Bidding.vue"
 import BiddingResult from "./BiddingResult.vue"
 import TricksWonDisplay from "./TricksWonDisplay.vue"
@@ -60,6 +61,8 @@ import {
     Score,
     Position,
     Trick,
+    Call,
+    Card,
 } from "@/api/types"
 import { partnershipFor } from "@/utils.ts"
 import _ from "lodash"
@@ -148,7 +151,7 @@ export default class BridgeTable extends mixins(PartnershipMixin) {
         }
     }
 
-    private playCard({ position, card }: PlayEvent) {
+    private cardPlayed({ position, card }: PlayEvent) {
         const trick = _.last(this.deal.tricks)
         if (trick && trick.cards) {
             trick.cards.push({ position, card });
@@ -216,6 +219,31 @@ export default class BridgeTable extends mixins(PartnershipMixin) {
         }
     }
 
+    private handleConflictError(err: Error) {
+        const axiosError = err as AxiosError;
+        if (axiosError.isAxiosError && axiosError.response && axiosError.response.status == 409) {
+            this.fetchSelfState();
+        } else {
+            this.$store.dispatch("reportError", err);
+        }
+    }
+
+    private makeCall(call: Call) {
+        if (this.gameUuid) {
+            this.$store.state.api.makeCall(this.gameUuid, call).catch(
+                this.handleConflictError.bind(this)
+            );
+        }
+    }
+
+    private playCard(card: Card) {
+        if (this.gameUuid) {
+            this.$store.state.api.playCard(this.gameUuid, card).catch(
+                this.handleConflictError.bind(this)
+            );
+        }
+    }
+
     private startGame() {
         this.close();
         const wrap = (callback: (event: Event) => void) => {
@@ -249,7 +277,7 @@ export default class BridgeTable extends mixins(PartnershipMixin) {
                 turn: wrap(this.handleTurn),  // @ts-ignore
                 call: wrap(this.addCall),  // @ts-ignore
                 bidding: wrap(this.completeBidding),  // @ts-ignore
-                play: wrap(this.playCard),  // @ts-ignore
+                play: wrap(this.cardPlayed),  // @ts-ignore
                 dummy: wrap(this.revealDummy),  // @ts-ignore
                 trick: wrap(this.completeTrick),  // @ts-ignore
                 dealend: wrap(this.recordScore),  // @ts-ignore

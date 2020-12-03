@@ -5,7 +5,7 @@
         :key="cardKey(card.rank, card.suit)"
         class="m-1"
         variant="outline-dark"
-        @click="playCard(card)">
+        @click="$emit('play', card)">
         <CardDisplay :rank="card.rank" :suit="card.suit" />
     </b-button>
 </div>
@@ -44,7 +44,6 @@ const cardCompare = (function() {
     }
 })
 export default class CardPanel extends Vue {
-    @Prop() private readonly gameUuid!: string;
     @Prop({ default: () => [] }) private readonly allowedCards!: Array<Card>;
 
     private cardKey = cardKey;
@@ -53,12 +52,6 @@ export default class CardPanel extends Vue {
         const choices = [...this.allowedCards]
         choices.sort(cardCompare);
         return choices;
-    }
-
-    private async playCard(card: Card) {
-        if (this.gameUuid) {
-            await this.$store.state.api.playCard(this.gameUuid, card);
-        }
     }
 }
 </script>

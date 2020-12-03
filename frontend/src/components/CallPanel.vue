@@ -5,7 +5,7 @@
         :key="callKey(call)"
         class="m-1"
         variant="outline-dark"
-        @click="makeCall(call)">
+        @click="$emit('call', call)">
         <CallDisplay :type="call.type" :bid="call.bid" />
     </b-button>
 </div>
@@ -22,7 +22,6 @@ import { Call } from "@/api/types"
     }
 })
 export default class CallPanel extends Vue {
-    @Prop() private readonly gameUuid!: string;
     @Prop({ default: () => [] }) private readonly allowedCalls!: Array<Call>;
 
     callKey(call: Call) {
@@ -31,12 +30,6 @@ export default class CallPanel extends Vue {
             ret = ret.concat([String(call.bid.level), call.bid.strain]);
         }
         return ret.join("-");
-    }
-
-    private async makeCall(call: Call) {
-        if (this.gameUuid) {
-            await this.$store.state.api.makeCall(this.gameUuid, call);
-        }
     }
 }
 </script>

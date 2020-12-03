@@ -16,6 +16,7 @@ describe("BridgeTable.vue", function() {
     let deal: Deal;
     let store: any;
     let state: any;
+    let actions: any;
     let wrapper: any;
 
     this.beforeEach(async function() {
@@ -24,12 +25,16 @@ describe("BridgeTable.vue", function() {
         deal = new Deal();
         fakeApi = {
             getDeal: sinon.fake.resolves(deal),
-            getSelf: sinon.fake.resolves(self),
+            getSelf: sinon.stub().resolves(self),
+            makeCall: sinon.stub().resolves(),
+            playCard: sinon.stub().resolves(),
             subscribe: sinon.fake(),
         }
         state = { username: "user", api: fakeApi };
+        actions = { reportError: sinon.fake() };
         store = new Vuex.Store({
             state,
+            actions,
             getters: { isLoggedIn: () => true },
         });
         wrapper = mount(BridgeTable, { localVue, store, propsData: { gameUuid } });
@@ -67,6 +72,70 @@ describe("BridgeTable.vue", function() {
                 expect(wrapper.find(`.${position}.turn`).exists()).to.be.true;
             });
         }
+    });
+
+    describe("calls", function() {
+        const call = { type: CallType.pass };
+
+        this.beforeEach(async function() {
+            fakeApi.getSelf.resetHistory();
+            self.allowedCalls = [call];
+            await wrapper.vm.$nextTick();
+        });
+
+        it("should make call on call event", async function() {
+            await wrapper.find(".call-panel button").trigger("click");
+            expect(fakeApi.makeCall).to.be.calledWith(gameUuid, call);
+        })
+
+        it("should fetch self state on 409", async function() {
+            fakeApi.makeCall.rejects({ isAxiosError: true, response: { status: 409 } });
+            await wrapper.find(".call-panel button").trigger("click");
+            await flushPromises();
+            clock.tick(200);
+            expect(fakeApi.getSelf).to.be.calledWith(gameUuid);
+        });
+
+        it("should let other errors through", async function() {
+            fakeApi.makeCall.rejects();
+            await wrapper.find(".call-panel button").trigger("click");
+            await flushPromises();
+            clock.tick(200);
+            expect(fakeApi.getSelf).not.to.be.called;
+            expect(actions.reportError).to.be.called;
+        });
+    });
+
+    describe("cards", function() {
+        const card = { rank: Rank._7, suit: Suit.diamonds };
+
+        this.beforeEach(async function() {
+            fakeApi.getSelf.resetHistory();
+            self.allowedCards = [card];
+            await wrapper.vm.$nextTick();
+        });
+
+        it("should make card on play event", async function() {
+            await wrapper.find(".card-panel button").trigger("click");
+            expect(fakeApi.playCard).to.be.calledWith(gameUuid, card);
+        });
+
+        it("should fetch self state on 409", async function() {
+            fakeApi.playCard.rejects({ isAxiosError: true, response: { status: 409 } });
+            await wrapper.find(".card-panel button").trigger("click");
+            await flushPromises();
+            clock.tick(200);
+            expect(fakeApi.getSelf).to.be.calledWith(gameUuid);
+        });
+
+        it("should let other errors through", async function() {
+            fakeApi.playCard.rejects();
+            await wrapper.find(".card-panel button").trigger("click");
+            await flushPromises();
+            clock.tick(200);
+            expect(fakeApi.getSelf).not.to.be.called;
+            expect(actions.reportError).to.be.called;
+        });
     });
 
     describe("events", function() {
