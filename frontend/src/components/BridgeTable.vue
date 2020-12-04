@@ -58,7 +58,6 @@ import {
     DummyEvent,
     TrickEvent,
     DealEndEvent,
-    Score,
     Position,
     Trick,
     Call,
@@ -186,23 +185,27 @@ export default class BridgeTable extends mixins(PartnershipMixin) {
         }
     }
 
-    private recordScore({ score }: DealEndEvent) {
+    private recordScore(event: DealEndEvent) {
         // TODO: Ideally, there would be a scoresheet component listing deal
         // history and scores. But needs API support for retrieving past deal
         // results.
-        const message = ((score: Score | null, position: Position | null) => {
-            if (score) {
+        const message = (({contract, tricksWon, result}: DealEndEvent, position: Position | null) => {
+            if (contract && tricksWon && result.partnership) {
+                const resultMessage = `Declarer made ${tricksWon} tricks.`;
+                const contractMadeMessage = `Contract ${tricksWon >= contract.bid.level + 6 ? "made" : "defeated"}.`
+                let scoreMessage = "";
                 if (position) {
-                    const who = partnershipFor(position) == score.partnership ?
+                    const who = partnershipFor(position) == result.partnership ?
                         "You score" : "Opponent scores";
-                    return `${who} ${score.score} points`;
+                    scoreMessage = `${who} ${result.score} points`;
                 } else {
-                    return `${this.partnershipText(score.partnership)} scores ${score.score} points`;
+                    scoreMessage = `${this.partnershipText(result.partnership)} scores ${result.score} points`;
                 }
+                return `${resultMessage}\n${contractMadeMessage}\n${scoreMessage}`;
             } else {
                 return "Passed out";
             }
-        })(score, this.self.position);
+        })(event, this.self.position);
         this.$bvToast.toast(message, {
             title: "Deal result",
             autoHideDelay: 5000,

@@ -130,8 +130,8 @@ export interface Event {
     counter: number;
 }
 
-export interface Score {
-    partnership: Partnership;
+export interface DuplicateResult {
+    partnership: Partnership | null;
     score: number;
 }
 
@@ -166,7 +166,9 @@ export interface TrickEvent extends Event {
 }
 
 export interface DealEndEvent extends Event {
-    score: Score | null;
+    contract: Contract | null;
+    tricksWon: number | null;
+    result: DuplicateResult;
 }
 
 export interface EventHandlers {
