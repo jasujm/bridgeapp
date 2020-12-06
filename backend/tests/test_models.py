@@ -25,3 +25,8 @@ def test_bid_level_must_be_at_least_one():
 def test_bid_level_must_be_at_most_seven():
     with pytest.raises(pydantic.ValidationError):
         models.Bid(strain=models.Strain.clubs, level=8)
+
+
+def test_duplicate_result_score_must_be_nonnegative():
+    with pytest.raises(pydantic.ValidationError):
+        models.DuplicateResult(partnership=models.Partnership.northSouth, score=-1)

@@ -22,6 +22,13 @@ class Position(enum.Enum):
     west = "west"
 
 
+class Partnership(enum.Enum):
+    """Partnership in a bridge game"""
+
+    northSouth = "northSouth"
+    eastWest = "eastWest"
+
+
 class CallType(enum.Enum):
     """Bridge call type"""
 
@@ -45,7 +52,7 @@ class Bid(pydantic.BaseModel):
     """Bridge bid"""
 
     strain: Strain
-    level: int = pydantic.Field(ge=1, le=7)
+    level: pydantic.conint(ge=1, le=7)
 
     class Config:
         schema_extra = {
@@ -247,6 +254,12 @@ class Deal(pydantic.BaseModel):
     vulnerability: Vulnerability = Vulnerability()
 
 
+class PartialDeal(pydantic.BaseModel):
+    """Partial version of Deal"""
+
+    uuid: uuid.UUID
+
+
 class PlayerState(pydantic.BaseModel):
     """Player state within a bridge deal
 
@@ -267,3 +280,31 @@ class PlayerState(pydantic.BaseModel):
                 "allowedCards": [CardType(rank=Rank.ten, suit=Suit.clubs)],
             },
         }
+
+
+class DuplicateResult(pydantic.BaseModel):
+    """Duplicate bridge deal result
+
+    A duplicate result consists of score and the partnership awarded that
+    score. A passed out deal is represented by having null partnership and zero
+    score.
+    """
+
+    partnership: typing.Optional[Partnership]
+    score: pydantic.conint(ge=0)
+
+    class Config:
+        schema_extra = {
+            "example": {"partnership": Partnership.northSouth, "score": 100}
+        }
+
+
+class DealResult(pydantic.BaseModel):
+    """Bridge game deal result
+
+    A deal result consists of the deal, and a result object describing the
+    outcome of that deal.
+    """
+
+    deal: PartialDeal
+    result: typing.Optional[DuplicateResult]

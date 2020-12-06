@@ -74,17 +74,22 @@ def curve_keys():
 
 
 @pytest.fixture
-def game_kwargs():
+def game_uuid():
+    return uuid.uuid4()
+
+
+@pytest.fixture
+def game_kwargs(game_uuid):
     return {
-        "game": uuid.uuid4(),
+        "game": game_uuid,
         "args": [1, 2, 3],
     }
 
 
 @pytest.fixture
-def game_and_player():
+def game_and_player(game_uuid):
     return {
-        "game": uuid.uuid4(),
+        "game": game_uuid,
         "player": uuid.uuid4(),
     }
 
@@ -664,6 +669,73 @@ class TestBridgeClientGetSelfCommand:
                 expected_command=b"get",
                 expected_command_args=dict(**game_and_player, get=["self"]),
                 reply_args={"get": {"self": "invalid"}},
+            )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "results",
+    [
+        [],
+        [
+            models.DealResult(
+                deal=models.PartialDeal(uuid=uuid.uuid4()),
+                result=models.DuplicateResult(
+                    partnership=models.Partnership.northSouth, score=100
+                ),
+            ),
+            models.DealResult(
+                deal=models.PartialDeal(uuid=uuid.uuid4()),
+                result=None,
+            )
+        ],
+    ],
+)
+class TestBridgeClientGetResultsCommand:
+    async def test_success(self, server, client, game_uuid, results):
+        assert (
+            await _command_helper(
+                server,
+                client,
+                client.get_results(game=game_uuid),
+                expected_command=b"get",
+                expected_command_args={"game": game_uuid, "get": ["results"]},
+                reply_args={
+                    "get": {
+                        "results": [
+                            {"deal": result.deal.uuid, "result": result.result}
+                            for result in results
+                        ]
+                    }
+                },
+            )
+            == results
+        )
+
+    async def test_missing_results_should_lead_to_failure(
+        self, server, client, game_uuid, results
+    ):
+        with pytest.raises(bridgeprotocol.InvalidMessage):
+            await _command_helper(
+                server,
+                client,
+                client.get_results(game=game_uuid),
+                expected_command=b"get",
+                expected_command_args={"game": game_uuid, "get": ["results"]},
+                reply_args={"get": {}},
+            )
+
+    async def test_invalid_results_should_lead_to_failure(
+        self, server, client, game_uuid, results
+    ):
+        with pytest.raises(bridgeprotocol.InvalidMessage):
+            await _command_helper(
+                server,
+                client,
+                client.get_results(game=game_uuid),
+                expected_command=b"get",
+                expected_command_args={"game": game_uuid, "get": ["results"]},
+                reply_args={"get": {"results": "invalid"}},
             )
 
 

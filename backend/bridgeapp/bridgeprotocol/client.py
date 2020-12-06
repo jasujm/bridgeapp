@@ -158,6 +158,14 @@ class BridgeClient(_base.ClientBase):
         )
 
     @_retries_handshake
+    async def get_results(self, *, game: uuid.UUID):
+        """Get the deal results from the server"""
+        reply = await self.command("get", game=game, get=["results"])
+        return self._convert_reply_safe(
+            self._create_deal_results, reply, "get", command="get"
+        )
+
+    @_retries_handshake
     async def call(
         self, *, game: uuid.UUID, player: OptionalUuid = None, call: models.Call
     ):
@@ -194,6 +202,15 @@ class BridgeClient(_base.ClientBase):
     @staticmethod
     def _create_player_state(get):
         return models.PlayerState(**get["self"])
+
+    @staticmethod
+    def _create_deal_results(get):
+        return [
+            models.DealResult(
+                deal=models.PartialDeal(uuid=result["deal"]), result=result["result"]
+            )
+            for result in get["results"]
+        ]
 
     def _create_command_failure_exception(self, status: bytes):
         code = utils.get_error_code(status)
