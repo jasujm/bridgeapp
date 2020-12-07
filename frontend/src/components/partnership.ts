@@ -6,9 +6,13 @@ const partnershipTexts = {
     eastWest: "East–West",
 }
 
+export function partnershipText(partnership: Partnership) {
+    return partnershipTexts[partnership];
+}
+
 @Component
 export default class PartnershipMixin extends Vue {
     protected partnershipText(partnership: Partnership) {
-        return partnershipTexts[partnership];
+        return partnershipText(partnership);
     }
 }

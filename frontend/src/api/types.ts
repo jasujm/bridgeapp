@@ -1,4 +1,5 @@
 import { Event as WsEvent } from "reconnecting-websocket";
+import { NIL as NIL_UUID } from "uuid"
 
 export enum Position {
     north = "north",
@@ -104,6 +105,7 @@ export interface Vulnerability {
 }
 
 export class Deal {
+    uuid: string = NIL_UUID;
     positionInTurn?: Position;
     calls: Array<PositionCallPair> = [];
     declarer: Position | null = null;
@@ -124,15 +126,20 @@ export class Self {
     allowedCards: Array<Card> = [];
 }
 
+export interface DuplicateResult {
+    partnership: Partnership | null;
+    score: number;
+}
+
+export interface DealResult {
+    deal: Partial<Deal>;
+    result: DuplicateResult | null;
+}
+
 export interface Event {
     game: string;
     type: string;
     counter: number;
-}
-
-export interface DuplicateResult {
-    partnership: Partnership | null;
-    score: number;
 }
 
 export type DealEvent = Event;
@@ -166,6 +173,7 @@ export interface TrickEvent extends Event {
 }
 
 export interface DealEndEvent extends Event {
+    deal: string;
     contract: Contract | null;
     tricksWon: number | null;
     result: DuplicateResult;

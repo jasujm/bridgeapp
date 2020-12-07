@@ -2,8 +2,20 @@ import { localVue, expect } from "./common"
 import { mount } from "@vue/test-utils"
 import BridgeTable from "@/components/BridgeTable.vue"
 import Vuex from "vuex"
-import sinon from "sinon"
-import { Position, Rank, Suit, Deal, Self, EventHandlers, CallType, Strain, Doubling } from "@/api/types"
+import sinon, { SinonSpy } from "sinon"
+import {
+    Position,
+    Rank,
+    Suit,
+    Deal,
+    Self,
+    EventHandlers,
+    CallType,
+    Strain,
+    Doubling,
+    Partnership,
+    DealEndEvent,
+} from "@/api/types"
 import flushPromises from "flush-promises"
 import _ from "lodash"
 
@@ -26,6 +38,7 @@ describe("BridgeTable.vue", function() {
         fakeApi = {
             getDeal: sinon.fake.resolves(deal),
             getSelf: sinon.stub().resolves(self),
+            getResults: sinon.fake.resolves([]),
             makeCall: sinon.stub().resolves(),
             playCard: sinon.stub().resolves(),
             subscribe: sinon.fake(),
@@ -37,7 +50,9 @@ describe("BridgeTable.vue", function() {
             actions,
             getters: { isLoggedIn: () => true },
         });
-        wrapper = mount(BridgeTable, { localVue, store, propsData: { gameUuid } });
+        wrapper = mount(
+            BridgeTable, { localVue, store, propsData: { gameUuid } }
+        );
         await flushPromises();
         clock.tick(200);
     });
@@ -46,10 +61,11 @@ describe("BridgeTable.vue", function() {
         clock.restore();
     });
 
-    it("should fetch game data when mounted", async function() {
+    it("should fetch game data when mounted", function() {
         expect(fakeApi.subscribe).to.be.calledWith(gameUuid);
         expect(fakeApi.getDeal).to.be.calledWith(gameUuid);
         expect(fakeApi.getSelf).to.be.calledWith(gameUuid);
+        expect(fakeApi.getResults).to.be.calledWith(gameUuid);
     });
 
     it("should fetch game data when game is changed", async function() {
@@ -60,6 +76,7 @@ describe("BridgeTable.vue", function() {
         expect(fakeApi.subscribe).to.be.calledWith(otherUuid);
         expect(fakeApi.getDeal).to.be.calledWith(otherUuid);
         expect(fakeApi.getSelf).to.be.calledWith(otherUuid);
+        expect(fakeApi.getResults).to.be.calledWith(otherUuid);
     });
 
     describe("turn", function() {
@@ -264,6 +281,51 @@ describe("BridgeTable.vue", function() {
                 expect(wrapper.vm.deal.tricks.length).to.be.equal(13);
             });
 
+        });
+
+        describe("dealend", function() {
+            const dealUuid = "d7a05529-9b95-4678-b6b2-e5ca0ea501fc";
+            const dealResult = {
+                deal: { uuid: dealUuid },
+                result: { partnership: Partnership.northSouth, score: 200 },
+            };
+            let dealEndEvent: DealEndEvent;
+            let toastSpy: SinonSpy;
+
+            this.beforeEach(function() {
+                dealEndEvent = {
+                    game: gameUuid,
+                    type: "dealend",
+                    deal: dealUuid,
+                    contract: null,
+                    tricksWon: null,
+                    result: dealResult.result,
+                    counter: 1,
+                }
+                toastSpy = sinon.spy(wrapper.vm.$bvToast, "toast");
+            });
+
+            this.afterEach(function() {
+                toastSpy.restore();
+            });
+
+            it("should add new deal result on dealend event", function() {
+                handlers.dealend!(dealEndEvent);
+                expect(wrapper.vm.results).to.be.deep.equal([dealResult]);
+            });
+
+            it("should display toast on dealend event", function() {
+                handlers.dealend!(dealEndEvent);
+                expect(toastSpy).to.be.called;
+            });
+
+            it("should amend the latest result if deal UUID matches", function() {
+                wrapper.setData({
+                    results: [{ deal: { uuid: dealUuid }, result: null }]
+                });
+                handlers.dealend!(dealEndEvent);
+                expect(wrapper.vm.results).to.be.deep.equal([dealResult]);
+            });
         });
     });
 });

@@ -11,6 +11,7 @@ import {
     EventHandlers,
     ErrorSeverity,
     ErrorMessage,
+    DealResult,
 } from "./types"
 
 function defaultWsBaseUrl() {
@@ -90,6 +91,14 @@ export default class {
             url: `/games/${gameUuid}/self`,
         });
         return response.data as Self;
+    }
+
+    async getResults(gameUuid: string) {
+        const response = await this.request({
+            method: "get",
+            url: `/games/${gameUuid}/results`,
+        });
+        return response.data as Array<DealResult>;
     }
 
     subscribe(gameUuid: string, handlers: EventHandlers) {

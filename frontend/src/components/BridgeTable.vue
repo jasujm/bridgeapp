@@ -19,6 +19,7 @@
                     v-if="deal.declarer && deal.contract"
                     :selfPosition="self.position"
                     :tricks="deal.tricks" />
+                <DealResultsDisplay :results="results" />
             </b-col>
             <b-col lg="8">
                 <TableDisplay
@@ -36,8 +37,7 @@
 </template>
 
 <script lang="ts">
-import Component, { mixins } from "vue-class-component"
-import { Prop, Watch } from "vue-property-decorator"
+import { Vue, Component, Prop, Watch } from "vue-property-decorator"
 import { AxiosError } from "axios"
 import Bidding from "./Bidding.vue"
 import BiddingResult from "./BiddingResult.vue"
@@ -45,7 +45,8 @@ import TricksWonDisplay from "./TricksWonDisplay.vue"
 import TableDisplay from "./TableDisplay.vue"
 import CallPanel from "./CallPanel.vue"
 import CardPanel from "./CardPanel.vue"
-import PartnershipMixin from "./partnership"
+import DealResultsDisplay from "./DealResultsDisplay.vue"
+import { partnershipText } from "./partnership"
 import {
     Deal,
     DealCounterPair,
@@ -62,6 +63,7 @@ import {
     Trick,
     Call,
     Card,
+    DealResult,
 } from "@/api/types"
 import { partnershipFor } from "@/utils.ts"
 import _ from "lodash"
@@ -69,6 +71,24 @@ import _ from "lodash"
 interface EventCallback {
     counter: number;
     callback: () => void;
+}
+
+function scoreMessage({contract, tricksWon, result}: DealEndEvent, position: Position | null) {
+    if (contract && tricksWon && result.partnership) {
+        const resultMessage = `Declarer made ${tricksWon} tricks.`;
+        const contractMadeMessage = `Contract ${tricksWon >= contract.bid.level + 6 ? "made" : "defeated"}.`
+        let scoreMessage = "";
+        if (position) {
+            const who = partnershipFor(position) == result.partnership ?
+                "You score" : "Opponent scores";
+            scoreMessage = `${who} ${result.score} points`;
+        } else {
+            scoreMessage = `${partnershipText(result.partnership)} scores ${result.score} points`;
+        }
+        return `${resultMessage}\n${contractMadeMessage}\n${scoreMessage}`;
+    } else {
+        return "Passed out";
+    }
 }
 
 @Component({
@@ -79,12 +99,14 @@ interface EventCallback {
         TableDisplay,
         CallPanel,
         CardPanel,
+        DealResultsDisplay,
     }
 })
-export default class BridgeTable extends mixins(PartnershipMixin) {
+export default class BridgeTable extends Vue {
     @Prop() private readonly gameUuid!: string;
     private deal = new Deal();
     private self = new Self();
+    private results: Array<DealResult> = [];
     private displayTrick: Trick | null = null;
     private ws?: WebSocket;
     private timerId?: number;
@@ -129,9 +151,21 @@ export default class BridgeTable extends mixins(PartnershipMixin) {
 
     private fetchSelfState = _.debounce(this._fetchSelfState, 50, { trailing: true })
 
+    private _fetchResults() {
+        if (this.gameUuid) {
+            const api = this.$store.state.api;
+            api.getResults(this.gameUuid).then(
+                (results: Array<DealResult>) => this.results = results
+            ).catch((err: Error) => this.$store.dispatch("reportError", err));
+        }
+    }
+
+    private fetchResults = _.debounce(this._fetchResults, 50, { trailing: true })
+
     private fetchGameState() {
         this.fetchDealState();
         this.fetchSelfState();
+        this.fetchResults();
     }
 
     private addCall({ position, call }: CallEvent) {
@@ -186,26 +220,13 @@ export default class BridgeTable extends mixins(PartnershipMixin) {
     }
 
     private recordScore(event: DealEndEvent) {
-        // TODO: Ideally, there would be a scoresheet component listing deal
-        // history and scores. But needs API support for retrieving past deal
-        // results.
-        const message = (({contract, tricksWon, result}: DealEndEvent, position: Position | null) => {
-            if (contract && tricksWon && result.partnership) {
-                const resultMessage = `Declarer made ${tricksWon} tricks.`;
-                const contractMadeMessage = `Contract ${tricksWon >= contract.bid.level + 6 ? "made" : "defeated"}.`
-                let scoreMessage = "";
-                if (position) {
-                    const who = partnershipFor(position) == result.partnership ?
-                        "You score" : "Opponent scores";
-                    scoreMessage = `${who} ${result.score} points`;
-                } else {
-                    scoreMessage = `${this.partnershipText(result.partnership)} scores ${result.score} points`;
-                }
-                return `${resultMessage}\n${contractMadeMessage}\n${scoreMessage}`;
-            } else {
-                return "Passed out";
-            }
-        })(event, this.self.position);
+        const latestResult = _.last(this.results)
+        if (latestResult && latestResult.deal.uuid == event.deal) {
+            latestResult.result = event.result;
+        } else {
+            this.results.push({ deal: { uuid: event.deal }, result: event.result });
+        }
+        const message = scoreMessage(event, this.self.position);
         this.$bvToast.toast(message, {
             title: "Deal result",
             autoHideDelay: 5000,
