@@ -5,6 +5,7 @@ Games endpoints
 
 import asyncio
 import uuid
+import typing
 
 import fastapi
 import orjson
@@ -102,6 +103,23 @@ async def get_game_self(
     """Handle getting self details"""
     client = await utils.get_bridge_client()
     return await client.get_self(game=game_uuid, player=player_uuid)
+
+
+@router.get(
+    "/{game_uuid}/results",
+    name="game_results",
+    summary="Get deal results of the game",
+    description="""The response will contain an array of deal results in the chronological
+    order.""",
+    response_model=typing.List[base_models.DealResult],
+    responses={fastapi.status.HTTP_404_NOT_FOUND: _GAME_NOT_FOUND_RESPONSE},
+)
+async def get_game_results(
+    game_uuid: uuid.UUID, player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid)
+):
+    del player_uuid
+    client = await utils.get_bridge_client()
+    return await client.get_results(game=game_uuid)
 
 
 @router.post(
