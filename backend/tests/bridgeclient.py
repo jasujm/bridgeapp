@@ -44,6 +44,13 @@ async def _wreak_havoc(client: bridgeprotocol.BridgeClient, game_uuid: uuid.UUID
             sys.exit(1)
 
 
+async def _get_results(client: bridgeprotocol.BridgeClient, game_uuid: uuid.UUID):
+    while True:
+        await asyncio.sleep(2)
+        results = await client.get_results(game=game_uuid)
+        logger.info("Deal results: %r", results)
+
+
 async def _get_turn_from_deal(client, game, player):
     deal, _ = await client.get_deal(game=game, player=player)
     return deal.positionInTurn
@@ -99,6 +106,7 @@ async def _async_main(
             await asyncio.wait(
                 [
                     asyncio.create_task(_wreak_havoc(client, game_uuid)),
+                    asyncio.create_task(_get_results(client, game_uuid)),
                     asyncio.create_task(
                         _play_bridge_game(client, event_receiver, game_uuid)
                     ),
