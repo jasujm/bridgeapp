@@ -17,7 +17,7 @@
                 class="lho"
                 :class="handClasses(lhoPosition)" />
         </b-col>
-        <b-col cols="4">
+        <b-col id="trick-display-col" cols="4">
             <TrickDisplay
                 v-if="trick"
                 :trick="trick"
@@ -95,6 +95,12 @@ export default class TableDisplay extends mixins(SelfPositionMixin) {
 @import "~bootstrap/scss/functions";
 @import "~bootstrap/scss/variables";
 @import "~bootstrap/scss/mixins";
+
+#trick-display-col {
+  background-color: #f2ffe6;
+  border: 1px solid #479900;
+  min-height: 8rem;
+}
 
 .trick {
   min-height: 8rem;

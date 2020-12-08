@@ -5,7 +5,10 @@
     </b-alert>
     <b-container>
         <b-row>
-            <b-col lg="4">
+            <b-col lg="4" class="border-bottom mb-4">
+                <h3>Results</h3>
+                <DealResultsDisplay :results="results" />
+                <h3>Bidding</h3>
                 <Bidding
                     :northSouthVulnerable="deal.vulnerability.northSouth"
                     :eastWestVulnerable="deal.vulnerability.eastWest"
@@ -19,9 +22,9 @@
                     v-if="deal.declarer && deal.contract"
                     :selfPosition="self.position"
                     :tricks="deal.tricks" />
-                <DealResultsDisplay :results="results" />
             </b-col>
-            <b-col lg="8">
+            <b-col lg="8" class="mb-4">
+                <h3 class="d-none">Table</h3>
                 <TableDisplay
                     :selfPosition="self.position"
                     :positionInTurn="deal.positionInTurn"
@@ -353,3 +356,14 @@ export default class BridgeTable extends Vue {
     }
 }
 </script>
+
+<style lang="scss" scoped>
+@import "~bootstrap/scss/functions";
+@import "~bootstrap/scss/variables";
+
+.bidding, .deal-results {
+  height: 10rem;
+  overflow-y: scroll;
+  margin-bottom: $spacer;
+}
+</style>
