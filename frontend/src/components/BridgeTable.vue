@@ -346,7 +346,7 @@ export default class BridgeTable extends Vue {
         return _.last(this.deal.tricks) || null;
     }
 
-    @Watch("lastTrick")
+    @Watch("deal.tricks")
     private trickChanged() {
         // This visually retains the old trick for two seconds after new trick
         // is started
