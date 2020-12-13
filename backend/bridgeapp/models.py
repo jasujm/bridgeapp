@@ -157,12 +157,11 @@ CardList = typing.List[typing.Optional[CardType]]
 """List of cards, either revealed or not revealed"""
 
 
-class Cards(pydantic.BaseModel):
+class CardsInHands(pydantic.BaseModel):
     """Cards in a bridge deal
 
-    Describes the cards held by each of the four positions. A card may
-    be either known or unknown, represented by a Card object or null,
-    respectively.
+    Cards held by the players in each position. A card may be either known or
+    unknown, represented by a Card object or null, respectively.
     """
 
     north: CardList = []
@@ -250,7 +249,7 @@ class Deal(IdentifiableModel):
     calls: typing.List[PositionCallPair] = []
     declarer: typing.Optional[Position]
     contract: typing.Optional[Contract]
-    cards: Cards = Cards()
+    cards: CardsInHands = CardsInHands()
     tricks: typing.List[Trick] = []
     vulnerability: Vulnerability = Vulnerability()
 

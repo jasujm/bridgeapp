@@ -453,7 +453,9 @@ async def test_bridge_client_get_command_should_fail_if_reply_missing_get(
             contract=models.Contract(
                 bid=_any_bid(), doubling=models.Doubling.redoubled
             ),
-            cards=models.Cards(north=[_any_card(), _any_card()], east=[None, None]),
+            cards=models.CardsInHands(
+                north=[_any_card(), _any_card()], east=[None, None]
+            ),
             tricks=[
                 models.Trick(
                     cards=[
