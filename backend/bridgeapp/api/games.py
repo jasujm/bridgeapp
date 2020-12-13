@@ -117,6 +117,7 @@ async def get_game_self(
 async def get_game_results(
     game_uuid: uuid.UUID, player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid)
 ):
+    """Handle getting deal results"""
     del player_uuid
     client = await utils.get_bridge_client()
     return await client.get_results(game=game_uuid)
