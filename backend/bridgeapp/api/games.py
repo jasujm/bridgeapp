@@ -154,11 +154,13 @@ async def get_game_players(
     },
 )
 async def post_game_players(
-    game_uuid: uuid.UUID, player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid),
+    game_uuid: uuid.UUID,
+    player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid),
+    position: typing.Optional[base_models.Position] = None,
 ):
     """Handle adding player to a game"""
     client = await utils.get_bridge_client()
-    await client.join(game=game_uuid, player=player_uuid)
+    await client.join(game=game_uuid, player=player_uuid, position=position)
 
 
 @router.delete(

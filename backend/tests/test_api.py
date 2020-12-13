@@ -177,10 +177,27 @@ def test_read_players_should_fail_if_game_not_found(
 
 def test_add_player(client, mock_bridge_client, game_uuid, username_and_player_uuid):
     username, player_uuid = username_and_player_uuid
-    mock_bridge_client.join.return_value = None
     res = client.post(f"/api/v1/games/{game_uuid}/players", auth=(username, "secret"))
     assert res.status_code == fastapi.status.HTTP_204_NO_CONTENT
-    mock_bridge_client.join.assert_awaited_once_with(game=game_uuid, player=player_uuid)
+    mock_bridge_client.join.assert_awaited_once_with(
+        game=game_uuid, player=player_uuid, position=None
+    )
+
+
+@pytest.mark.parametrize("position", list(models.Position))
+def test_add_player_with_position(
+    client, mock_bridge_client, game_uuid, username_and_player_uuid, position
+):
+    username, player_uuid = username_and_player_uuid
+    res = client.post(
+        f"/api/v1/games/{game_uuid}/players",
+        params={"position": position.value},
+        auth=(username, "secret"),
+    )
+    assert res.status_code == fastapi.status.HTTP_204_NO_CONTENT
+    mock_bridge_client.join.assert_awaited_once_with(
+        game=game_uuid, player=player_uuid, position=position
+    )
 
 
 @pytest.mark.parametrize(
@@ -202,7 +219,6 @@ def test_add_player_should_fail_if_backend_fails(
 
 def test_remove_player(client, mock_bridge_client, game_uuid, username_and_player_uuid):
     username, player_uuid = username_and_player_uuid
-    mock_bridge_client.leave.return_value = None
     res = client.delete(f"/api/v1/games/{game_uuid}/players", auth=(username, "secret"))
     assert res.status_code == fastapi.status.HTTP_204_NO_CONTENT
     mock_bridge_client.leave.assert_awaited_once_with(
@@ -224,7 +240,6 @@ def test_make_call(client, mock_bridge_client, game_uuid, username_and_player_uu
     call = models.Call(
         type=models.CallType.bid, bid=models.Bid(level=4, strain=models.Strain.spades)
     )
-    mock_bridge_client.call.return_value = None
     res = client.post(
         f"/api/v1/games/{game_uuid}/calls", auth=(username, "secret"), data=call.json()
     )
@@ -269,7 +284,6 @@ def test_make_call_should_fail_if_backend_fails(
 def test_play_card(client, mock_bridge_client, game_uuid, username_and_player_uuid):
     username, player_uuid = username_and_player_uuid
     card = models.CardType(rank=models.Rank.queen, suit=models.Suit.hearts)
-    mock_bridge_client.play.return_value = None
     res = client.post(
         f"/api/v1/games/{game_uuid}/trick", auth=(username, "secret"), data=card.json()
     )
