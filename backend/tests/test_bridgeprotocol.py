@@ -435,10 +435,9 @@ async def test_bridge_client_get_command_should_fail_if_reply_missing_get(
 @pytest.mark.parametrize(
     "pubstate",
     [
-        models.Deal(uuid=uuid.uuid4()),
+        models.Deal(),
         # This isn't valid bridge deal state but... whatever
         models.Deal(
-            uuid=uuid.uuid4(),
             positionInTurn=_any_position(),
             calls=[
                 models.PositionCallPair(
@@ -679,12 +678,12 @@ class TestBridgeClientGetSelfCommand:
         [],
         [
             models.DealResult(
-                deal=models.PartialDeal(uuid=uuid.uuid4()),
+                deal=models.PartialDeal(),
                 result=models.DuplicateResult(
                     partnership=models.Partnership.northSouth, score=100
                 ),
             ),
-            models.DealResult(deal=models.PartialDeal(uuid=uuid.uuid4()), result=None),
+            models.DealResult(deal=models.PartialDeal(), result=None),
         ],
     ],
 )
@@ -742,10 +741,10 @@ class TestBridgeClientGetResultsCommand:
     [
         models.PlayersInGame(),
         models.PlayersInGame(
-            north=models.Player(uuid=uuid.uuid4()),
-            east=models.Player(uuid=uuid.uuid4()),
-            south=models.Player(uuid=uuid.uuid4()),
-            west=models.Player(uuid=uuid.uuid4()),
+            north=models.Player(),
+            east=models.Player(),
+            south=models.Player(),
+            west=models.Player(),
         ),
     ],
 )

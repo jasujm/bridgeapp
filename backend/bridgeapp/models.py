@@ -5,12 +5,18 @@ Models
 
 import enum
 import typing
-import uuid
+from uuid import UUID, uuid4
 
 import pydantic
 
 # Don't care about warning related to pydantic conventions
 # pylint: disable=no-self-argument,no-self-use,too-few-public-methods,missing-class-docstring,no-member
+
+
+class IdentifiableModel(pydantic.BaseModel):
+    """Base class for models that are identified by UUID"""
+
+    uuid: UUID = pydantic.Field(default_factory=uuid4)
 
 
 class Position(enum.Enum):
@@ -223,19 +229,15 @@ class Trick(pydantic.BaseModel):
     winner: typing.Optional[Position]
 
 
-class Game(pydantic.BaseModel):
+class Game(IdentifiableModel):
     """Bridge game"""
 
-    uuid: uuid.UUID
 
-
-class Player(pydantic.BaseModel):
+class Player(IdentifiableModel):
     """Player taking part in a bridge game"""
 
-    uuid: uuid.UUID
 
-
-class Deal(pydantic.BaseModel):
+class Deal(IdentifiableModel):
     """Bridge deal
 
     The deal object contains the description of an ongoing or
@@ -244,7 +246,6 @@ class Deal(pydantic.BaseModel):
     to different players (notably which cards are visible to whom).
     """
 
-    uuid: uuid.UUID
     positionInTurn: typing.Optional[Position]
     calls: typing.List[PositionCallPair] = []
     declarer: typing.Optional[Position]
@@ -254,10 +255,8 @@ class Deal(pydantic.BaseModel):
     vulnerability: Vulnerability = Vulnerability()
 
 
-class PartialDeal(pydantic.BaseModel):
+class PartialDeal(IdentifiableModel):
     """Partial version of Deal"""
-
-    uuid: uuid.UUID
 
 
 class PlayerState(pydantic.BaseModel):
@@ -308,12 +307,6 @@ class DealResult(pydantic.BaseModel):
 
     deal: PartialDeal
     result: typing.Optional[DuplicateResult]
-
-
-class Player(pydantic.BaseModel):
-    """A player"""
-
-    uuid: uuid.UUID
 
 
 class PlayersInGame(pydantic.BaseModel):
