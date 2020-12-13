@@ -141,7 +141,7 @@ async def get_game_players(
 
 @router.post(
     "/{game_uuid}/players",
-    name="game_players",
+    name="game_players_create",
     summary="Add a player to a game",
     description="""Make the authenticated player join the game, if there are seats available.""",
     status_code=fastapi.status.HTTP_204_NO_CONTENT,
@@ -159,6 +159,22 @@ async def post_game_players(
     """Handle adding player to a game"""
     client = await utils.get_bridge_client()
     await client.join(game=game_uuid, player=player_uuid)
+
+
+@router.delete(
+    "/{game_uuid}/players",
+    name="game_players_delete",
+    summary="Remove a player from a game",
+    description="""Make the authenticated player leave the game.""",
+    status_code=fastapi.status.HTTP_204_NO_CONTENT,
+    responses={fastapi.status.HTTP_404_NOT_FOUND: _GAME_NOT_FOUND_RESPONSE,},
+)
+async def delete_game_players(
+    game_uuid: uuid.UUID, player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid),
+):
+    """Handle removing a player from a game"""
+    client = await utils.get_bridge_client()
+    await client.leave(game=game_uuid, player=player_uuid)
 
 
 @router.post(

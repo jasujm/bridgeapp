@@ -121,6 +121,13 @@ class BridgeClient(_base.ClientBase):
         return self._convert_reply_safe(uuid.UUID, reply, "game", command="join")
 
     @_retries_handshake
+    async def leave(
+        self, *, game: uuid.UUID, player: uuid.UUID,
+    ):
+        """Send leave command to the server"""
+        await self.command("leave", game=game, player=player)
+
+    @_retries_handshake
     async def get(
         self, *, game: uuid.UUID, player: OptionalUuid = None, get: typing.List[str]
     ):

@@ -62,19 +62,41 @@ async def _get_turn_from_events(event_receiver):
             return models.Position(event.position)
 
 
+async def _change_players(
+    client: bridgeprotocol.BridgeClient,
+    player_uuids: typing.Mapping[models.Position, uuid.UUID],
+    game_uuid: uuid.UUID,
+):
+    new_player_uuids = {}
+    for position, player_uuid in player_uuids.items():
+        await client.leave(game=game_uuid, player=player_uuid)
+        new_player_uuid = uuid.uuid4()
+        new_player_uuids[position] = new_player_uuid
+        await client.join(game=game_uuid, player=new_player_uuid, position=position)
+    return new_player_uuids
+
+
+def _alarm_task():
+    return asyncio.create_task(asyncio.sleep(1))
+
+
 async def _play_bridge_game(
     client: bridgeprotocol.BridgeClient,
     event_receiver: bridgeprotocol.BridgeEventReceiver,
     game_uuid: uuid.UUID,
 ):
     player_uuids = {position: uuid.uuid4() for position in models.Position}
-    player_uuid = player_uuids[models.Position.north]
     for position, player_uuid in player_uuids.items():
         await client.join(game=game_uuid, player=player_uuid, position=position)
     players_in_game = await client.get_players(game=game_uuid)
     logger.info("Players in the game: %r", players_in_game)
     position_in_turn = await _get_turn_from_deal(client, game_uuid, player_uuid)
+    alarm = _alarm_task()
     while True:
+        if alarm.done():
+            await alarm
+            player_uuids = await _change_players(client, player_uuids, game_uuid)
+            alarm = _alarm_task()
         player_uuid = player_uuids[position_in_turn]
         player_state = await client.get_self(game=game_uuid, player=player_uuid)
         if calls := player_state.allowedCalls:

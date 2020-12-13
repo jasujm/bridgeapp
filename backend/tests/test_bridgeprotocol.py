@@ -345,6 +345,21 @@ async def test_bridge_client_join_command_should_fail_if_reply_has_invalid_type(
 
 
 @pytest.mark.asyncio
+async def test_bridge_client_leave_command(server, client, game_and_player):
+    assert (
+        await _command_helper(
+            server,
+            client,
+            client.leave(**game_and_player),
+            expected_command=b"leave",
+            expected_command_args=game_and_player,
+            reply_args={},
+        )
+        is None
+    )
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "call",
     [

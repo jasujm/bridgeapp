@@ -25,6 +25,7 @@ def mock_bridge_client(monkeypatch):
     mock = unittest.mock.Mock(
         game=unittest.mock.AsyncMock(),
         join=unittest.mock.AsyncMock(),
+        leave=unittest.mock.AsyncMock(),
         get_deal=unittest.mock.AsyncMock(),
         get_self=unittest.mock.AsyncMock(),
         get_results=unittest.mock.AsyncMock(),
@@ -197,6 +198,25 @@ def test_add_player_should_fail_if_backend_fails(
     res = client.post(f"/api/v1/games/{game_uuid}/players", auth=(username, "secret"))
     assert res.status_code == status_code
     mock_bridge_client.join.assert_awaited_once()
+
+
+def test_remove_player(client, mock_bridge_client, game_uuid, username_and_player_uuid):
+    username, player_uuid = username_and_player_uuid
+    mock_bridge_client.leave.return_value = None
+    res = client.delete(f"/api/v1/games/{game_uuid}/players", auth=(username, "secret"))
+    assert res.status_code == fastapi.status.HTTP_204_NO_CONTENT
+    mock_bridge_client.leave.assert_awaited_once_with(
+        game=game_uuid, player=player_uuid
+    )
+
+
+def test_remove_player_should_fail_if_backend_fails(
+    client, mock_bridge_client, game_uuid, username
+):
+    mock_bridge_client.leave.side_effect = bridgeprotocol.NotFoundError
+    res = client.delete(f"/api/v1/games/{game_uuid}/players", auth=(username, "secret"))
+    assert res.status_code == fastapi.status.HTTP_404_NOT_FOUND
+    mock_bridge_client.leave.assert_awaited_once()
 
 
 def test_make_call(client, mock_bridge_client, game_uuid, username_and_player_uuid):
