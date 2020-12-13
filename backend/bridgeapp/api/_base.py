@@ -6,7 +6,11 @@ from bridgeapp import bridgeprotocol
 
 from . import models, games
 
-subapp = fastapi.FastAPI()
+subapp = fastapi.FastAPI(
+    title="Contract bridge API",
+    description="""API for playing contract bridge. Work in progress.""",
+    version="0.1",
+)
 
 subapp.include_router(games.router, prefix="/games", tags=["games"])
 
