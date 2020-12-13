@@ -1,8 +1,27 @@
 <template>
 <div class="bridge-table">
-    <b-alert :show="self.position === null" variant="info">
-        You have not joined this game. You can do so with the “Join” button.
-    </b-alert>
+    <b-form-group>
+        <b-dropdown
+            v-if="self.position === null"
+            class="join-game any"
+            block right split
+            variant="primary"
+            text="Join table"
+            @click="joinGame()">
+            <b-dropdown-item
+                v-for="position of availablePositions"
+                class="join-game"
+                :class="position"
+                :key="position"
+                @click="joinGame(position)">{{ positionText(position) }}</b-dropdown-item>
+        </b-dropdown>
+        <b-button
+            v-else
+            class="leave-game"
+            block
+            variant="secondary"
+            @click="leaveGame()">Leave table</b-button>
+    </b-form-group>
     <b-container>
         <b-row>
             <b-col lg="4" class="border-bottom mb-4">
@@ -40,7 +59,8 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Watch } from "vue-property-decorator"
+import Component, { mixins } from "vue-class-component"
+import { Prop, Watch } from "vue-property-decorator"
 import { AxiosError } from "axios"
 import Bidding from "./Bidding.vue"
 import BiddingResult from "./BiddingResult.vue"
@@ -50,11 +70,13 @@ import CallPanel from "./CallPanel.vue"
 import CardPanel from "./CardPanel.vue"
 import DealResultsDisplay from "./DealResultsDisplay.vue"
 import { partnershipText } from "./partnership"
+import PositionMixin from "./position"
 import {
     Deal,
     DealCounterPair,
     Self,
     Event,
+    PlayerEvent,
     TurnEvent,
     CallEvent,
     BiddingEvent,
@@ -67,6 +89,7 @@ import {
     Call,
     Card,
     DealResult,
+    PlayersInGame,
 } from "@/api/types"
 import { partnershipFor } from "@/utils.ts"
 import _ from "lodash"
@@ -105,11 +128,12 @@ function scoreMessage({contract, tricksWon, result}: DealEndEvent, position: Pos
         DealResultsDisplay,
     }
 })
-export default class BridgeTable extends Vue {
+export default class BridgeTable extends mixins(PositionMixin) {
     @Prop() private readonly gameUuid!: string;
     private deal = new Deal();
     private self = new Self();
     private results: Array<DealResult> = [];
+    private players: PlayersInGame = { north: null, east: null, south: null, west: null };
     private displayTrick: Trick | null = null;
     private ws?: WebSocket;
     private timerId?: number;
@@ -165,10 +189,58 @@ export default class BridgeTable extends Vue {
 
     private fetchResults = _.debounce(this._fetchResults, 50, { trailing: true })
 
+    private _fetchPlayers() {
+        if (this.gameUuid) {
+            const api = this.$store.state.api;
+            api.getPlayers(this.gameUuid).then(
+                (players: PlayersInGame) => this.players = players
+            ).catch((err: Error) => this.$store.dispatch("reportError", err));
+        }
+    }
+
+    private fetchPlayers = _.debounce(this._fetchPlayers, 50, { trailing: true })
+
     private fetchGameState() {
         this.fetchDealState();
         this.fetchSelfState();
         this.fetchResults();
+        this.fetchPlayers();
+    }
+
+    private get availablePositions() {
+        return _.values(Position).filter(p => this.players[p] === null);
+    }
+
+    private joinGame(position?: Position) {
+        if (this.gameUuid) {
+            const api = this.$store.state.api;
+            api.joinGame(this.gameUuid, position).then(
+                () => {
+                    this.fetchSelfState();
+                    this.fetchDealState();
+                }
+            ).catch(
+                (err: Error) => this.$store.dispatch("reportError", err)
+            );
+        }
+    }
+
+    private leaveGame() {
+        if (this.gameUuid) {
+            const api = this.$store.state.api;
+            api.leaveGame(this.gameUuid).then(
+                () => {
+                    this.self = new Self();
+                    this.fetchDealState();
+                }
+            ).catch(
+                (err: Error) => this.$store.dispatch("reportError", err)
+            );
+        }
+    }
+
+    private changePlayer({ position, player }: PlayerEvent) {
+        this.players[position] = player ? { uuid: player } : null;
     }
 
     private addCall({ position, call }: CallEvent) {
@@ -299,7 +371,8 @@ export default class BridgeTable extends Vue {
         this.ws = this.$store.state.api.subscribe(
             this.gameUuid,
             {
-                open: this.fetchGameState.bind(this),
+                open: this.fetchGameState.bind(this),  // @ts-ignore
+                player: wrap(this.changePlayer),  // @ts-ignore
                 deal: wrap(this.fetchDealState),  // @ts-ignore
                 turn: wrap(this.handleTurn),  // @ts-ignore
                 call: wrap(this.addCall),  // @ts-ignore

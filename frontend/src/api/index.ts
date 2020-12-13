@@ -12,6 +12,8 @@ import {
     ErrorSeverity,
     ErrorMessage,
     DealResult,
+    Position,
+    PlayersInGame,
 } from "./types"
 
 function defaultWsBaseUrl() {
@@ -51,9 +53,17 @@ export default class {
         return response.data as string;
     }
 
-    async joinGame(gameUuid: string) {
+    async joinGame(gameUuid: string, position?: Position) {
         await this.request({
             method: "post",
+            url: `/games/${gameUuid}/players`,
+            params: { position },
+        });
+    }
+
+    async leaveGame(gameUuid: string) {
+        await this.request({
+            method: "delete",
             url: `/games/${gameUuid}/players`,
         });
     }
@@ -99,6 +109,14 @@ export default class {
             url: `/games/${gameUuid}/results`,
         });
         return response.data as Array<DealResult>;
+    }
+
+    async getPlayers(gameUuid: string) {
+        const response = await this.request({
+            method: "get",
+            url: `/games/${gameUuid}/players`,
+        });
+        return response.data as PlayersInGame;
     }
 
     subscribe(gameUuid: string, handlers: EventHandlers) {

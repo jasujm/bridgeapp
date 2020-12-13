@@ -46,12 +46,8 @@ describe("GameSelector.vue", function() {
             await flushPromises();
         });
 
-        it("should send API request", async function() {
-            expect(fakeApi.joinGame).to.be.calledWith(uuid);
-        });
-
         it("should emit an event", async function() {
-            expect(wrapper.emitted("game-joined")).to.be.deep.equal([[uuid]]);
+            expect(wrapper.emitted("game-selected")).to.be.deep.equal([[uuid]]);
         });
     });
 });

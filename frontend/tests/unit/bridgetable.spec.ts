@@ -15,17 +15,21 @@ import {
     Doubling,
     Partnership,
     DealEndEvent,
+    PlayersInGame,
 } from "@/api/types"
 import flushPromises from "flush-promises"
 import _ from "lodash"
 
 const gameUuid = "6bac87b3-8e49-4675-bf69-8c0d6a351f40";
+const playerUuid = "313343df-3c97-42aa-a4f3-3abe10ced3b0";
+const otherPlayerUuid = "fb11eeae-7be2-41d6-a7f9-4dc126c2bf3c";
 
 describe("BridgeTable.vue", function() {
     let clock: any;
     let fakeApi: any;
     let self: Self;
     let deal: Deal;
+    let players: PlayersInGame;
     let store: any;
     let state: any;
     let actions: any;
@@ -35,10 +39,19 @@ describe("BridgeTable.vue", function() {
         clock = sinon.useFakeTimers();
         self = new Self();
         deal = new Deal();
+        players = {
+            north: null,
+            east: null,
+            south: null,
+            west: { uuid: otherPlayerUuid },
+        };
         fakeApi = {
             getDeal: sinon.fake.resolves(deal),
             getSelf: sinon.stub().resolves(self),
             getResults: sinon.fake.resolves([]),
+            getPlayers: sinon.fake.resolves(players),
+            joinGame: sinon.fake.resolves(undefined),
+            leaveGame: sinon.fake.resolves(undefined),
             makeCall: sinon.stub().resolves(),
             playCard: sinon.stub().resolves(),
             subscribe: sinon.fake(),
@@ -66,6 +79,7 @@ describe("BridgeTable.vue", function() {
         expect(fakeApi.getDeal).to.be.calledWith(gameUuid);
         expect(fakeApi.getSelf).to.be.calledWith(gameUuid);
         expect(fakeApi.getResults).to.be.calledWith(gameUuid);
+        expect(fakeApi.getPlayers).to.be.calledWith(gameUuid);
     });
 
     it("should fetch game data when game is changed", async function() {
@@ -77,6 +91,46 @@ describe("BridgeTable.vue", function() {
         expect(fakeApi.getDeal).to.be.calledWith(otherUuid);
         expect(fakeApi.getSelf).to.be.calledWith(otherUuid);
         expect(fakeApi.getResults).to.be.calledWith(otherUuid);
+        expect(fakeApi.getPlayers).to.be.calledWith(otherUuid);
+    });
+
+    describe("join", function() {
+        it("should display join buttons when the player is not in the game", function() {
+            expect(wrapper.find(".join-game.any").exists()).to.be.true;
+        });
+        it("should join the game when the join button is pressed", async function() {
+            await wrapper.find(".join-game.any a").trigger("click");
+            expect(fakeApi.joinGame).to.be.calledWith(gameUuid);
+        });
+        for (const position of [Position.north, Position.east, Position.south]) {
+            it(`should display join buttons for available seats: ${position}`, function() {
+                expect(wrapper.find(`.join-game.${position}`).exists()).to.be.true;
+            });
+            it(`should join the game when the join button is pressed: ${position}`, async function() {
+                await wrapper.find(`.join-game.${position} a`).trigger("click");
+                expect(fakeApi.joinGame).to.be.calledWith(gameUuid, position);
+            });
+        }
+        it("should not display join button for unavailable seat", function() {
+            expect(wrapper.find(".join-game.west").exists()).to.be.false;
+        });
+    });
+
+    describe("leave", function() {
+        this.beforeEach(async function() {
+            players.north = { uuid: playerUuid };
+            self.position = Position.north;
+            wrapper.setData({ self, players });
+            await wrapper.vm.$nextTick();
+        });
+
+        it("should display leave buttons when the player is in the game", function() {
+            expect(wrapper.find(".leave-game").exists()).to.be.true;
+        });
+        it("should leave the game when the leave button is pressed", async function() {
+            await wrapper.find(".leave-game").trigger("click");
+            expect(fakeApi.leaveGame).to.be.calledWith(gameUuid);
+        });
     });
 
     describe("turn", function() {
@@ -161,6 +215,30 @@ describe("BridgeTable.vue", function() {
         this.beforeEach(function() {
             wrapper.setData({ dealCounter: null });
             handlers = fakeApi.subscribe.getCall(0).lastArg;
+        });
+
+        it("should update players on player event", async function() {
+            handlers.player!({
+                game: gameUuid,
+                type: "player",
+                position: Position.north,
+                player: playerUuid,
+                counter: 1
+            });
+            await wrapper.vm.$nextTick();
+            expect(wrapper.find(".join-game.north").exists()).to.be.false;
+        });
+
+        it("should update players on player event", async function() {
+            handlers.player!({
+                game: gameUuid,
+                type: "player",
+                position: Position.west,
+                player: null,
+                counter: 1
+            });
+            await wrapper.vm.$nextTick();
+            expect(wrapper.find(`.join-game.west`).exists()).to.be.true;
         });
 
         it("should update deal status on deal event", async function() {

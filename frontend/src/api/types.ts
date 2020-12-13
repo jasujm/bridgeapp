@@ -136,10 +136,21 @@ export interface DealResult {
     result: DuplicateResult | null;
 }
 
+export interface Player {
+    uuid: string;
+}
+
+export type PlayersInGame = Record<Position, Player | null>;
+
 export interface Event {
     game: string;
     type: string;
     counter: number;
+}
+
+export interface PlayerEvent extends Event {
+    position: Position;
+    player: string | null;
 }
 
 export type DealEvent = Event;
@@ -181,6 +192,7 @@ export interface DealEndEvent extends Event {
 
 export interface EventHandlers {
     open?: (event: WsEvent) => void;
+    player?: (event: PlayerEvent) => void;
     deal?: (event: DealEvent) => void;
     turn?: (event: TurnEvent) => void;
     call?: (event: CallEvent) => void;

@@ -2,7 +2,7 @@
 <div class="bridge-game">
     <ErrorDisplay :severity="$store.state.error.severity" :message="$store.state.error.message" />
     <b-alert variant="info" :show="!$store.getters.isLoggedIn">Login to get started.</b-alert>
-    <GameSelector ref="selector" @game-joined="updateGame($event)" />
+    <GameSelector ref="selector" @game-selected="updateGame($event)" />
     <BridgeTable ref="table" v-if="hasGame" :gameUuid="this.$route.params.gameUuid" />
 </div>
 </template>
