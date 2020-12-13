@@ -454,7 +454,7 @@ async def test_bridge_client_get_command_should_fail_if_reply_missing_get(
             contract=models.Contract(
                 bid=_any_bid(), doubling=models.Doubling.redoubled
             ),
-            cards=models.Cards(north=[_any_card(), _any_card()], east=[None, None],),
+            cards=models.Cards(north=[_any_card(), _any_card()], east=[None, None]),
             tricks=[
                 models.Trick(
                     cards=[
@@ -467,7 +467,7 @@ async def test_bridge_client_get_command_should_fail_if_reply_missing_get(
                 )
                 for j in range(3)
             ],
-            vulnerability=models.Vulnerability(northSouth=True, eastWest=False,),
+            vulnerability=models.Vulnerability(northSouth=True, eastWest=False),
         ),
     ],
 )
@@ -684,10 +684,7 @@ class TestBridgeClientGetSelfCommand:
                     partnership=models.Partnership.northSouth, score=100
                 ),
             ),
-            models.DealResult(
-                deal=models.PartialDeal(uuid=uuid.uuid4()),
-                result=None,
-            )
+            models.DealResult(deal=models.PartialDeal(uuid=uuid.uuid4()), result=None),
         ],
     ],
 )
@@ -736,6 +733,69 @@ class TestBridgeClientGetResultsCommand:
                 expected_command=b"get",
                 expected_command_args={"game": game_uuid, "get": ["results"]},
                 reply_args={"get": {"results": "invalid"}},
+            )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "players",
+    [
+        models.PlayersInGame(),
+        models.PlayersInGame(
+            north=models.Player(uuid=uuid.uuid4()),
+            east=models.Player(uuid=uuid.uuid4()),
+            south=models.Player(uuid=uuid.uuid4()),
+            west=models.Player(uuid=uuid.uuid4()),
+        ),
+    ],
+)
+class TestBridgeClientGetPlayersCommand:
+    async def test_success(self, server, client, game_uuid, players):
+        assert (
+            await _command_helper(
+                server,
+                client,
+                client.get_players(game=game_uuid),
+                expected_command=b"get",
+                expected_command_args={"game": game_uuid, "get": ["players"]},
+                reply_args={
+                    "get": {
+                        "players": {
+                            "north": getattr(players.north, "uuid", None),
+                            "east": getattr(players.east, "uuid", None),
+                            "south": getattr(players.south, "uuid", None),
+                            "west": getattr(players.west, "uuid", None),
+                        }
+                    }
+                },
+            )
+            == players
+        )
+
+    async def test_missing_players_should_lead_to_failure(
+        self, server, client, game_uuid, players
+    ):
+        with pytest.raises(bridgeprotocol.InvalidMessage):
+            await _command_helper(
+                server,
+                client,
+                client.get_players(game=game_uuid),
+                expected_command=b"get",
+                expected_command_args={"game": game_uuid, "get": ["players"]},
+                reply_args={"get": {}},
+            )
+
+    async def test_invalid_players_should_lead_to_failure(
+        self, server, client, game_uuid, players
+    ):
+        with pytest.raises(bridgeprotocol.InvalidMessage):
+            await _command_helper(
+                server,
+                client,
+                client.get_players(game=game_uuid),
+                expected_command=b"get",
+                expected_command_args={"game": game_uuid, "get": ["players"]},
+                reply_args={"get": {"players": "invalid"}},
             )
 
 

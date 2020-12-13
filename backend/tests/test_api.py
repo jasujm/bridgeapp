@@ -28,6 +28,7 @@ def mock_bridge_client(monkeypatch):
         get_deal=unittest.mock.AsyncMock(),
         get_self=unittest.mock.AsyncMock(),
         get_results=unittest.mock.AsyncMock(),
+        get_players=unittest.mock.AsyncMock(),
         call=unittest.mock.AsyncMock(),
         play=unittest.mock.AsyncMock(),
     )
@@ -135,7 +136,9 @@ def test_read_results(client, mock_bridge_client, game_uuid, username_and_player
     deal_results = [
         models.DealResult(
             deal=models.PartialDeal(uuid=uuid.uuid4()),
-            result=models.DuplicateResult(partnership=models.Partnership.eastWest, score=420),
+            result=models.DuplicateResult(
+                partnership=models.Partnership.eastWest, score=420
+            ),
         )
     ]
     mock_bridge_client.get_results.return_value = deal_results
@@ -151,6 +154,26 @@ def test_read_results_should_fail_if_game_not_found(
     res = client.get(f"/api/v1/games/{game_uuid}/results", auth=(username, "secret"))
     assert res.status_code == fastapi.status.HTTP_404_NOT_FOUND
     mock_bridge_client.get_results.assert_awaited_once()
+
+
+def test_read_players(client, mock_bridge_client, game_uuid, username_and_player_uuid):
+    username, player_uuid = username_and_player_uuid
+    players_in_game = models.PlayersInGame(
+        north=models.Player(uuid=player_uuid),
+    )
+    mock_bridge_client.get_players.return_value = players_in_game
+    res = client.get(f"/api/v1/games/{game_uuid}/players", auth=(username, "secret"))
+    assert models.PlayersInGame(**res.json()) == players_in_game
+    mock_bridge_client.get_players.assert_awaited_once_with(game=game_uuid)
+
+
+def test_read_players_should_fail_if_game_not_found(
+    client, mock_bridge_client, game_uuid, username
+):
+    mock_bridge_client.get_players.side_effect = bridgeprotocol.NotFoundError
+    res = client.get(f"/api/v1/games/{game_uuid}/players", auth=(username, "secret"))
+    assert res.status_code == fastapi.status.HTTP_404_NOT_FOUND
+    mock_bridge_client.get_players.assert_awaited_once()
 
 
 def test_add_player(client, mock_bridge_client, game_uuid, username_and_player_uuid):

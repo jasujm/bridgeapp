@@ -308,3 +308,22 @@ class DealResult(pydantic.BaseModel):
 
     deal: PartialDeal
     result: typing.Optional[DuplicateResult]
+
+
+class Player(pydantic.BaseModel):
+    """A player"""
+
+    uuid: uuid.UUID
+
+
+class PlayersInGame(pydantic.BaseModel):
+    """Players in a bridge game
+
+    Identifies the players sitting at each seat in a bridge game. Vacant seats
+    are represented by null values.
+    """
+
+    north: typing.Optional[Player]
+    east: typing.Optional[Player]
+    south: typing.Optional[Player]
+    west: typing.Optional[Player]

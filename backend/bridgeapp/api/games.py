@@ -122,6 +122,22 @@ async def get_game_results(
     return await client.get_results(game=game_uuid)
 
 
+@router.get(
+    "/{game_uuid}/players",
+    name="game_players_list",
+    summary="Get the players in a game",
+    description="""Retrieve a mapping between positions and players in a game.""",
+    response_model=base_models.PlayersInGame,
+)
+async def get_game_players(
+    game_uuid: uuid.UUID, player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid),
+):
+    """Handle getting player details"""
+    del player_uuid
+    client = await utils.get_bridge_client()
+    return await client.get_players(game=game_uuid)
+
+
 @router.post(
     "/{game_uuid}/players",
     name="game_players",

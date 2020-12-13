@@ -166,6 +166,14 @@ class BridgeClient(_base.ClientBase):
         )
 
     @_retries_handshake
+    async def get_players(self, *, game: uuid.UUID):
+        """Get the players in a game from the server"""
+        reply = await self.command("get", game=game, get=["players"])
+        return self._convert_reply_safe(
+            self._create_players_map, reply, "get", command="get"
+        )
+
+    @_retries_handshake
     async def call(
         self, *, game: uuid.UUID, player: OptionalUuid = None, call: models.Call
     ):
@@ -211,6 +219,15 @@ class BridgeClient(_base.ClientBase):
             )
             for result in get["results"]
         ]
+
+    @staticmethod
+    def _create_players_map(get):
+        return models.PlayersInGame(
+            **{
+                position: uuid and models.Player(uuid=uuid)
+                for (position, uuid) in get["players"].items()
+            }
+        )
 
     def _create_command_failure_exception(self, status: bytes):
         code = utils.get_error_code(status)

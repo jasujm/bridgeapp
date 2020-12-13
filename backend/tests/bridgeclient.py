@@ -71,6 +71,8 @@ async def _play_bridge_game(
     player_uuid = player_uuids[models.Position.north]
     for position, player_uuid in player_uuids.items():
         await client.join(game=game_uuid, player=player_uuid, position=position)
+    players_in_game = await client.get_players(game=game_uuid)
+    logger.info("Players in the game: %r", players_in_game)
     position_in_turn = await _get_turn_from_deal(client, game_uuid, player_uuid)
     while True:
         player_uuid = player_uuids[position_in_turn]
