@@ -17,4 +17,4 @@ FROM base
 COPY --from=builder /usr/venv /usr/venv
 COPY . .
 
-CMD ["/usr/venv/bridgeapp/bin/gunicorn", "--proxy-protocol", "-b", "0.0.0.0", "-k", "uvicorn.workers.UvicornWorker", "bridgeapp"]
+CMD ["/usr/venv/bridgeapp/bin/gunicorn", "--forwarded-allow-ips", "*", "-b", "0.0.0.0", "-k", "uvicorn.workers.UvicornWorker", "bridgeapp"]
