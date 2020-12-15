@@ -218,21 +218,11 @@ class BridgeClient(_base.ClientBase):
 
     @staticmethod
     def _create_deal_results(get):
-        return [
-            models.DealResult(
-                deal=models.PartialDeal(uuid=result["deal"]), result=result["result"]
-            )
-            for result in get["results"]
-        ]
+        return [models.DealResult(**result) for result in get["results"]]
 
     @staticmethod
     def _create_players_map(get):
-        return models.PlayersInGame(
-            **{
-                position: uuid and models.Player(uuid=uuid)
-                for (position, uuid) in get["players"].items()
-            }
-        )
+        return models.PlayersInGame(**get["players"])
 
     def _create_command_failure_exception(self, status: bytes):
         code = utils.get_error_code(status)

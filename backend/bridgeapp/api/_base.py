@@ -4,7 +4,7 @@ import fastapi
 
 from bridgeapp import bridgeprotocol
 
-from . import models, games
+from . import models, games, deals, players
 
 subapp = fastapi.FastAPI(
     title="Contract bridge API",
@@ -13,6 +13,8 @@ subapp = fastapi.FastAPI(
 )
 
 subapp.include_router(games.router, prefix="/games", tags=["games"])
+subapp.include_router(deals.router, prefix="/deals", tags=["deals"])
+subapp.include_router(players.router, prefix="/players", tags=["players"])
 
 
 def _exception_response(status: int, ex: Exception):

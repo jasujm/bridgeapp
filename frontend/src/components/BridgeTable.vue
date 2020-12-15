@@ -240,7 +240,7 @@ export default class BridgeTable extends mixins(PositionMixin) {
     }
 
     private changePlayer({ position, player }: PlayerEvent) {
-        this.players[position] = player ? { uuid: player } : null;
+        this.players[position] = player;
     }
 
     private addCall({ position, call }: CallEvent) {
@@ -296,10 +296,10 @@ export default class BridgeTable extends mixins(PositionMixin) {
 
     private recordScore(event: DealEndEvent) {
         const latestResult = _.last(this.results)
-        if (latestResult && latestResult.deal.uuid == event.deal) {
+        if (latestResult && latestResult.deal == event.deal) {
             latestResult.result = event.result;
         } else {
-            this.results.push({ deal: { uuid: event.deal }, result: event.result });
+            this.results.push({ deal: event.deal, result: event.result });
         }
         const message = scoreMessage(event, this.self.position);
         this.$bvToast.toast(message, {

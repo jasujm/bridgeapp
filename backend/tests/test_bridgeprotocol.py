@@ -697,12 +697,12 @@ class TestBridgeClientGetSelfCommand:
         [],
         [
             models.DealResult(
-                deal=models.PartialDeal(),
+                deal=uuid.uuid4(),
                 result=models.DuplicateResult(
                     partnership=models.Partnership.northSouth, score=100
                 ),
             ),
-            models.DealResult(deal=models.PartialDeal(), result=None),
+            models.DealResult(deal=uuid.uuid4(), result=None),
         ],
     ],
 )
@@ -718,7 +718,7 @@ class TestBridgeClientGetResultsCommand:
                 reply_args={
                     "get": {
                         "results": [
-                            {"deal": result.deal.uuid, "result": result.result}
+                            {"deal": result.deal, "result": result.result}
                             for result in results
                         ]
                     }
@@ -760,10 +760,10 @@ class TestBridgeClientGetResultsCommand:
     [
         models.PlayersInGame(),
         models.PlayersInGame(
-            north=models.Player(),
-            east=models.Player(),
-            south=models.Player(),
-            west=models.Player(),
+            north=uuid.uuid4(),
+            east=uuid.uuid4(),
+            south=uuid.uuid4(),
+            west=uuid.uuid4(),
         ),
     ],
 )
@@ -776,16 +776,7 @@ class TestBridgeClientGetPlayersCommand:
                 client.get_players(game=game_uuid),
                 expected_command=b"get",
                 expected_command_args={"game": game_uuid, "get": ["players"]},
-                reply_args={
-                    "get": {
-                        "players": {
-                            "north": getattr(players.north, "uuid", None),
-                            "east": getattr(players.east, "uuid", None),
-                            "south": getattr(players.south, "uuid", None),
-                            "west": getattr(players.west, "uuid", None),
-                        }
-                    }
-                },
+                reply_args={"get": {"players": players.dict()}},
             )
             == players
         )
@@ -896,6 +887,89 @@ class TestEventReceiver:
             game=game_uuid, type=event_type, **event_arguments
         )
         assert [r.levelname for r in caplog.records] == ["WARNING"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "event_type,event_cls,event_arguments",
+    [
+        (
+            "player",
+            bridgeprotocol.events.PlayerEvent,
+            {"position": _any_position(), "player": uuid.uuid4()},
+        ),
+        (
+            "deal",
+            bridgeprotocol.events.DealEvent,
+            {
+                "deal": uuid.uuid4(),
+                "opener": _any_position(),
+                "vulnerability": models.Vulnerability(),
+            },
+        ),
+        (
+            "turn",
+            bridgeprotocol.events.TurnEvent,
+            {"deal": uuid.uuid4(), "position": _any_position()},
+        ),
+        (
+            "call",
+            bridgeprotocol.events.CallEvent,
+            {
+                "deal": uuid.uuid4(),
+                "position": _any_position(),
+                "call": models.Call(type=models.CallType.pass_),
+            },
+        ),
+        (
+            "bidding",
+            bridgeprotocol.events.BiddingEvent,
+            {
+                "deal": uuid.uuid4(),
+                "declarer": _any_position(),
+                "contract": models.Contract(
+                    bid=_any_bid(), doubling=models.Doubling.undoubled
+                ),
+            },
+        ),
+        (
+            "play",
+            bridgeprotocol.events.PlayEvent,
+            {"deal": uuid.uuid4(), "position": _any_position(), "card": _any_card()},
+        ),
+        (
+            "dummy",
+            bridgeprotocol.events.DummyEvent,
+            {
+                "deal": uuid.uuid4(),
+                "position": _any_position(),
+                "cards": [_any_card(), _any_card()],
+            },
+        ),
+        (
+            "trick",
+            bridgeprotocol.events.TrickEvent,
+            {"deal": uuid.uuid4(), "winner": _any_position()},
+        ),
+        (
+            "dealend",
+            bridgeprotocol.events.DealEndEvent,
+            {"deal": uuid.uuid4(), "result": models.DealResult(deal=uuid.uuid4())},
+        ),
+    ],
+)
+async def test_bridge_event_receiver_concrete_events(
+    server, client, event_receiver, game_uuid, event_type, event_cls, event_arguments
+):
+    await server.send_event(
+        f"{str(game_uuid)}:{event_type}".encode(),
+        client._serialize_all(event_arguments),
+    )
+    assert await event_receiver.get_event() == event_cls(
+        game=game_uuid,
+        type=bridgeprotocol.events.EventType[event_type],
+        **event_arguments,
+    )
 
 
 @pytest.mark.parametrize(

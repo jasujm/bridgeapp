@@ -43,7 +43,7 @@ describe("BridgeTable.vue", function() {
             north: null,
             east: null,
             south: null,
-            west: { uuid: otherPlayerUuid },
+            west: otherPlayerUuid,
         };
         fakeApi = {
             getDeal: sinon.fake.resolves(deal),
@@ -118,7 +118,7 @@ describe("BridgeTable.vue", function() {
 
     describe("leave", function() {
         this.beforeEach(async function() {
-            players.north = { uuid: playerUuid };
+            players.north = playerUuid;
             self.position = Position.north;
             wrapper.setData({ self, players });
             await wrapper.vm.$nextTick();
@@ -364,7 +364,7 @@ describe("BridgeTable.vue", function() {
         describe("dealend", function() {
             const dealUuid = "d7a05529-9b95-4678-b6b2-e5ca0ea501fc";
             const dealResult = {
-                deal: { uuid: dealUuid },
+                deal: dealUuid,
                 result: { partnership: Partnership.northSouth, score: 200 },
             };
             let dealEndEvent: DealEndEvent;
@@ -399,7 +399,7 @@ describe("BridgeTable.vue", function() {
 
             it("should amend the latest result if deal UUID matches", function() {
                 wrapper.setData({
-                    results: [{ deal: { uuid: dealUuid }, result: null }]
+                    results: [{ deal: dealUuid, result: null }]
                 });
                 handlers.dealend!(dealEndEvent);
                 expect(wrapper.vm.results).to.be.deep.equal([dealResult]);

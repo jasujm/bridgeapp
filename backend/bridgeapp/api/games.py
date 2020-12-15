@@ -9,7 +9,6 @@ import typing
 
 import fastapi
 import orjson
-import starlette.websockets as ws
 
 from bridgeapp.bridgeprotocol import models as base_models
 
@@ -38,6 +37,8 @@ def _get_player_uuid(
     "",
     name="games",
     summary="Create a new game",
+    description="""Creates a new game. The server generates an UUID for the game and return it
+    in the response body.""",
     status_code=fastapi.status.HTTP_201_CREATED,
     response_model=models.Game,
 )
@@ -46,10 +47,7 @@ async def post_games(
     response: fastapi.Response,
     _credentials: fastapi.security.HTTPBasicCredentials = fastapi.Depends(security),
 ):
-    """
-    This call causes a new game to be created. The server generates an UUID for
-    the game and return it in the response body.
-    """
+    """Handle creating a game"""
     client = await utils.get_bridge_client()
     game_uuid = await client.game()
     response.headers["Location"] = request.url_for("game_details", game_uuid=game_uuid)
@@ -111,16 +109,21 @@ async def get_game_self(
     summary="Get deal results of the game",
     description="""The response will contain an array of deal results in the chronological
     order.""",
-    response_model=typing.List[base_models.DealResult],
+    response_model=typing.List[models.DealResult],
     responses={fastapi.status.HTTP_404_NOT_FOUND: _GAME_NOT_FOUND_RESPONSE},
 )
 async def get_game_results(
-    game_uuid: uuid.UUID, player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid)
+    request: fastapi.Request,
+    game_uuid: uuid.UUID,
+    player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid),
 ):
     """Handle getting deal results"""
     del player_uuid
     client = await utils.get_bridge_client()
-    return await client.get_results(game=game_uuid)
+    deal_results = await client.get_results(game=game_uuid)
+    return [
+        models.DealResult.from_base_model(result, request) for result in deal_results
+    ]
 
 
 @router.get(
@@ -128,15 +131,18 @@ async def get_game_results(
     name="game_players_list",
     summary="Get the players in a game",
     description="""Retrieve a mapping between positions and players in a game.""",
-    response_model=base_models.PlayersInGame,
+    response_model=models.PlayersInGame,
 )
 async def get_game_players(
-    game_uuid: uuid.UUID, player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid),
+    request: fastapi.Request,
+    game_uuid: uuid.UUID,
+    player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid),
 ):
     """Handle getting player details"""
     del player_uuid
     client = await utils.get_bridge_client()
-    return await client.get_players(game=game_uuid)
+    players_in_game = await client.get_players(game=game_uuid)
+    return models.PlayersInGame.from_base_model(players_in_game, request)
 
 
 @router.post(
@@ -233,7 +239,7 @@ async def post_game_trick(
 
 @router.websocket("/{game_uuid}/ws")
 async def games_websocket(
-    game_uuid: uuid.UUID, websocket: ws.WebSocket,
+    game_uuid: uuid.UUID, websocket: fastapi.WebSocket,
 ):
     """Open a websocket publishing events about a game"""
     loop = asyncio.get_running_loop()
@@ -255,16 +261,16 @@ async def games_websocket(
                     pending, return_when=asyncio.FIRST_COMPLETED
                 )
                 if event_task in done:
-                    await websocket.send_bytes(
-                        orjson.dumps(await event_task, default=dict)
-                    )
+                    event = await event_task
+                    event = models.BridgeEvent.from_base_model(event, websocket)
+                    await websocket.send_bytes(orjson.dumps(event, default=dict))
                     event_task = _create_event_task()
                     pending.add(event_task)
                 if recv_task in done:
                     await recv_task
                     recv_task = _create_recv_task()
                     pending.add(recv_task)
-        except ws.WebSocketDisconnect:
+        except fastapi.websockets.WebSocketDisconnect:
             pass
         finally:
             event_task.cancel()

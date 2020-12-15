@@ -12,6 +12,15 @@ import pydantic
 # Don't care about warning related to pydantic conventions
 # pylint: disable=no-self-argument,no-self-use,too-few-public-methods,missing-class-docstring,no-member
 
+GameUuid = typing.NewType("GameUuid", UUID)
+"""Game UUID"""
+
+PlayerUuid = typing.NewType("PlayerUuid", UUID)
+"""Player UUID"""
+
+DealUuid = typing.NewType("DealUuid", UUID)
+"""Deal UUID"""
+
 
 class IdentifiableModel(pydantic.BaseModel):
     """Base class for models that are identified by UUID"""
@@ -232,10 +241,6 @@ class Game(IdentifiableModel):
     """Bridge game"""
 
 
-class Player(IdentifiableModel):
-    """Player taking part in a bridge game"""
-
-
 class Deal(IdentifiableModel):
     """Bridge deal
 
@@ -252,10 +257,6 @@ class Deal(IdentifiableModel):
     cards: CardsInHands = CardsInHands()
     tricks: typing.List[Trick] = []
     vulnerability: Vulnerability = Vulnerability()
-
-
-class PartialDeal(IdentifiableModel):
-    """Partial version of Deal"""
 
 
 class PlayerState(pydantic.BaseModel):
@@ -304,7 +305,7 @@ class DealResult(pydantic.BaseModel):
     outcome of that deal.
     """
 
-    deal: PartialDeal
+    deal: DealUuid
     result: typing.Optional[DuplicateResult]
 
 
@@ -315,7 +316,7 @@ class PlayersInGame(pydantic.BaseModel):
     are represented by null values.
     """
 
-    north: typing.Optional[Player]
-    east: typing.Optional[Player]
-    south: typing.Optional[Player]
-    west: typing.Optional[Player]
+    north: typing.Optional[PlayerUuid]
+    east: typing.Optional[PlayerUuid]
+    south: typing.Optional[PlayerUuid]
+    west: typing.Optional[PlayerUuid]

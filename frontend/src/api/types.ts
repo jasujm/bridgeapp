@@ -132,15 +132,11 @@ export interface DuplicateResult {
 }
 
 export interface DealResult {
-    deal: Partial<Deal>;
+    deal: string;
     result: DuplicateResult | null;
 }
 
-export interface Player {
-    uuid: string;
-}
-
-export type PlayersInGame = Record<Position, Player | null>;
+export type PlayersInGame = Record<Position, string | null>;
 
 export interface Event {
     game: string;
