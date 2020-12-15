@@ -12,7 +12,7 @@ import typing
 
 import pydantic
 
-from bridgeapp import models as base_models
+from bridgeapp.bridgeprotocol import models as base_models
 
 
 class Game(base_models.Game):

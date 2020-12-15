@@ -11,7 +11,9 @@ import uuid
 import pytest
 import zmq
 
-from bridgeapp import bridgeprotocol, models
+from bridgeapp import bridgeprotocol
+from bridgeapp.bridgeprotocol import models
+
 from . import mocks
 
 

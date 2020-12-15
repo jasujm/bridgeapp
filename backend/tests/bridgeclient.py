@@ -12,7 +12,8 @@ import click
 import click_log
 import zmq.asyncio
 
-from bridgeapp import bridgeprotocol, models, settings
+from bridgeapp import bridgeprotocol, settings
+from bridgeapp.bridgeprotocol import models
 
 click_log.basic_config()
 logger = logging.getLogger(__name__)

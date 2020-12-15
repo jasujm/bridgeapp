@@ -28,10 +28,10 @@ Module reference
 Model definitions
 -----------------
 
-The :mod:`models` module contains the model definitions needed across the
-application.
+The :mod:`bridgeapp.bridgeprotocol.models` module contains the model definitions
+needed across the application.
 
-.. automodule:: bridgeapp.models
+.. automodule:: bridgeapp.bridgeprotocol.models
    :members:
 
 Bridge protocol implementation

@@ -11,7 +11,7 @@ import fastapi
 import orjson
 import starlette.websockets as ws
 
-from bridgeapp import models as base_models
+from bridgeapp.bridgeprotocol import models as base_models
 
 from . import models, utils
 

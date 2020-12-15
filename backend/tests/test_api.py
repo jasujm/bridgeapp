@@ -10,7 +10,8 @@ import fastapi
 import fastapi.testclient
 import pytest
 
-from bridgeapp import application as app, api, bridgeprotocol, models
+from bridgeapp import application as app, api, bridgeprotocol
+from bridgeapp.bridgeprotocol import models
 
 
 @pytest.fixture

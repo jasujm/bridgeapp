@@ -1,4 +1,4 @@
-from bridgeapp import models
+from bridgeapp.bridgeprotocol import models
 
 import pydantic
 import pytest
