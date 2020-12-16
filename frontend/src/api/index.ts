@@ -1,8 +1,11 @@
 // FIXME: Validate responses and handle errors
+// TODO: The methods here could just accept the URL of a game, since that's what
+// is returned in the response when a game is created/queried
 
 import axios, { AxiosRequestConfig, AxiosError } from "axios"
 import ReconnectingWebSocket from "reconnecting-websocket"
 import {
+    Game,
     Deal,
     Call,
     Card,
@@ -50,7 +53,7 @@ export default class {
             method: "post",
             url: "/games",
         });
-        return response.data as string;
+        return response.data as Game;
     }
 
     async joinGame(gameUuid: string, position?: Position) {

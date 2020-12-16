@@ -38,6 +38,7 @@
 <script lang="ts">
 import Component, { mixins } from "vue-class-component"
 import { ValidationMixin } from "./validation"
+import _ from "lodash"
 
 @Component
 export default class GameSelector extends mixins(ValidationMixin) {
@@ -48,10 +49,16 @@ export default class GameSelector extends mixins(ValidationMixin) {
     }
 
     async createGame() {
-        const response = await this.$store.state.api.createGame();
-        this.uuid = response.uuid;
-        await this.$store.state.api.joinGame(this.uuid);
-        await this.selectGame();
+        // TODO: The UUID from the API response (URL) is parsed, just so that
+        // the URL is constructed over and over again. Instead just pass the URL
+        // around.
+        const game = await this.$store.state.api.createGame();
+        const gameUuid = _.first(/\/[0-9a-f-]+$/.exec(game.self));
+        if (gameUuid) {
+            this.uuid = gameUuid.substring(1);
+            await this.$store.state.api.joinGame(this.uuid);
+            await this.selectGame();
+        }
     }
 
     async selectGame() {

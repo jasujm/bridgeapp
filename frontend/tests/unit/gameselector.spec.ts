@@ -6,6 +6,7 @@ import sinon from "sinon"
 import flushPromises from "flush-promises"
 
 const uuid = "6bac87b3-8e49-4675-bf69-8c0d6a351f40";
+const gameUrl = `http://testserver/api/v1/games/${uuid}`;
 
 describe("GameSelector.vue", function() {
     let fakeApi: any;
@@ -15,7 +16,7 @@ describe("GameSelector.vue", function() {
 
     this.beforeEach(function() {
         fakeApi = {
-            createGame: sinon.fake.resolves({ uuid }),
+            createGame: sinon.fake.resolves({ self: gameUrl }),
             joinGame: sinon.fake.resolves(null),
         }
         state = { username: "user", api: fakeApi };

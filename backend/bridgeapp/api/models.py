@@ -31,6 +31,12 @@ _UUID_TO_URL_CONVERSION = {
 }
 
 
+def _apify_field_name(name: str):
+    if name == "uuid":
+        return "self"
+    return name
+
+
 def _from_base_model(
     cls,
     model: pydantic.BaseModel,
@@ -42,44 +48,59 @@ def _from_base_model(
         if value and (conversion := (_UUID_TO_URL_CONVERSION.get(field.outer_type_))):
             kwargs = {conversion.uuidarg: value}
             value = request.url_for(conversion.handler, **kwargs)
-        values[name] = value
+        values[_apify_field_name(name)] = value
     return cls(**values)
 
 
+def _apify_field_type(outer_type_):
+    if typing.get_origin(outer_type_) == typing.Union:
+        return typing.Union[
+            tuple(_apify_field_type(t) for t in typing.get_args(outer_type_))
+        ]
+    if outer_type_ in _UUID_TO_URL_CONVERSION:
+        return pydantic.AnyHttpUrl
+    return outer_type_
+
+
 def _apify_field(field: pydantic.fields.ModelField):
-    new_type = (
-        field.type_
-        if field.outer_type_ not in _UUID_TO_URL_CONVERSION
-        else pydantic.AnyHttpUrl
-    )
-    if not field.required:
-        new_type = typing.Optional[new_type]
-    return (new_type, field.default)
+    return (_apify_field_type(field.outer_type_), field.default)
 
 
 def _apify_model(
     model: typing.Type[pydantic.BaseModel],
 ) -> typing.Type[pydantic.BaseModel]:
+    # Rename uuid -> self, otherwise take the name as is
+    # In the API response we prefer URLs to raw UUIDs
     new_fields = {
-        name: _apify_field(field) for (name, field) in model.__fields__.items()
+        _apify_field_name(name): _apify_field(field)
+        for (name, field) in model.__fields__.items()
     }
-    new_model = pydantic.create_model(model.__name__, __base__=model, **new_fields)
+    new_model = pydantic.create_model(
+        model.__name__, __config__=model.__config__, **new_fields
+    )
+    new_model.__doc__ = model.__doc__
     new_model.from_base_model = classmethod(_from_base_model)
     return new_model
 
 
-class Game(base_models.Game):
+Deal = _apify_model(base_models.Deal)
+
+
+class Game(pydantic.BaseModel):
     """Bridge game
 
     Mode lpcontaining the basic information of a game, and the current
     deal state.
     """
 
-    deal: typing.Optional[base_models.Deal]
+    self: pydantic.AnyHttpUrl
+    deal: typing.Optional[Deal]
 
 
-class Player(base_models.IdentifiableModel):
+class Player(pydantic.BaseModel):
     """Player taking part in a bridge game"""
+
+    self: pydantic.AnyHttpUrl
 
 
 PlayersInGame = _apify_model(base_models.PlayersInGame)

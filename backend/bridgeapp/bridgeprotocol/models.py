@@ -22,12 +22,6 @@ DealUuid = typing.NewType("DealUuid", UUID)
 """Deal UUID"""
 
 
-class IdentifiableModel(pydantic.BaseModel):
-    """Base class for models that are identified by UUID"""
-
-    uuid: UUID = pydantic.Field(default_factory=uuid4)
-
-
 class Position(enum.Enum):
     """Position of a bridge player"""
 
@@ -237,11 +231,7 @@ class Trick(pydantic.BaseModel):
     winner: typing.Optional[Position]
 
 
-class Game(IdentifiableModel):
-    """Bridge game"""
-
-
-class Deal(IdentifiableModel):
+class Deal(pydantic.BaseModel):
     """Bridge deal
 
     The deal object contains the description of an ongoing or
@@ -250,6 +240,7 @@ class Deal(IdentifiableModel):
     to different players (notably which cards are visible to whom).
     """
 
+    uuid: DealUuid = pydantic.Field(default_factory=uuid4)
     positionInTurn: typing.Optional[Position]
     calls: typing.List[PositionCallPair] = []
     declarer: typing.Optional[Position]

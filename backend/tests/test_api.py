@@ -95,17 +95,22 @@ def test_create_game(client, mock_bridge_client, game_uuid, username):
     mock_bridge_client.game.return_value = game_uuid
     res = client.post("/api/v1/games", auth=(username, "secret"))
     assert res.status_code == fastapi.status.HTTP_201_CREATED
-    assert res.headers["Location"] == f"http://testserver/api/v1/games/{game_uuid}"
-    assert api.models.Game(**res.json()) == api.models.Game(uuid=game_uuid)
+    game_url = f"http://testserver/api/v1/games/{game_uuid}"
+    assert res.headers["Location"] == game_url
+    assert api.models.Game(**res.json()) == api.models.Game(self=game_url)
 
 
 def test_read_game(client, mock_bridge_client, game_uuid, username_and_player_uuid):
     username, player_uuid = username_and_player_uuid
     deal = models.Deal()
+    api_deal = api.models.Deal(self=f"http://testserver/api/v1/deals/{deal.uuid}")
     mock_bridge_client.get_deal.return_value = (deal, 123)
     res = client.get(f"/api/v1/games/{game_uuid}", auth=(username, "secret"))
     assert res.headers[api.games.COUNTER_HEADER] == "123"
-    assert api.models.Game(**res.json()) == {"uuid": game_uuid, "deal": deal}
+    assert api.models.Game(**res.json()) == {
+        "self": f"http://testserver/api/v1/games/{game_uuid}",
+        "deal": api_deal,
+    }
     mock_bridge_client.get_deal.assert_awaited_once_with(
         game=game_uuid, player=player_uuid
     )

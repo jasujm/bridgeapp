@@ -7,7 +7,7 @@ import uuid
 
 import fastapi
 
-from bridgeapp.bridgeprotocol import models as base_models
+from . import models
 
 router = fastapi.APIRouter()
 
@@ -17,8 +17,9 @@ router = fastapi.APIRouter()
     name="deal_details",
     summary="Get infomation about a deal",
     description="""This endpoint is a stub ensuring that each deal has an URL.""",
-    response_model=base_models.Deal,
+    response_model=models.Deal,
 )
-def get_deal_details(deal_uuid: uuid.UUID):
+def get_deal_details(request: fastapi.Request, deal_uuid: uuid.UUID):
     """Handle getting deal details"""
-    return base_models.Deal(uuid=deal_uuid)
+    del deal_uuid
+    return models.Deal(self=str(request.url))

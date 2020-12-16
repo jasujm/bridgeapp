@@ -50,8 +50,9 @@ async def post_games(
     """Handle creating a game"""
     client = await utils.get_bridge_client()
     game_uuid = await client.game()
-    response.headers["Location"] = request.url_for("game_details", game_uuid=game_uuid)
-    return models.Game(uuid=game_uuid).dict(exclude_unset=True)
+    game_url = request.url_for("game_details", game_uuid=game_uuid)
+    response.headers["Location"] = game_url
+    return models.Game(self=game_url).dict(exclude_unset=True)
 
 
 @router.get(
@@ -75,6 +76,7 @@ async def post_games(
     },
 )
 async def get_game_details(
+    request: fastapi.Request,
     response: fastapi.Response,
     game_uuid: uuid.UUID,
     player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid),
@@ -83,7 +85,9 @@ async def get_game_details(
     client = await utils.get_bridge_client()
     deal, counter = await client.get_deal(game=game_uuid, player=player_uuid)
     response.headers[COUNTER_HEADER] = str(counter)
-    return models.Game(uuid=game_uuid, deal=deal)
+    return models.Game(
+        self=str(request.url), deal=models.Deal.from_base_model(deal, request)
+    )
 
 
 @router.get(
