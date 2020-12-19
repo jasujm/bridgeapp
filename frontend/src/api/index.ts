@@ -1,4 +1,3 @@
-// FIXME: Validate responses and handle errors
 // TODO: The methods here could just accept the URL of a game, since that's what
 // is returned in the response when a game is created/queried
 
@@ -10,7 +9,7 @@ import {
     Call,
     Card,
     Self,
-    Event,
+    AnyEvent,
     EventHandlers,
     ErrorSeverity,
     ErrorMessage,
@@ -30,6 +29,12 @@ const client = axios.create({
     baseURL: `${process.env.VUE_APP_BRIDGEAPP_API_PREFIX || ""}/api/v1/`,
     timeout: 3000,
 });
+
+function callHandler<Event>(event: Event, handler?: (event: Event) => void) {
+    if (handler) {
+        handler(event);
+    }
+}
 
 export default class {
     private username?: string;
@@ -131,12 +136,27 @@ export default class {
         };
         ws.onmessage = async function(message) {
             const text = await message.data.text();
-            const event = JSON.parse(text) as Event;
-            // FIXME: Validating, type-safe approach is needed here
-            // @ts-ignore
-            const handler = handlers[event.type];
-            if (handler) {
-                handler(event);
+            const event = JSON.parse(text) as AnyEvent;
+            // This seems silly, but not sure if the type checker will allow it
+            // any other way
+            if (event.type == "player") {
+                callHandler(event, handlers.player);
+            } else if (event.type == "deal") {
+                callHandler(event, handlers.deal);
+            } else if (event.type == "turn") {
+                callHandler(event, handlers.turn);
+            } else if (event.type == "call") {
+                callHandler(event, handlers.call);
+            } else if (event.type == "bidding") {
+                callHandler(event, handlers.bidding);
+            } else if (event.type == "play") {
+                callHandler(event, handlers.play);
+            } else if (event.type == "dummy") {
+                callHandler(event, handlers.dummy);
+            } else if (event.type == "trick") {
+                callHandler(event, handlers.trick);
+            } else if (event.type == "dealend") {
+                callHandler(event, handlers.dealend);
             }
         };
         return ws;

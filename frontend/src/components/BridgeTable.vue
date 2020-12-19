@@ -75,7 +75,7 @@ import {
     Deal,
     DealCounterPair,
     Self,
-    Event,
+    AnyEvent,
     PlayerEvent,
     TurnEvent,
     CallEvent,
@@ -343,44 +343,45 @@ export default class BridgeTable extends mixins(PositionMixin) {
         }
     }
 
+    private wrapEventHandler<Event extends AnyEvent>(callback: (event: Event) => void) {
+        return (event: Event) => {
+            if (event.counter > this.eventCounter) {
+                // Queue events if their counter is not larger than the biggest
+                // known deal counter
+                this.eventCounter = event.counter;
+                const invokeCallback = () => callback.call(this, event);
+                if (this.dealCounter === null || event.counter > this.dealCounter) {
+                    invokeCallback();
+                } else if (this.dealCounter >= event.counter) {
+                    this.eventCallbacks.push({
+                        counter: event.counter,
+                        callback: invokeCallback,
+                    });
+                }
+            } else {
+                // Event counter wrapped, refresh state and start over
+                this.dealCounter = Number.POSITIVE_INFINITY;
+                this.eventCounter = Number.NEGATIVE_INFINITY;
+                this.fetchGameState();
+            }
+        }
+    }
+
     private startGame() {
         this.close();
-        const wrap = (callback: (event: Event) => void) => {
-            return (event: Event) => {
-                if (event.counter > this.eventCounter) {
-                    // Queue events if their counter is not larger than the biggest
-                    // known deal counter
-                    this.eventCounter = event.counter;
-                    const invokeCallback = () => callback.call(this, event);
-                    if (this.dealCounter === null || event.counter > this.dealCounter) {
-                        invokeCallback();
-                    } else if (this.dealCounter >= event.counter) {
-                        this.eventCallbacks.push({
-                            counter: event.counter,
-                            callback: invokeCallback,
-                        });
-                    }
-                } else {
-                    // Event counter wrapped, refresh state and start over
-                    this.dealCounter = Number.POSITIVE_INFINITY;
-                    this.eventCounter = Number.NEGATIVE_INFINITY;
-                    this.fetchGameState();
-                }
-            }
-        };
         this.ws = this.$store.state.api.subscribe(
             this.gameUuid,
             {
-                open: this.fetchGameState.bind(this),  // @ts-ignore
-                player: wrap(this.changePlayer),  // @ts-ignore
-                deal: wrap(this.fetchDealState),  // @ts-ignore
-                turn: wrap(this.handleTurn),  // @ts-ignore
-                call: wrap(this.addCall),  // @ts-ignore
-                bidding: wrap(this.completeBidding),  // @ts-ignore
-                play: wrap(this.cardPlayed),  // @ts-ignore
-                dummy: wrap(this.revealDummy),  // @ts-ignore
-                trick: wrap(this.completeTrick),  // @ts-ignore
-                dealend: wrap(this.recordScore),  // @ts-ignore
+                open: this.fetchGameState.bind(this),
+                player: this.wrapEventHandler(this.changePlayer),
+                deal: this.wrapEventHandler(this.fetchDealState),
+                turn: this.wrapEventHandler(this.handleTurn),
+                call: this.wrapEventHandler(this.addCall),
+                bidding: this.wrapEventHandler(this.completeBidding),
+                play: this.wrapEventHandler(this.cardPlayed),
+                dummy: this.wrapEventHandler(this.revealDummy),
+                trick: this.wrapEventHandler(this.completeTrick),
+                dealend: this.wrapEventHandler(this.recordScore),
             }
         );
         this.fetchGameState();

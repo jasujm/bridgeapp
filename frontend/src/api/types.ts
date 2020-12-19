@@ -143,52 +143,65 @@ export interface Game {
 }
 
 export interface Event {
-    game: string;
     type: string;
+    game: string;
     counter: number;
 }
 
 export interface PlayerEvent extends Event {
+    type: "player";
     position: Position;
     player: string | null;
 }
 
-export type DealEvent = Event;
+export interface DealEvent extends Event {
+    type: "deal";
+}
 
 export interface TurnEvent extends Event {
+    type: "turn";
     position: Position;
 }
 
 export interface CallEvent extends Event {
+    type: "call";
     position: Position;
     call: Call;
 }
 
 export interface BiddingEvent extends Event {
+    type: "bidding";
     declarer: Position | null;
     contract: Contract | null;
 }
 
 export interface PlayEvent extends Event {
+    type: "play";
     position: Position;
     card: Card;
 }
 
 export interface DummyEvent extends Event {
+    type: "dummy";
     position: Position;
     cards: Array<Card>;
 }
 
 export interface TrickEvent extends Event {
+    type: "trick";
     winner: Position;
 }
 
 export interface DealEndEvent extends Event {
+    type: "dealend";
     deal: string;
     contract: Contract | null;
     tricksWon: number | null;
     result: DuplicateResult;
 }
+
+export type AnyEvent = PlayerEvent | DealEvent | TurnEvent | CallEvent |
+    BiddingEvent | PlayEvent | DummyEvent | TrickEvent | DealEndEvent;
 
 export interface EventHandlers {
     open?: (event: WsEvent) => void;
