@@ -311,3 +311,13 @@ class PlayersInGame(pydantic.BaseModel):
     east: typing.Optional[PlayerUuid]
     south: typing.Optional[PlayerUuid]
     west: typing.Optional[PlayerUuid]
+
+
+class Game(pydantic.BaseModel):
+    """A bridge game"""
+
+    uuid: GameUuid = pydantic.Field(default_factory=uuid4)
+    deal: typing.Optional[Deal]
+    self: PlayerState = PlayerState()
+    results: typing.List[DealResult] = []
+    players: PlayersInGame = PlayersInGame()

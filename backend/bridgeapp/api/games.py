@@ -22,6 +22,20 @@ _GAME_NOT_FOUND_RESPONSE = {
     "description": "Game not found",
 }
 
+_GAME_OK_RESPONSE = {
+    "headers": {
+        COUNTER_HEADER: {
+            "schema": {"type": "integer"},
+            "description": "Running counter that can be used to synchronize event stream",
+        }
+    }
+}
+
+_GAME_RESPONSES = {
+    fastapi.status.HTTP_200_OK: _GAME_OK_RESPONSE,
+    fastapi.status.HTTP_404_NOT_FOUND: _GAME_NOT_FOUND_RESPONSE,
+}
+
 router = fastapi.APIRouter()
 security = fastapi.security.HTTPBasic()
 
@@ -52,7 +66,7 @@ async def post_games(
     game_uuid = await client.game()
     game_url = request.url_for("game_details", game_uuid=game_uuid)
     response.headers["Location"] = game_url
-    return models.Game(self=game_url).dict(exclude_unset=True)
+    return models.Game(self=game_url)
 
 
 @router.get(
@@ -63,48 +77,73 @@ async def post_games(
     the authenticated player. If the player is not in the game, only public
     information will be retrieved.""",
     response_model=models.Game,
-    responses={
-        fastapi.status.HTTP_200_OK: {
-            "headers": {
-                COUNTER_HEADER: {
-                    "schema": {"type": "integer"},
-                    "description": "Running counter that can be used to synchronize event stream",
-                }
-            }
-        },
-        fastapi.status.HTTP_404_NOT_FOUND: _GAME_NOT_FOUND_RESPONSE,
-    },
+    responses=_GAME_RESPONSES,
 )
 async def get_game_details(
     request: fastapi.Request,
-    response: fastapi.Response,
     game_uuid: uuid.UUID,
     player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid),
 ):
     """Handle getting game details"""
     client = await utils.get_bridge_client()
-    deal, counter = await client.get_deal(game=game_uuid, player=player_uuid)
-    response.headers[COUNTER_HEADER] = str(counter)
+    game, request.state.counter_header_value = await client.get_game(
+        game=game_uuid, player=player_uuid
+    )
     return models.Game(
-        self=str(request.url), deal=models.Deal.from_base_model(deal, request)
+        self=str(request.url),
+        deal=models.Deal.from_base_model(game.deal, request),
+        me=game.self,
+        results=[
+            models.DealResult.from_base_model(result, request)
+            for result in game.results
+        ],
+        players=models.PlayersInGame.from_base_model(game.players, request),
     )
 
 
 @router.get(
-    "/{game_uuid}/self",
-    name="game_self",
+    "/{game_uuid}/deal",
+    name="game_deal",
+    summary="Get the current deal of a game",
+    description="""The response contains a representation of the current deal of the game from
+    the point of view of the authenticated player. If the player is not in the
+    game, only public information will be retrieved.""",
+    response_model=models.Deal,
+    responses=_GAME_RESPONSES,
+)
+async def get_game_deal(
+    request: fastapi.Request,
+    game_uuid: uuid.UUID,
+    player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid),
+):
+    """Handle getting the current deal of a game"""
+    client = await utils.get_bridge_client()
+    deal, request.state.counter_header_value = await client.get_deal(
+        game=game_uuid, player=player_uuid
+    )
+    return models.Deal.from_base_model(deal, request)
+
+
+@router.get(
+    "/{game_uuid}/me",
+    name="game_me",
     summary="Get information about the authenticated player",
     description="""The response contains information about the authenticated player itself
     within the game, including position and available moves.""",
     response_model=base_models.PlayerState,
-    responses={fastapi.status.HTTP_404_NOT_FOUND: _GAME_NOT_FOUND_RESPONSE},
+    responses=_GAME_RESPONSES,
 )
-async def get_game_self(
-    game_uuid: uuid.UUID, player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid)
+async def get_game_me(
+    request: fastapi.Request,
+    game_uuid: uuid.UUID,
+    player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid),
 ):
     """Handle getting self details"""
     client = await utils.get_bridge_client()
-    return await client.get_self(game=game_uuid, player=player_uuid)
+    me_, request.state.counter_header_value = await client.get_self(
+        game=game_uuid, player=player_uuid
+    )
+    return me_
 
 
 @router.get(
@@ -114,7 +153,7 @@ async def get_game_self(
     description="""The response will contain an array of deal results in the chronological
     order.""",
     response_model=typing.List[models.DealResult],
-    responses={fastapi.status.HTTP_404_NOT_FOUND: _GAME_NOT_FOUND_RESPONSE},
+    responses=_GAME_RESPONSES,
 )
 async def get_game_results(
     request: fastapi.Request,
@@ -124,7 +163,9 @@ async def get_game_results(
     """Handle getting deal results"""
     del player_uuid
     client = await utils.get_bridge_client()
-    deal_results = await client.get_results(game=game_uuid)
+    deal_results, request.state.counter_header_value = await client.get_results(
+        game=game_uuid
+    )
     return [
         models.DealResult.from_base_model(result, request) for result in deal_results
     ]
@@ -136,6 +177,7 @@ async def get_game_results(
     summary="Get the players in a game",
     description="""Retrieve a mapping between positions and players in a game.""",
     response_model=models.PlayersInGame,
+    responses=_GAME_RESPONSES,
 )
 async def get_game_players(
     request: fastapi.Request,
@@ -145,7 +187,9 @@ async def get_game_players(
     """Handle getting player details"""
     del player_uuid
     client = await utils.get_bridge_client()
-    players_in_game = await client.get_players(game=game_uuid)
+    players_in_game, request.state.counter_header_value = await client.get_players(
+        game=game_uuid
+    )
     return models.PlayersInGame.from_base_model(players_in_game, request)
 
 

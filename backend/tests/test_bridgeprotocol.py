@@ -414,38 +414,41 @@ async def test_bridge_client_play_command(server, client, card):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("keys", [[], ["key1", "key2"]])
-@pytest.mark.parametrize("response", [{}, {"key1": "value1", "key2": "value2"}])
-async def test_bridge_client_get_command(
-    server, client, game_and_player, keys, response
-):
-    kwargs = dict(get=keys, **game_and_player)
-    assert (
-        await _command_helper(
-            server,
-            client,
-            client.get(**kwargs),
-            expected_command=b"get",
-            expected_command_args=kwargs,
-            reply_args={"get": response},
-        )
-        == response
+async def test_get_game_success(server, client, game_and_player):
+    deal = models.Deal()
+    pubstate = deal.dict()
+    pubstate["deal"] = str(pubstate.pop("uuid"))
+    privstate = {}
+    self = models.PlayerState(position=models.Position.north)
+    results = [models.DealResult(deal=deal.uuid)]
+    players = models.PlayersInGame(north=game_and_player["player"])
+    game = models.Game(
+        uuid=game_and_player["game"],
+        deal=deal,
+        self=self,
+        results=results,
+        players=players,
     )
-
-
-@pytest.mark.asyncio
-async def test_bridge_client_get_command_should_fail_if_reply_missing_get(
-    server, client, game_and_player
-):
-    kwargs = dict(get=[], **game_and_player)
-    with pytest.raises(bridgeprotocol.InvalidMessage):
-        await _command_helper(
-            server,
-            client,
-            client.get(**kwargs),
-            expected_command=b"get",
-            expected_command_args=kwargs,
-        )
+    assert await _command_helper(
+        server,
+        client,
+        client.get_game(**game_and_player),
+        expected_command=b"get",
+        expected_command_args=dict(
+            **game_and_player,
+            get=["pubstate", "privstate", "self", "results", "players"],
+        ),
+        reply_args={
+            "get": {
+                "pubstate": pubstate,
+                "privstate": privstate,
+                "self": self,
+                "results": results,
+                "players": players,
+            },
+            "counter": 123,
+        },
+    ) == (game, 123)
 
 
 @pytest.mark.asyncio
@@ -651,17 +654,14 @@ async def test_null_deal(server, client, game_and_player):
 )
 class TestBridgeClientGetSelfCommand:
     async def test_success(self, server, client, game_and_player, self_):
-        assert (
-            await _command_helper(
-                server,
-                client,
-                client.get_self(**game_and_player),
-                expected_command=b"get",
-                expected_command_args=dict(**game_and_player, get=["self"]),
-                reply_args={"get": {"self": self_}},
-            )
-            == self_
-        )
+        assert await _command_helper(
+            server,
+            client,
+            client.get_self(**game_and_player),
+            expected_command=b"get",
+            expected_command_args=dict(**game_and_player, get=["self"]),
+            reply_args={"get": {"self": self_}, "counter": 123},
+        ) == (self_, 123)
 
     async def test_missing_self_should_lead_to_failure(
         self, server, client, game_and_player, self_
@@ -673,7 +673,7 @@ class TestBridgeClientGetSelfCommand:
                 client.get_self(**game_and_player),
                 expected_command=b"get",
                 expected_command_args=dict(**game_and_player, get=["self"]),
-                reply_args={"get": {}},
+                reply_args={"get": {}, "counter": 123},
             )
 
     async def test_invalid_self_should_lead_to_failure(
@@ -686,7 +686,7 @@ class TestBridgeClientGetSelfCommand:
                 client.get_self(**game_and_player),
                 expected_command=b"get",
                 expected_command_args=dict(**game_and_player, get=["self"]),
-                reply_args={"get": {"self": "invalid"}},
+                reply_args={"get": {"self": "invalid"}, "counter": 123},
             )
 
 
@@ -708,24 +708,22 @@ class TestBridgeClientGetSelfCommand:
 )
 class TestBridgeClientGetResultsCommand:
     async def test_success(self, server, client, game_uuid, results):
-        assert (
-            await _command_helper(
-                server,
-                client,
-                client.get_results(game=game_uuid),
-                expected_command=b"get",
-                expected_command_args={"game": game_uuid, "get": ["results"]},
-                reply_args={
-                    "get": {
-                        "results": [
-                            {"deal": result.deal, "result": result.result}
-                            for result in results
-                        ]
-                    }
+        assert await _command_helper(
+            server,
+            client,
+            client.get_results(game=game_uuid),
+            expected_command=b"get",
+            expected_command_args={"game": game_uuid, "get": ["results"]},
+            reply_args={
+                "get": {
+                    "results": [
+                        {"deal": result.deal, "result": result.result}
+                        for result in results
+                    ]
                 },
-            )
-            == results
-        )
+                "counter": 123,
+            },
+        ) == (results, 123)
 
     async def test_missing_results_should_lead_to_failure(
         self, server, client, game_uuid, results
@@ -737,7 +735,7 @@ class TestBridgeClientGetResultsCommand:
                 client.get_results(game=game_uuid),
                 expected_command=b"get",
                 expected_command_args={"game": game_uuid, "get": ["results"]},
-                reply_args={"get": {}},
+                reply_args={"get": {}, "counter": 123},
             )
 
     async def test_invalid_results_should_lead_to_failure(
@@ -750,7 +748,7 @@ class TestBridgeClientGetResultsCommand:
                 client.get_results(game=game_uuid),
                 expected_command=b"get",
                 expected_command_args={"game": game_uuid, "get": ["results"]},
-                reply_args={"get": {"results": "invalid"}},
+                reply_args={"get": {"results": "invalid"}, "counter": 123},
             )
 
 
@@ -769,17 +767,14 @@ class TestBridgeClientGetResultsCommand:
 )
 class TestBridgeClientGetPlayersCommand:
     async def test_success(self, server, client, game_uuid, players):
-        assert (
-            await _command_helper(
-                server,
-                client,
-                client.get_players(game=game_uuid),
-                expected_command=b"get",
-                expected_command_args={"game": game_uuid, "get": ["players"]},
-                reply_args={"get": {"players": players.dict()}},
-            )
-            == players
-        )
+        assert await _command_helper(
+            server,
+            client,
+            client.get_players(game=game_uuid),
+            expected_command=b"get",
+            expected_command_args={"game": game_uuid, "get": ["players"]},
+            reply_args={"get": {"players": players.dict()}, "counter": 123},
+        ) == (players, 123)
 
     async def test_missing_players_should_lead_to_failure(
         self, server, client, game_uuid, players
@@ -791,7 +786,7 @@ class TestBridgeClientGetPlayersCommand:
                 client.get_players(game=game_uuid),
                 expected_command=b"get",
                 expected_command_args={"game": game_uuid, "get": ["players"]},
-                reply_args={"get": {}},
+                reply_args={"get": {}, "counter": 123},
             )
 
     async def test_invalid_players_should_lead_to_failure(
@@ -804,7 +799,7 @@ class TestBridgeClientGetPlayersCommand:
                 client.get_players(game=game_uuid),
                 expected_command=b"get",
                 expected_command_args={"game": game_uuid, "get": ["players"]},
-                reply_args={"get": {"players": "invalid"}},
+                reply_args={"get": {"players": "invalid"}, "counter": 123},
             )
 
 

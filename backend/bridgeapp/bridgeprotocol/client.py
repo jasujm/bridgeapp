@@ -126,12 +126,30 @@ class BridgeClient(_base.ClientBase):
         await self.command("leave", game=game, player=player)
 
     @_retries_handshake
-    async def get(
-        self, *, game: uuid.UUID, player: OptionalUuid = None, get: typing.List[str]
-    ):
-        """Send get command to the server"""
-        reply = await self.command("get", game=game, player=player, get=get)
-        return self._convert_reply_safe(lambda r: r, reply, "get", command="get")
+    async def get_game(
+        self, *, game: uuid.UUID, player: OptionalUuid = None
+    ) -> typing.Tuple[models.Game, int]:
+        """Get the full state of a game from the server
+
+        Parameters:
+            game: The UUID of the game
+            player: The player requesting deal information
+
+        Returns:
+            A tuple containing the game state, and the running counter, respectively
+        """
+        reply = await self.command(
+            "get",
+            game=game,
+            player=player,
+            get=["pubstate", "privstate", "self", "results", "players"],
+        )
+        return (
+            self._convert_reply_safe(
+                self._create_game(game), reply, "get", command="get"
+            ),
+            self._convert_reply_safe(int, reply, "counter", command="get"),
+        )
 
     @_retries_handshake
     async def get_deal(
@@ -155,27 +173,66 @@ class BridgeClient(_base.ClientBase):
         )
 
     @_retries_handshake
-    async def get_self(self, *, game: uuid.UUID, player: OptionalUuid = None):
-        """Get the player state from the server"""
+    async def get_self(
+        self, *, game: uuid.UUID, player: OptionalUuid = None
+    ) -> typing.Tuple[models.PlayerState, int]:
+        """Get the player state from the server
+
+        Parameters:
+            game: The UUID of the game
+            player: The player requesting deal information
+
+        Returns:
+            A tuple containing the self state, and the running counter, respectively
+        """
         reply = await self.command("get", game=game, player=player, get=["self"])
-        return self._convert_reply_safe(
-            self._create_player_state, reply, "get", command="get"
+        return (
+            self._convert_reply_safe(
+                self._create_player_state, reply, "get", command="get"
+            ),
+            self._convert_reply_safe(int, reply, "counter", command="get"),
         )
 
     @_retries_handshake
-    async def get_results(self, *, game: uuid.UUID):
-        """Get the deal results from the server"""
+    async def get_results(
+        self, *, game: uuid.UUID
+    ) -> typing.Tuple[typing.List[models.DealResult], int]:
+        """Get the deal results from the server
+
+        Parameters:
+            game: The UUID of the game
+            player: The player requesting deal information
+
+        Returns:
+            A tuple containing the results, and the running counter, respectively
+        """
         reply = await self.command("get", game=game, get=["results"])
-        return self._convert_reply_safe(
-            self._create_deal_results, reply, "get", command="get"
+        return (
+            self._convert_reply_safe(
+                self._create_deal_results, reply, "get", command="get"
+            ),
+            self._convert_reply_safe(int, reply, "counter", command="get"),
         )
 
     @_retries_handshake
-    async def get_players(self, *, game: uuid.UUID):
-        """Get the players in a game from the server"""
+    async def get_players(
+        self, *, game: uuid.UUID
+    ) -> typing.Tuple[models.PlayersInGame, int]:
+        """Get the players in a game from the server
+
+        Parameters:
+            game: The UUID of the game
+
+        Returns:
+            A tuple containing the players in the game, and the running counter,
+            respectively
+        """
         reply = await self.command("get", game=game, get=["players"])
-        return self._convert_reply_safe(
-            self._create_players_map, reply, "get", command="get"
+        return (
+            self._convert_reply_safe(
+                self._create_players_map, reply, "get", command="get"
+            ),
+            self._convert_reply_safe(int, reply, "counter", command="get"),
         )
 
     @_retries_handshake
@@ -199,6 +256,19 @@ class BridgeClient(_base.ClientBase):
     @staticmethod
     def _deserialize(obj):
         return orjson.loads(obj)
+
+    @classmethod
+    def _create_game(cls, game_uuid: uuid.UUID):
+        def _create_game_inner(get):
+            return models.Game(
+                uuid=game_uuid,
+                deal=cls._create_deal(get),
+                self=cls._create_player_state(get),
+                results=cls._create_deal_results(get),
+                players=cls._create_players_map(get),
+            )
+
+        return _create_game_inner
 
     @staticmethod
     def _create_deal(get):

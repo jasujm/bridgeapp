@@ -86,17 +86,6 @@ def _apify_model(
 Deal = _apify_model(base_models.Deal)
 
 
-class Game(pydantic.BaseModel):
-    """Bridge game
-
-    Mode lpcontaining the basic information of a game, and the current
-    deal state.
-    """
-
-    self: pydantic.AnyHttpUrl
-    deal: typing.Optional[Deal]
-
-
 class Player(pydantic.BaseModel):
     """Player taking part in a bridge game"""
 
@@ -106,6 +95,20 @@ class Player(pydantic.BaseModel):
 PlayersInGame = _apify_model(base_models.PlayersInGame)
 DealResult = _apify_model(base_models.DealResult)
 BridgeEvent = _apify_model(base_events.BridgeEvent)
+
+
+class Game(pydantic.BaseModel):
+    """Bridge game
+
+    Model containing the full description of the state of a game, from the point
+    of view of a player.
+    """
+
+    self: pydantic.AnyHttpUrl
+    deal: typing.Optional[Deal]
+    me: base_models.PlayerState = base_models.PlayerState()
+    results: typing.List[DealResult] = []
+    players: PlayersInGame = PlayersInGame()
 
 
 class Error(pydantic.BaseModel):

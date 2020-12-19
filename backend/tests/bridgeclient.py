@@ -48,8 +48,8 @@ async def _wreak_havoc(client: bridgeprotocol.BridgeClient, game_uuid: uuid.UUID
 async def _get_results(client: bridgeprotocol.BridgeClient, game_uuid: uuid.UUID):
     while True:
         await asyncio.sleep(2)
-        results = await client.get_results(game=game_uuid)
-        logger.info("Deal results: %r", results)
+        results, counter = await client.get_results(game=game_uuid)
+        logger.info("Deal results: %r, counter: %d", results, counter)
 
 
 async def _get_turn_from_deal(client, game, player):
@@ -89,7 +89,7 @@ async def _play_bridge_game(
     player_uuids = {position: uuid.uuid4() for position in models.Position}
     for position, player_uuid in player_uuids.items():
         await client.join(game=game_uuid, player=player_uuid, position=position)
-    players_in_game = await client.get_players(game=game_uuid)
+    players_in_game, _ = await client.get_players(game=game_uuid)
     logger.info("Players in the game: %r", players_in_game)
     position_in_turn = await _get_turn_from_deal(client, game_uuid, player_uuid)
     alarm = _alarm_task()
@@ -99,7 +99,7 @@ async def _play_bridge_game(
             player_uuids = await _change_players(client, player_uuids, game_uuid)
             alarm = _alarm_task()
         player_uuid = player_uuids[position_in_turn]
-        player_state = await client.get_self(game=game_uuid, player=player_uuid)
+        player_state, _ = await client.get_self(game=game_uuid, player=player_uuid)
         if calls := player_state.allowedCalls:
             await client.call(
                 game=game_uuid, player=player_uuid, call=random.choice(calls)

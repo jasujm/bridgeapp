@@ -28,6 +28,7 @@ def mock_bridge_client(monkeypatch):
         game=unittest.mock.AsyncMock(),
         join=unittest.mock.AsyncMock(),
         leave=unittest.mock.AsyncMock(),
+        get_game=unittest.mock.AsyncMock(),
         get_deal=unittest.mock.AsyncMock(),
         get_self=unittest.mock.AsyncMock(),
         get_results=unittest.mock.AsyncMock(),
@@ -104,14 +105,15 @@ def test_read_game(client, mock_bridge_client, game_uuid, username_and_player_uu
     username, player_uuid = username_and_player_uuid
     deal = models.Deal()
     api_deal = api.models.Deal(self=f"http://testserver/api/v1/deals/{deal.uuid}")
-    mock_bridge_client.get_deal.return_value = (deal, 123)
+    game = models.Game(uuid=game_uuid, deal=deal)
+    api_game = api.models.Game(
+        self=f"http://testserver/api/v1/games/{game_uuid}", deal=api_deal,
+    )
+    mock_bridge_client.get_game.return_value = (game, 123)
     res = client.get(f"/api/v1/games/{game_uuid}", auth=(username, "secret"))
     assert res.headers[api.games.COUNTER_HEADER] == "123"
-    assert api.models.Game(**res.json()) == {
-        "self": f"http://testserver/api/v1/games/{game_uuid}",
-        "deal": api_deal,
-    }
-    mock_bridge_client.get_deal.assert_awaited_once_with(
+    assert api.models.Game(**res.json()) == api_game
+    mock_bridge_client.get_game.assert_awaited_once_with(
         game=game_uuid, player=player_uuid
     )
 
@@ -119,8 +121,30 @@ def test_read_game(client, mock_bridge_client, game_uuid, username_and_player_uu
 def test_read_game_should_fail_if_game_not_found(
     client, mock_bridge_client, game_uuid, username
 ):
-    mock_bridge_client.get_deal.side_effect = bridgeprotocol.NotFoundError
+    mock_bridge_client.get_game.side_effect = bridgeprotocol.NotFoundError
     res = client.get(f"/api/v1/games/{game_uuid}", auth=(username, "secret"))
+    assert res.status_code == fastapi.status.HTTP_404_NOT_FOUND
+    mock_bridge_client.get_game.assert_awaited_once()
+
+
+def test_read_deal(client, mock_bridge_client, game_uuid, username_and_player_uuid):
+    username, player_uuid = username_and_player_uuid
+    deal = models.Deal()
+    api_deal = api.models.Deal(self=f"http://testserver/api/v1/deals/{deal.uuid}")
+    mock_bridge_client.get_deal.return_value = (deal, 123)
+    res = client.get(f"/api/v1/games/{game_uuid}/deal", auth=(username, "secret"))
+    assert res.headers[api.games.COUNTER_HEADER] == "123"
+    assert api.models.Deal(**res.json()) == api_deal
+    mock_bridge_client.get_deal.assert_awaited_once_with(
+        game=game_uuid, player=player_uuid
+    )
+
+
+def test_read_deal_should_fail_if_game_not_found(
+    client, mock_bridge_client, game_uuid, username
+):
+    mock_bridge_client.get_deal.side_effect = bridgeprotocol.NotFoundError
+    res = client.get(f"/api/v1/games/{game_uuid}/deal", auth=(username, "secret"))
     assert res.status_code == fastapi.status.HTTP_404_NOT_FOUND
     mock_bridge_client.get_deal.assert_awaited_once()
 
@@ -128,8 +152,8 @@ def test_read_game_should_fail_if_game_not_found(
 def test_read_self(client, mock_bridge_client, game_uuid, username_and_player_uuid):
     username, player_uuid = username_and_player_uuid
     player_state = models.PlayerState(position=models.Position.north)
-    mock_bridge_client.get_self.return_value = player_state
-    res = client.get(f"/api/v1/games/{game_uuid}/self", auth=(username, "secret"))
+    mock_bridge_client.get_self.return_value = (player_state, 123)
+    res = client.get(f"/api/v1/games/{game_uuid}/me", auth=(username, "secret"))
     assert models.PlayerState(**res.json()) == player_state
     mock_bridge_client.get_self.assert_awaited_once_with(
         game=game_uuid, player=player_uuid
@@ -140,7 +164,7 @@ def test_read_self_should_fail_if_game_not_found(
     client, mock_bridge_client, game_uuid, username
 ):
     mock_bridge_client.get_self.side_effect = bridgeprotocol.NotFoundError
-    res = client.get(f"/api/v1/games/{game_uuid}/self", auth=(username, "secret"))
+    res = client.get(f"/api/v1/games/{game_uuid}/me", auth=(username, "secret"))
     assert res.status_code == fastapi.status.HTTP_404_NOT_FOUND
     mock_bridge_client.get_self.assert_awaited_once()
 
@@ -155,12 +179,12 @@ def test_read_results(client, mock_bridge_client, game_uuid, username_and_player
             ),
         )
     ]
-    mock_bridge_client.get_results.return_value = deal_results
+    mock_bridge_client.get_results.return_value = (deal_results, 123)
     res = client.get(f"/api/v1/games/{game_uuid}/results", auth=(username, "secret"))
     assert res.json() == [
         {
             "deal": f"http://testserver/api/v1/deals/{deal_results[0].deal}",
-            "result": {"partnership": "eastWest", "score": 420,},
+            "result": {"partnership": "eastWest", "score": 420},
         }
     ]
     mock_bridge_client.get_results.assert_awaited_once_with(game=game_uuid)
@@ -178,7 +202,7 @@ def test_read_results_should_fail_if_game_not_found(
 def test_read_players(client, mock_bridge_client, game_uuid, username_and_player_uuid):
     username, player_uuid = username_and_player_uuid
     players_in_game = models.PlayersInGame(north=player_uuid)
-    mock_bridge_client.get_players.return_value = players_in_game
+    mock_bridge_client.get_players.return_value = (players_in_game, 123)
     res = client.get(f"/api/v1/games/{game_uuid}/players", auth=(username, "secret"))
     assert res.json() == {
         "north": f"http://testserver/api/v1/players/{player_uuid}",

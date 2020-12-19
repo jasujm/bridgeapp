@@ -114,12 +114,7 @@ export class Deal {
     vulnerability: Vulnerability = { northSouth: false, eastWest: false };
 }
 
-export interface DealCounterPair {
-    deal: Deal | null;
-    counter: number | null;
-}
-
-export class Self {
+export class PlayerState {
     position: Position | null = null;
     allowedCalls: Array<Call> = [];
     allowedCards: Array<Card> = [];
@@ -135,11 +130,29 @@ export interface DealResult {
     result: DuplicateResult | null;
 }
 
-export type PlayersInGame = Record<Position, string | null>;
+export class PlayersInGame {
+    north: string | null = null;
+    east: string | null = null;
+    south: string | null = null;
+    west: string | null = null;
+}
+
+export class Game {
+    self = "";
+    deal: Deal | null = null;
+    me = new PlayerState()
+    results: Array<DealResult> = [];
+    players = new PlayersInGame();
+}
 
 export interface Game {
-    self: string;
-    deal?: Deal;
+    game: Game;
+    counter: number | null;
+}
+
+export interface GameCounterPair {
+    game: Game;
+    counter: number | null;
 }
 
 export interface Event {

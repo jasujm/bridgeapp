@@ -8,7 +8,7 @@ import {
     Deal,
     Call,
     Card,
-    Self,
+    PlayerState,
     AnyEvent,
     EventHandlers,
     ErrorSeverity,
@@ -92,23 +92,31 @@ export default class {
         });
     }
 
-    async getDeal(gameUuid: string) {
+    async getGame(gameUuid: string) {
         const response = await this.request({
             method: "get",
             url: `/games/${gameUuid}`,
         });
         return {
-            deal: response.data.deal as Deal | null,
+            game: response.data as Game | null,
             counter: Number(response.headers["x-counter"]) || null,
         };
     }
 
-    async getSelf(gameUuid: string) {
+    async getDeal(gameUuid: string) {
         const response = await this.request({
             method: "get",
-            url: `/games/${gameUuid}/self`,
+            url: `/games/${gameUuid}/deal`,
         });
-        return response.data as Self;
+        return response.data as Deal | null;
+    }
+
+    async getPlayerState(gameUuid: string) {
+        const response = await this.request({
+            method: "get",
+            url: `/games/${gameUuid}/me`,
+        });
+        return response.data as PlayerState;
     }
 
     async getResults(gameUuid: string) {

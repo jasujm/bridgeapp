@@ -7,15 +7,14 @@ import {
     Position,
     Rank,
     Suit,
+    Game,
     Deal,
-    Self,
     EventHandlers,
     CallType,
     Strain,
     Doubling,
     Partnership,
     DealEndEvent,
-    PlayersInGame,
 } from "@/api/types"
 import flushPromises from "flush-promises"
 import _ from "lodash"
@@ -27,9 +26,7 @@ const otherPlayerUuid = "fb11eeae-7be2-41d6-a7f9-4dc126c2bf3c";
 describe("BridgeTable.vue", function() {
     let clock: any;
     let fakeApi: any;
-    let self: Self;
-    let deal: Deal;
-    let players: PlayersInGame;
+    let game: Game;
     let store: any;
     let state: any;
     let actions: any;
@@ -37,19 +34,13 @@ describe("BridgeTable.vue", function() {
 
     this.beforeEach(async function() {
         clock = sinon.useFakeTimers();
-        self = new Self();
-        deal = new Deal();
-        players = {
-            north: null,
-            east: null,
-            south: null,
-            west: otherPlayerUuid,
-        };
+        game = new Game();
+        game.deal = new Deal();
+        game.players.west = otherPlayerUuid;
         fakeApi = {
-            getDeal: sinon.fake.resolves(deal),
-            getSelf: sinon.stub().resolves(self),
-            getResults: sinon.fake.resolves([]),
-            getPlayers: sinon.fake.resolves(players),
+            getGame: sinon.fake.resolves({ game, counter: 0 }),
+            getDeal: sinon.fake.resolves(game.deal),
+            getPlayerState: sinon.stub().resolves(game.me),
             joinGame: sinon.fake.resolves(undefined),
             leaveGame: sinon.fake.resolves(undefined),
             makeCall: sinon.stub().resolves(),
@@ -76,10 +67,7 @@ describe("BridgeTable.vue", function() {
 
     it("should fetch game data when mounted", function() {
         expect(fakeApi.subscribe).to.be.calledWith(gameUuid);
-        expect(fakeApi.getDeal).to.be.calledWith(gameUuid);
-        expect(fakeApi.getSelf).to.be.calledWith(gameUuid);
-        expect(fakeApi.getResults).to.be.calledWith(gameUuid);
-        expect(fakeApi.getPlayers).to.be.calledWith(gameUuid);
+        expect(fakeApi.getGame).to.be.calledWith(gameUuid);
     });
 
     it("should fetch game data when game is changed", async function() {
@@ -88,10 +76,7 @@ describe("BridgeTable.vue", function() {
         await flushPromises();
         clock.tick(200);
         expect(fakeApi.subscribe).to.be.calledWith(otherUuid);
-        expect(fakeApi.getDeal).to.be.calledWith(otherUuid);
-        expect(fakeApi.getSelf).to.be.calledWith(otherUuid);
-        expect(fakeApi.getResults).to.be.calledWith(otherUuid);
-        expect(fakeApi.getPlayers).to.be.calledWith(otherUuid);
+        expect(fakeApi.getGame).to.be.calledWith(otherUuid);
     });
 
     describe("join", function() {
@@ -118,9 +103,9 @@ describe("BridgeTable.vue", function() {
 
     describe("leave", function() {
         this.beforeEach(async function() {
-            players.north = playerUuid;
-            self.position = Position.north;
-            wrapper.setData({ self, players });
+            game.players.north = playerUuid;
+            game.me.position = Position.north;
+            wrapper.setData({ me: game.me, players: game.players });
             await wrapper.vm.$nextTick();
         });
 
@@ -149,8 +134,8 @@ describe("BridgeTable.vue", function() {
         const call = { type: CallType.pass };
 
         this.beforeEach(async function() {
-            fakeApi.getSelf.resetHistory();
-            self.allowedCalls = [call];
+            fakeApi.getPlayerState.resetHistory();
+            game.me.allowedCalls = [call];
             await wrapper.vm.$nextTick();
         });
 
@@ -159,12 +144,12 @@ describe("BridgeTable.vue", function() {
             expect(fakeApi.makeCall).to.be.calledWith(gameUuid, call);
         })
 
-        it("should fetch self state on 409", async function() {
+        it("should fetch player state on 409", async function() {
             fakeApi.makeCall.rejects({ isAxiosError: true, response: { status: 409 } });
             await wrapper.find(".call-panel button").trigger("click");
             await flushPromises();
             clock.tick(200);
-            expect(fakeApi.getSelf).to.be.calledWith(gameUuid);
+            expect(fakeApi.getPlayerState).to.be.calledWith(gameUuid);
         });
 
         it("should let other errors through", async function() {
@@ -172,7 +157,7 @@ describe("BridgeTable.vue", function() {
             await wrapper.find(".call-panel button").trigger("click");
             await flushPromises();
             clock.tick(200);
-            expect(fakeApi.getSelf).not.to.be.called;
+            expect(fakeApi.getPlayerState).not.to.be.called;
             expect(actions.reportError).to.be.called;
         });
     });
@@ -181,8 +166,8 @@ describe("BridgeTable.vue", function() {
         const card = { rank: Rank._7, suit: Suit.diamonds };
 
         this.beforeEach(async function() {
-            fakeApi.getSelf.resetHistory();
-            self.allowedCards = [card];
+            fakeApi.getPlayerState.resetHistory();
+            game.me.allowedCards = [card];
             await wrapper.vm.$nextTick();
         });
 
@@ -191,12 +176,12 @@ describe("BridgeTable.vue", function() {
             expect(fakeApi.playCard).to.be.calledWith(gameUuid, card);
         });
 
-        it("should fetch self state on 409", async function() {
+        it("should fetch player state on 409", async function() {
             fakeApi.playCard.rejects({ isAxiosError: true, response: { status: 409 } });
             await wrapper.find(".card-panel button").trigger("click");
             await flushPromises();
             clock.tick(200);
-            expect(fakeApi.getSelf).to.be.calledWith(gameUuid);
+            expect(fakeApi.getPlayerState).to.be.calledWith(gameUuid);
         });
 
         it("should let other errors through", async function() {
@@ -204,7 +189,7 @@ describe("BridgeTable.vue", function() {
             await wrapper.find(".card-panel button").trigger("click");
             await flushPromises();
             clock.tick(200);
-            expect(fakeApi.getSelf).not.to.be.called;
+            expect(fakeApi.getPlayerState).not.to.be.called;
             expect(actions.reportError).to.be.called;
         });
     });
@@ -247,24 +232,24 @@ describe("BridgeTable.vue", function() {
         });
 
         it("should update allowed actions on turn event", async function() {
-            self.position = Position.south;
-            self.allowedCalls = [{ type: CallType.pass }];
-            self.allowedCards = [{ rank: Rank._2, suit: Suit.clubs }];
-            // Self has turn... fetch new actions
+            game.me.position = Position.south;
+            game.me.allowedCalls = [{ type: CallType.pass }];
+            game.me.allowedCards = [{ rank: Rank._2, suit: Suit.clubs }];
+            // The player has turn... fetch new actions
             handlers.turn!(
                 { game: gameUuid, type: "turn", position: Position.south, counter: 1 }
             );
-            expect(fakeApi.getSelf).to.be.called;
+            expect(fakeApi.getPlayerState).to.be.called;
             expect(wrapper.vm.deal.positionInTurn).to.be.equal(Position.south);
-            expect(wrapper.vm.self.allowedCalls).to.be.equal(self.allowedCalls);
-            expect(wrapper.vm.self.allowedCards).to.be.equal(self.allowedCards);
+            expect(wrapper.vm.me.allowedCalls).to.be.equal(game.me.allowedCalls);
+            expect(wrapper.vm.me.allowedCards).to.be.equal(game.me.allowedCards);
             // Someone else has turn... clear the actions
             handlers.turn!(
                 { game: gameUuid, type: "turn", position: Position.north, counter: 2 }
             );
             expect(wrapper.vm.deal.positionInTurn).to.be.equal(Position.north);
-            expect(wrapper.vm.self.allowedCalls).to.be.empty;
-            expect(wrapper.vm.self.allowedCards).to.be.empty;
+            expect(wrapper.vm.me.allowedCalls).to.be.empty;
+            expect(wrapper.vm.me.allowedCards).to.be.empty;
         });
 
         it("should add call on call event", async function() {
@@ -307,9 +292,9 @@ describe("BridgeTable.vue", function() {
             const card = { rank: Rank.jack, suit: Suit.diamonds };
 
             this.beforeEach(function() {
-                deal.tricks.push({ cards: [] });
-                deal.cards.west.push(card);
-                wrapper.setData({ deal });
+                game.deal!.tricks.push({ cards: [] });
+                game.deal!.cards.west.push(card);
+                wrapper.setData({ deal: game.deal });
             });
 
             it("should add the played card to the trick", function() {
@@ -323,8 +308,8 @@ describe("BridgeTable.vue", function() {
             });
 
             it("should remove the played card from the hand even if unknown", function() {
-                deal.cards.west[0] = null;
-                wrapper.setData({ deal });
+                game.deal!.cards.west[0] = null;
+                wrapper.setData({ deal: game.deal });
                 handlers.play!({ game: gameUuid, type: "play", position, card, counter: 1 });
                 expect(wrapper.vm.deal.cards.west).to.be.empty;
             });
@@ -346,15 +331,15 @@ describe("BridgeTable.vue", function() {
             });
 
             it("should record the winner of the previous trick", function() {
-                deal.tricks = [{ cards: [] }];
-                wrapper.setData({ deal });
+                game.deal!.tricks = [{ cards: [] }];
+                wrapper.setData({ deal: game.deal });
                 handlers.trick!({ game: gameUuid, type: "trick", winner, counter: 1 });
                 expect(wrapper.vm.deal.tricks[0].winner).to.be.equal(winner);
             });
 
             it("should not add a new trick if there are 13", function() {
-                deal.tricks = Array(13).fill({ cards: [] });
-                wrapper.setData({ deal });
+                game.deal!.tricks = Array(13).fill({ cards: [] });
+                wrapper.setData({ deal: game.deal });
                 handlers.trick!({ game: gameUuid, type: "trick", winner, counter: 1 });
                 expect(wrapper.vm.deal.tricks.length).to.be.equal(13);
             });

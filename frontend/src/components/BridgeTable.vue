@@ -2,7 +2,7 @@
 <div class="bridge-table">
     <b-form-group>
         <b-dropdown
-            v-if="self.position === null"
+            v-if="me.position === null"
             class="join-game any"
             block right split
             variant="primary"
@@ -34,26 +34,26 @@
                     :calls="deal.calls" />
                 <BiddingResult
                     v-if="deal.declarer && deal.contract"
-                    :selfPosition="self.position"
+                    :selfPosition="me.position"
                     :declarer="deal.declarer"
                     :contract="deal.contract" />
                 <TricksWonDisplay
                     v-if="deal.declarer && deal.contract"
-                    :selfPosition="self.position"
+                    :selfPosition="me.position"
                     :tricks="deal.tricks" />
             </b-col>
             <b-col lg="8" class="mb-4">
                 <h3 class="d-none">Table</h3>
                 <TableDisplay
-                    :selfPosition="self.position"
+                    :selfPosition="me.position"
                     :positionInTurn="deal.positionInTurn"
                     :declarer="deal.declarer"
                     :cards="deal.cards"
                     :trick="displayTrick" />
             </b-col>
         </b-row>
-        <CallPanel :allowedCalls="self.allowedCalls" @call="makeCall($event)" />
-        <CardPanel :allowedCards="self.allowedCards" @play="playCard($event)" />
+        <CallPanel :allowedCalls="me.allowedCalls" @call="makeCall($event)" />
+        <CardPanel :allowedCards="me.allowedCards" @play="playCard($event)" />
     </b-container>
 </div>
 </template>
@@ -72,9 +72,9 @@ import DealResultsDisplay from "./DealResultsDisplay.vue"
 import { partnershipText } from "./partnership"
 import PositionMixin from "./position"
 import {
+    GameCounterPair,
     Deal,
-    DealCounterPair,
-    Self,
+    PlayerState,
     AnyEvent,
     PlayerEvent,
     TurnEvent,
@@ -131,9 +131,9 @@ function scoreMessage({contract, tricksWon, result}: DealEndEvent, position: Pos
 export default class BridgeTable extends mixins(PositionMixin) {
     @Prop() private readonly gameUuid!: string;
     private deal = new Deal();
-    private self = new Self();
+    private me = new PlayerState();
     private results: Array<DealResult> = [];
-    private players: PlayersInGame = { north: null, east: null, south: null, west: null };
+    private players = new PlayersInGame();
     private displayTrick: Trick | null = null;
     private ws?: WebSocket;
     private timerId?: number;
@@ -145,12 +145,35 @@ export default class BridgeTable extends mixins(PositionMixin) {
         this.fetchGameState();
     }
 
-    private _fetchDealState() {
+    private fetchDealState() {
         if (this.gameUuid) {
             const api = this.$store.state.api;
             api.getDeal(this.gameUuid).then(
-                ({ deal, counter }: DealCounterPair) => {
+                (deal: Deal) => {
                     this.deal = deal || new Deal();
+                }
+            ).catch((err: Error) => this.$store.dispatch("reportError", err));
+        }
+    }
+
+    private fetchPlayerState() {
+        if (this.gameUuid) {
+            const api = this.$store.state.api;
+            api.getPlayerState(this.gameUuid).then(
+                (me: PlayerState) => this.me = me
+            ).catch((err: Error) => this.$store.dispatch("reportError", err));
+        }
+    }
+
+    private fetchGameState() {
+        if (this.gameUuid) {
+            const api = this.$store.state.api;
+            api.getGame(this.gameUuid).then(
+                ({ game, counter }: GameCounterPair) => {
+                    this.deal = game.deal || new Deal();
+                    this.me = game.me;
+                    this.results = game.results;
+                    this.players = game.players;
                     this.dealCounter = counter;
                     // Apply the queued events whose counter value is higher than the
                     // current counter value
@@ -165,48 +188,6 @@ export default class BridgeTable extends mixins(PositionMixin) {
         }
     }
 
-    private fetchDealState = _.debounce(this._fetchDealState, 50, { trailing: true })
-
-    private _fetchSelfState() {
-        if (this.gameUuid) {
-            const api = this.$store.state.api;
-            api.getSelf(this.gameUuid).then(
-                (self: Self) => this.self = self
-            ).catch((err: Error) => this.$store.dispatch("reportError", err));
-        }
-    }
-
-    private fetchSelfState = _.debounce(this._fetchSelfState, 50, { trailing: true })
-
-    private _fetchResults() {
-        if (this.gameUuid) {
-            const api = this.$store.state.api;
-            api.getResults(this.gameUuid).then(
-                (results: Array<DealResult>) => this.results = results
-            ).catch((err: Error) => this.$store.dispatch("reportError", err));
-        }
-    }
-
-    private fetchResults = _.debounce(this._fetchResults, 50, { trailing: true })
-
-    private _fetchPlayers() {
-        if (this.gameUuid) {
-            const api = this.$store.state.api;
-            api.getPlayers(this.gameUuid).then(
-                (players: PlayersInGame) => this.players = players
-            ).catch((err: Error) => this.$store.dispatch("reportError", err));
-        }
-    }
-
-    private fetchPlayers = _.debounce(this._fetchPlayers, 50, { trailing: true })
-
-    private fetchGameState() {
-        this.fetchDealState();
-        this.fetchSelfState();
-        this.fetchResults();
-        this.fetchPlayers();
-    }
-
     private get availablePositions() {
         return _.values(Position).filter(p => this.players[p] === null);
     }
@@ -216,7 +197,7 @@ export default class BridgeTable extends mixins(PositionMixin) {
             const api = this.$store.state.api;
             api.joinGame(this.gameUuid, position).then(
                 () => {
-                    this.fetchSelfState();
+                    this.fetchPlayerState();
                     this.fetchDealState();
                 }
             ).catch(
@@ -230,7 +211,7 @@ export default class BridgeTable extends mixins(PositionMixin) {
             const api = this.$store.state.api;
             api.leaveGame(this.gameUuid).then(
                 () => {
-                    this.self = new Self();
+                    this.me = new PlayerState();
                     this.fetchDealState();
                 }
             ).catch(
@@ -301,7 +282,7 @@ export default class BridgeTable extends mixins(PositionMixin) {
         } else {
             this.results.push({ deal: event.deal, result: event.result });
         }
-        const message = scoreMessage(event, this.self.position);
+        const message = scoreMessage(event, this.me.position);
         this.$bvToast.toast(message, {
             title: "Deal result",
             autoHideDelay: 5000,
@@ -310,18 +291,18 @@ export default class BridgeTable extends mixins(PositionMixin) {
 
     private handleTurn({ position }: TurnEvent) {
         this.deal.positionInTurn = position;
-        if (position == this.self.position) {
-            this.fetchSelfState();
+        if (position == this.me.position) {
+            this.fetchPlayerState();
         } else {
-            this.self.allowedCalls = [];
-            this.self.allowedCards = [];
+            this.me.allowedCalls = [];
+            this.me.allowedCards = [];
         }
     }
 
     private handleConflictError(err: Error) {
         const axiosError = err as AxiosError;
         if (axiosError.isAxiosError && axiosError.response && axiosError.response.status == 409) {
-            this.fetchSelfState();
+            this.fetchPlayerState();
         } else {
             this.$store.dispatch("reportError", err);
         }

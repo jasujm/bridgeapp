@@ -17,6 +17,16 @@ subapp.include_router(deals.router, prefix="/deals", tags=["deals"])
 subapp.include_router(players.router, prefix="/players", tags=["players"])
 
 
+@subapp.middleware("http")
+async def add_counter_middleware(request: fastapi.Request, call_next):
+    """Add X-Counter header to the response if set"""
+    request.state.counter_header_value = None
+    response = await call_next(request)
+    if (counter := request.state.counter_header_value) is not None:
+        response.headers[games.COUNTER_HEADER] = str(counter)
+    return response
+
+
 def _exception_response(status: int, ex: Exception):
     error = models.Error(detail=str(ex))
     return fastapi.responses.JSONResponse(status_code=status, content=error.dict())
