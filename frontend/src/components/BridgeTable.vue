@@ -59,7 +59,7 @@
 </template>
 
 <script lang="ts">
-import Component, { mixins } from "vue-class-component"
+    import Component, { mixins } from "vue-class-component"
 import { Prop, Watch } from "vue-property-decorator"
 import { AxiosError } from "axios"
 import Bidding from "./Bidding.vue"
@@ -135,8 +135,10 @@ export default class BridgeTable extends mixins(PositionMixin) {
     private results: Array<DealResult> = [];
     private players = new PlayersInGame();
     private displayTrick: Trick | null = null;
+    private nextDisplayTrick: Trick | null = null;
     private ws?: WebSocket;
-    private timerId?: number;
+    private fetchGameTimerId?: number;
+    private displayTrickTimerId?: number;
     private dealCounter: number | null = Number.POSITIVE_INFINITY;
     private eventCounter: number = Number.NEGATIVE_INFINITY;
     private eventCallbacks: Array<EventCallback> = [];
@@ -224,38 +226,33 @@ export default class BridgeTable extends mixins(PositionMixin) {
         this.players[position] = player;
     }
 
-    private addCall({ position, call }: CallEvent) {
-        this.deal.calls.push({ position, call });
-    }
-
-    private addTrick() {
-        this.deal.tricks.push({ cards: [] });
+    private addCall({ position, call, index }: CallEvent) {
+        this.$set(this.deal.calls, index, { position, call });
     }
 
     private completeBidding({ declarer, contract }: BiddingEvent) {
         this.deal.declarer = declarer;
         this.deal.contract = contract;
-        if (declarer) {
-            this.addTrick();
-        }
     }
 
-    private cardPlayed({ position, card }: PlayEvent) {
-        const trick = _.last(this.deal.tricks)
-        if (trick && trick.cards) {
-            trick.cards.push({ position, card });
-            const hand = this.deal.cards[position];
-            let index = _.findIndex(
-                hand,
-                c => c ? c.rank == card.rank && c.suit == card.suit : false
-            );
-            // If the cards are unknown, just remove one of the unknowns
-            if (index < 0) {
-                index = hand.indexOf(null);
-            }
-            if (index >= 0) {
-                hand.splice(index, 1);
-            }
+    private cardPlayed({ position, card, trick: trickIndex, index: cardIndex }: PlayEvent) {
+        if (!this.deal.tricks[trickIndex]) {
+            this.$set(this.deal.tricks, trickIndex, { cards: [] });
+        }
+        const trick = this.deal.tricks[trickIndex];
+        this.$set(trick.cards, cardIndex, { position, card });
+        this.updateDisplayTrick(trick);
+        const hand = this.deal.cards[position];
+        let index = _.findIndex(
+            hand,
+            c => c ? c.rank == card.rank && c.suit == card.suit : false
+        );
+        // If the cards are unknown, just remove one of the unknowns
+        if (index < 0) {
+            index = hand.indexOf(null);
+        }
+        if (index >= 0) {
+            hand.splice(index, 1);
         }
     }
 
@@ -263,16 +260,9 @@ export default class BridgeTable extends mixins(PositionMixin) {
         this.deal.cards[position] = cards;
     }
 
-    private completeTrick({ winner }: TrickEvent) {
-        // TODO: Ideally the event itself would include the information if this
-        // is the last trick. But needs API support.
-        const lastTrick = _.last(this.deal.tricks);
-        if (lastTrick) {
-            lastTrick.winner = winner;
-        }
-        if (this.deal.tricks.length < 13) {
-            this.addTrick();
-        }
+    private completeTrick({ winner, index }: TrickEvent) {
+        this.deal.tricks[index].winner = winner;
+        this.updateDisplayTrick(null);
     }
 
     private recordScore(event: DealEndEvent) {
@@ -355,7 +345,7 @@ export default class BridgeTable extends mixins(PositionMixin) {
             {
                 open: this.fetchGameState.bind(this),
                 player: this.wrapEventHandler(this.changePlayer),
-                deal: this.wrapEventHandler(this.fetchDealState),
+                deal: this.fetchGameState.bind(this),
                 turn: this.wrapEventHandler(this.handleTurn),
                 call: this.wrapEventHandler(this.addCall),
                 bidding: this.wrapEventHandler(this.completeBidding),
@@ -366,12 +356,16 @@ export default class BridgeTable extends mixins(PositionMixin) {
             }
         );
         this.fetchGameState();
-        this.timerId = setInterval(this.fetchGameState, 10000);
+        this.fetchGameTimerId = setInterval(this.fetchGameState, 10000);
+        this.updateDisplayTrick(this.lastTrick);
     }
 
     private close() {
-        if (this.timerId) {
-            clearInterval(this.timerId);
+        if (this.fetchGameTimerId) {
+            clearInterval(this.fetchGameTimerId);
+        }
+        if (this.displayTrickTimerId) {
+            clearTimeout(this.displayTrickTimerId);
         }
         if (this.ws) {
             this.ws.close();
@@ -393,7 +387,6 @@ export default class BridgeTable extends mixins(PositionMixin) {
     private loggedIn(value: boolean) {
         if (value) {
             this.startGame();
-            this.displayTrick = this.lastTrick;
         }
     }
 
@@ -401,13 +394,37 @@ export default class BridgeTable extends mixins(PositionMixin) {
         return _.last(this.deal.tricks) || null;
     }
 
+    private canReplaceDisplayTrick(trick: Trick | null) {
+        if (!this.displayTrick) {
+            return true;
+        }
+        if (!trick) {
+            return false;
+        }
+        const prefixLength = this.displayTrick.cards.length;
+        return _.isEqual(trick.cards.slice(0, prefixLength), this.displayTrick.cards.slice(0, prefixLength));
+    }
+
+    private updateDisplayTrick(trick: Trick | null) {
+        if (this.canReplaceDisplayTrick(trick)) {
+            this.displayTrick = trick;
+        } else {
+            this.nextDisplayTrick = trick;
+            if (this.displayTrickTimerId === undefined) {
+                this.displayTrickTimerId = setTimeout(
+                    () => {
+                        this.displayTrick = this.nextDisplayTrick;
+                        this.nextDisplayTrick = null;
+                        this.displayTrickTimerId = undefined;
+                    }, 2000
+                );
+            }
+        }
+    }
+
     @Watch("deal.tricks")
     private trickChanged() {
-        // This visually retains the old trick for two seconds after new trick
-        // is started
-        const trick = this.lastTrick;
-        const delay = (!trick || _.isEmpty(trick.cards)) ? 2000 : 0;
-        _.delay(() => this.displayTrick = trick, delay);
+        this.updateDisplayTrick(this.lastTrick);
     }
 }
 </script>

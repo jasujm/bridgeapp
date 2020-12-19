@@ -73,6 +73,7 @@ class CallEvent(BridgeEvent):
     deal: models.DealUuid
     position: models.Position
     call: models.Call
+    index: int
 
 
 @_register_event("bidding")
@@ -95,6 +96,8 @@ class PlayEvent(BridgeEvent):
     deal: models.DealUuid
     position: models.Position
     card: models.CardType
+    trick: int
+    index: int
 
 
 @_register_event("dummy")
@@ -116,6 +119,7 @@ class TrickEvent(BridgeEvent):
 
     deal: models.DealUuid
     winner: models.Position
+    index: int
 
 
 @_register_event("dealend")

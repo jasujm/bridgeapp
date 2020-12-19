@@ -914,6 +914,7 @@ class TestEventReceiver:
                 "deal": uuid.uuid4(),
                 "position": _any_position(),
                 "call": models.Call(type=models.CallType.pass_),
+                "index": random.randint(0, 16),
             },
         ),
         (
@@ -930,7 +931,13 @@ class TestEventReceiver:
         (
             "play",
             bridgeprotocol.events.PlayEvent,
-            {"deal": uuid.uuid4(), "position": _any_position(), "card": _any_card()},
+            {
+                "deal": uuid.uuid4(),
+                "position": _any_position(),
+                "card": _any_card(),
+                "trick": random.randint(0, 12),
+                "index": random.randint(0, 3),
+            },
         ),
         (
             "dummy",
@@ -944,7 +951,11 @@ class TestEventReceiver:
         (
             "trick",
             bridgeprotocol.events.TrickEvent,
-            {"deal": uuid.uuid4(), "winner": _any_position()},
+            {
+                "deal": uuid.uuid4(),
+                "winner": _any_position(),
+                "index": random.randint(0, 12),
+            },
         ),
         (
             "dealend",

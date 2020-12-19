@@ -145,6 +145,7 @@ export default class {
         ws.onmessage = async function(message) {
             const text = await message.data.text();
             const event = JSON.parse(text) as AnyEvent;
+            console.log(event)
             // This seems silly, but not sure if the type checker will allow it
             // any other way
             if (event.type == "player") {

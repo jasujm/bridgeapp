@@ -228,7 +228,7 @@ describe("BridgeTable.vue", function() {
 
         it("should update deal status on deal event", async function() {
             handlers.deal!({ game: gameUuid, type: "deal", counter: 1 });
-            expect(fakeApi.getDeal).to.be.called;
+            expect(fakeApi.getGame).to.be.called;
         });
 
         it("should update allowed actions on turn event", async function() {
@@ -256,7 +256,7 @@ describe("BridgeTable.vue", function() {
             const position = Position.east;
             const call = { type: CallType.pass };
             handlers.call!(
-                { game: gameUuid, type: "call", position, call, counter: 1 }
+                { game: gameUuid, type: "call", position, call, index: 0, counter: 1 }
             );
             expect(wrapper.vm.deal.calls).to.deep.include({ position, call });
         });
@@ -281,11 +281,7 @@ describe("BridgeTable.vue", function() {
             it("should record contract on bidding event", function() {
                 expect(wrapper.vm.deal.contract).to.be.deep.equal(contract);
             })
-
-            it("should open the first trick on bidding event", function() {
-                expect(wrapper.vm.deal.tricks.length).to.be.equal(1);
-            });
-        })
+        });
 
         describe("play", function() {
             const position = Position.west;
@@ -298,19 +294,19 @@ describe("BridgeTable.vue", function() {
             });
 
             it("should add the played card to the trick", function() {
-                handlers.play!({ game: gameUuid, type: "play", position, card, counter: 1 });
+                handlers.play!({ game: gameUuid, type: "play", position, card, trick: 0, index: 0, counter: 1 });
                 expect(wrapper.vm.deal.tricks[0].cards).to.deep.include({ position, card });
             });
 
             it("should remove the played card from the hand", function() {
-                handlers.play!({ game: gameUuid, type: "play", position, card, counter: 1 });
+                handlers.play!({ game: gameUuid, type: "play", position, card, trick: 0, index: 0, counter: 1 });
                 expect(wrapper.vm.deal.cards.west).to.be.empty;
             });
 
             it("should remove the played card from the hand even if unknown", function() {
                 game.deal!.cards.west[0] = null;
                 wrapper.setData({ deal: game.deal });
-                handlers.play!({ game: gameUuid, type: "play", position, card, counter: 1 });
+                handlers.play!({ game: gameUuid, type: "play", position, card, trick: 0, index: 0, counter: 1 });
                 expect(wrapper.vm.deal.cards.west).to.be.empty;
             });
         });
@@ -325,25 +321,12 @@ describe("BridgeTable.vue", function() {
         describe("trick", function() {
             const winner = Position.west;
 
-            it("should add a new trick on trick event", function() {
-                handlers.trick!({ game: gameUuid, type: "trick", winner, counter: 1 });
-                expect(wrapper.vm.deal.tricks).to.have.deep.members([{ cards: [] }]);
-            });
-
-            it("should record the winner of the previous trick", function() {
+            it("should record the winner of the trick", function() {
                 game.deal!.tricks = [{ cards: [] }];
                 wrapper.setData({ deal: game.deal });
-                handlers.trick!({ game: gameUuid, type: "trick", winner, counter: 1 });
+                handlers.trick!({ game: gameUuid, type: "trick", winner, index: 0, counter: 1 });
                 expect(wrapper.vm.deal.tricks[0].winner).to.be.equal(winner);
             });
-
-            it("should not add a new trick if there are 13", function() {
-                game.deal!.tricks = Array(13).fill({ cards: [] });
-                wrapper.setData({ deal: game.deal });
-                handlers.trick!({ game: gameUuid, type: "trick", winner, counter: 1 });
-                expect(wrapper.vm.deal.tricks.length).to.be.equal(13);
-            });
-
         });
 
         describe("dealend", function() {

@@ -180,6 +180,7 @@ export interface CallEvent extends Event {
     type: "call";
     position: Position;
     call: Call;
+    index: number;
 }
 
 export interface BiddingEvent extends Event {
@@ -192,6 +193,8 @@ export interface PlayEvent extends Event {
     type: "play";
     position: Position;
     card: Card;
+    trick: number;
+    index: number;
 }
 
 export interface DummyEvent extends Event {
@@ -203,6 +206,7 @@ export interface DummyEvent extends Event {
 export interface TrickEvent extends Event {
     type: "trick";
     winner: Position;
+    index: number;
 }
 
 export interface DealEndEvent extends Event {
