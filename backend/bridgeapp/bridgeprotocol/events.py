@@ -131,7 +131,7 @@ class DealEndEvent(BridgeEvent):
     deal: models.DealUuid
     contract: typing.Optional[models.Contract]
     tricksWon: typing.Optional[int]
-    result: models.DealResult
+    result: models.DuplicateResult
 
 
 EventType = enum.Enum("EventType", {type: type for type in _EVENT_CLASSES})
