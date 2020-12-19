@@ -2,6 +2,7 @@
 
 import asyncio
 from collections import defaultdict
+import logging
 import threading
 import uuid
 
@@ -9,6 +10,8 @@ import zmq.asyncio
 
 from bridgeapp import bridgeprotocol
 from bridgeapp.settings import settings
+
+logger = logging.getLogger(__name__)
 
 _ctx = zmq.asyncio.Context()
 _threadlocal = threading.local()
@@ -62,11 +65,15 @@ class EventDemultiplexer:
 
     async def _produce_events(self):
         while self._producers:
-            event = await self._event_receiver.get_event()
-            if producers := self._producers.get(event.game):
-                for producer in producers[:]:
-                    producer.produce(event)
-                await asyncio.sleep(0)
+            try:
+                event = await self._event_receiver.get_event()
+            except:  # pylint: disable=bare-except
+                logger.warning("Error while producing an event", exc_info=True)
+            else:
+                if producers := self._producers.get(event.game):
+                    for producer in producers[:]:
+                        producer.produce(event)
+                    await asyncio.sleep(0)
 
 
 async def get_bridge_client() -> bridgeprotocol.BridgeClient:

@@ -281,7 +281,7 @@ class DuplicateResult(pydantic.BaseModel):
     """
 
     partnership: typing.Optional[Partnership]
-    score: pydantic.conint(ge=0)
+    score: pydantic.conint(ge=0) = 0
 
     class Config:
         schema_extra = {

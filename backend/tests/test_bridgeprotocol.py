@@ -960,7 +960,7 @@ class TestEventReceiver:
         (
             "dealend",
             bridgeprotocol.events.DealEndEvent,
-            {"deal": uuid.uuid4(), "result": models.DealResult(deal=uuid.uuid4())},
+            {"deal": uuid.uuid4(), "result": models.DuplicateResult()},
         ),
     ],
 )
