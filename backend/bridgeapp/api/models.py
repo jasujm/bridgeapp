@@ -8,7 +8,6 @@ The models in this module extend the base models.
 # Don't care about warning related to pydantic conventions
 # pylint: disable=no-self-argument,no-self-use,too-few-public-methods,missing-class-docstring,no-member
 
-from collections import namedtuple
 import typing
 
 import fastapi
@@ -20,21 +19,16 @@ from bridgeapp.bridgeprotocol import models as base_models, events as base_event
 # fields of the base models into API URLs. Botched together with limited
 # knowledge about pydantic and if it could have been done more elegantly.
 
-_UuidConversion = namedtuple("_UuidConversion", "handler uuidarg")
+def _get_uuid_converter(handler: str, id_kwarg_name: str):
+    def _uuid_converter(request: fastapi.Request, id: str):
+        return request.url_for(handler, **{id_kwarg_name: id})
+    return _uuid_converter
 
-_UUID_TO_URL_CONVERSION = {
-    base_models.GameUuid: _UuidConversion(handler="game_details", uuidarg="game_id",),
-    base_models.PlayerUuid: _UuidConversion(
-        handler="player_details", uuidarg="player_id"
-    ),
-    base_models.DealUuid: _UuidConversion(handler="deal_details", uuidarg="deal_id"),
+_UUID_TO_URL_CONVERTERS = {
+    base_models.GameUuid: _get_uuid_converter("game_details", "game_id"),
+    base_models.PlayerUuid: _get_uuid_converter("player_details", "player_id"),
+    base_models.DealUuid: _get_uuid_converter("deal_details", "deal_id"),
 }
-
-
-def _apify_field_name(name: str):
-    if name == "id":
-        return "self"
-    return name
 
 
 def _from_base_model(
@@ -45,10 +39,12 @@ def _from_base_model(
     values = {}
     for (name, field) in model.__fields__.items():
         value = getattr(model, name, field.default)
-        if value and (conversion := (_UUID_TO_URL_CONVERSION.get(field.outer_type_))):
-            kwargs = {conversion.uuidarg: value}
-            value = request.url_for(conversion.handler, **kwargs)
-        values[_apify_field_name(name)] = value
+        if value and (url_converter := (_UUID_TO_URL_CONVERTERS.get(field.outer_type_))):
+            if name == "id":
+                values["self"] = url_converter(request, value)
+            else:
+                value = url_converter(request, value)
+        values[name] = value
     return cls(**values)
 
 
@@ -57,7 +53,7 @@ def _apify_field_type(outer_type_):
         return typing.Union[
             tuple(_apify_field_type(t) for t in typing.get_args(outer_type_))
         ]
-    if outer_type_ in _UUID_TO_URL_CONVERSION:
+    if outer_type_ in _UUID_TO_URL_CONVERTERS:
         return pydantic.AnyHttpUrl
     return outer_type_
 
@@ -69,12 +65,16 @@ def _apify_field(field: pydantic.fields.ModelField):
 def _apify_model(
     model: typing.Type[pydantic.BaseModel],
 ) -> typing.Type[pydantic.BaseModel]:
-    # Rename id -> self, otherwise take the name as is
-    # In the API response we prefer URLs to raw UUID
+    # ID fields of foreign objects are converted to URLs instead of UUIDs. The
+    # sole exception is the field called `id` which refers to the ID of the
+    # model itself. But add an additional `self` field which is the URL of the
+    # instance.
     new_fields = {
-        _apify_field_name(name): _apify_field(field)
+        name: _apify_field(field) if name != "id" else (field.outer_type_, field.default)
         for (name, field) in model.__fields__.items()
     }
+    if id_field := model.__fields__.get("id"):
+        new_fields["self"] = _apify_field(id_field)
     new_model = pydantic.create_model(
         model.__name__, __config__=model.__config__, **new_fields
     )
@@ -89,6 +89,7 @@ Deal = _apify_model(base_models.Deal)
 class Player(pydantic.BaseModel):
     """Player taking part in a bridge game"""
 
+    id: base_models.PlayerUuid
     self: pydantic.AnyHttpUrl
 
 
@@ -104,6 +105,7 @@ class Game(pydantic.BaseModel):
     of view of a player.
     """
 
+    id: base_models.GameUuid
     self: pydantic.AnyHttpUrl
     deal: typing.Optional[Deal]
     me: base_models.PlayerState = base_models.PlayerState()

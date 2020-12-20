@@ -98,16 +98,21 @@ def test_create_game(client, mock_bridge_client, game_id, username):
     assert res.status_code == fastapi.status.HTTP_201_CREATED
     game_url = f"http://testserver/api/v1/games/{game_id}"
     assert res.headers["Location"] == game_url
-    assert api.models.Game(**res.json()) == api.models.Game(self=game_url)
+    assert api.models.Game(**res.json()) == api.models.Game(id=game_id, self=game_url)
 
 
 def test_read_game(client, mock_bridge_client, game_id, username_and_player_id):
     username, player_id = username_and_player_id
     deal = models.Deal()
-    api_deal = api.models.Deal(self=f"http://testserver/api/v1/deals/{deal.id}")
+    api_deal = api.models.Deal(
+        id=deal.id,
+        self=f"http://testserver/api/v1/deals/{deal.id}"
+    )
     game = models.Game(id=game_id, deal=deal)
     api_game = api.models.Game(
-        self=f"http://testserver/api/v1/games/{game_id}", deal=api_deal,
+        id=game_id,
+        self=f"http://testserver/api/v1/games/{game_id}",
+        deal=api_deal,
     )
     mock_bridge_client.get_game.return_value = (game, 123)
     res = client.get(f"/api/v1/games/{game_id}", auth=(username, "secret"))
@@ -130,7 +135,7 @@ def test_read_game_should_fail_if_game_not_found(
 def test_read_deal(client, mock_bridge_client, game_id, username_and_player_id):
     username, player_id = username_and_player_id
     deal = models.Deal()
-    api_deal = api.models.Deal(self=f"http://testserver/api/v1/deals/{deal.id}")
+    api_deal = api.models.Deal(id=deal.id, self=f"http://testserver/api/v1/deals/{deal.id}")
     mock_bridge_client.get_deal.return_value = (deal, 123)
     res = client.get(f"/api/v1/games/{game_id}/deal", auth=(username, "secret"))
     assert res.headers[api.games.COUNTER_HEADER] == "123"

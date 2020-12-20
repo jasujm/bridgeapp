@@ -21,5 +21,4 @@ router = fastapi.APIRouter()
 )
 def get_deal_details(request: fastapi.Request, deal_id: uuid.UUID):
     """Handle getting deal details"""
-    del deal_id
-    return models.Deal(self=str(request.url))
+    return models.Deal(id=deal_id, self=str(request.url))

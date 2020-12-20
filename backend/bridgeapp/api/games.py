@@ -66,7 +66,7 @@ async def post_games(
     game_id = await client.game()
     game_url = request.url_for("game_details", game_id=game_id)
     response.headers["Location"] = game_url
-    return models.Game(self=game_url)
+    return models.Game(id=game_id, self=game_url)
 
 
 @router.get(
@@ -90,6 +90,7 @@ async def get_game_details(
         game=game_id, player=player_id
     )
     return models.Game(
+        id=game.id,
         self=str(request.url),
         deal=models.Deal.from_base_model(game.deal, request),
         me=game.self,

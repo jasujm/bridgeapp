@@ -16,7 +16,7 @@
                             @click="createGame()">+</b-button>
                         <b-form-input
                             id="game-id"
-                            placeholder="Game"
+                            placeholder="Game UUID"
                             v-model="gameId"
                             :state="getValidationState(validationContext)"
                             aria-describedby="game-id-feedback"
@@ -38,7 +38,6 @@
 <script lang="ts">
 import Component, { mixins } from "vue-class-component"
 import { ValidationMixin } from "./validation"
-import _ from "lodash"
 
 @Component
 export default class GameSelector extends mixins(ValidationMixin) {
@@ -53,12 +52,9 @@ export default class GameSelector extends mixins(ValidationMixin) {
         // the URL is constructed over and over again. Instead just pass the URL
         // around.
         const game = await this.$store.state.api.createGame();
-        const gameId = _.first(/\/[0-9a-f-]+$/.exec(game.self));
-        if (gameId) {
-            this.gameId = gameId.substring(1);
-            await this.$store.state.api.joinGame(this.gameId);
-            await this.selectGame();
-        }
+        this.gameId = game.id;
+        await this.$store.state.api.joinGame(game.id);
+        await this.selectGame();
     }
 
     async selectGame() {

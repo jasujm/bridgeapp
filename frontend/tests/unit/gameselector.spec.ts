@@ -16,7 +16,7 @@ describe("GameSelector.vue", function() {
 
     this.beforeEach(function() {
         fakeApi = {
-            createGame: sinon.fake.resolves({ self: gameUrl }),
+            createGame: sinon.fake.resolves({ id: gameId, self: gameUrl }),
             joinGame: sinon.fake.resolves(null),
         }
         state = { username: "user", api: fakeApi };

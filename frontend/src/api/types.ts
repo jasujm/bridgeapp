@@ -104,6 +104,7 @@ export interface Vulnerability {
 }
 
 export class Deal {
+    id = "";
     self = "";
     positionInTurn?: Position;
     calls: Array<PositionCallPair> = [];
@@ -138,6 +139,7 @@ export class PlayersInGame {
 }
 
 export class Game {
+    id = "";
     self = "";
     deal: Deal | null = null;
     me = new PlayerState()

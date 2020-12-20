@@ -21,5 +21,4 @@ router = fastapi.APIRouter()
 )
 def get_player_details(request: fastapi.Request, player_id: uuid.UUID):
     """Handle getting player details"""
-    del player_id
-    return models.Player(self=str(request.url))
+    return models.Player(id=player_id, self=str(request.url))
