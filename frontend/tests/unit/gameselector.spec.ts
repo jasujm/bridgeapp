@@ -37,7 +37,7 @@ describe("GameSelector.vue", function() {
     it("should not join a game if UUID is invalid", async function() {
         await wrapper.find("form").trigger("submit");
         await flushPromises();
-        expect(fakeApi.joinGame).not.to.be.called;
+        expect(wrapper.emitted("game-selected")).to.be.undefined;
     });
 
     describe("join game", function() {
