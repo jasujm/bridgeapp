@@ -5,8 +5,8 @@ import Vuex from "vuex"
 import sinon from "sinon"
 import flushPromises from "flush-promises"
 
-const uuid = "6bac87b3-8e49-4675-bf69-8c0d6a351f40";
-const gameUrl = `http://testserver/api/v1/games/${uuid}`;
+const gameId = "6bac87b3-8e49-4675-bf69-8c0d6a351f40";
+const gameUrl = `http://testserver/api/v1/games/${gameId}`;
 
 describe("GameSelector.vue", function() {
     let fakeApi: any;
@@ -31,7 +31,7 @@ describe("GameSelector.vue", function() {
         await wrapper.find(".btn-secondary").trigger("click");
         await flushPromises();
         expect(fakeApi.createGame).to.be.called;
-        expect(fakeApi.joinGame).to.be.calledWith(uuid);
+        expect(fakeApi.joinGame).to.be.calledWith(gameId);
     });
 
     it("should not join a game if UUID is invalid", async function() {
@@ -42,13 +42,13 @@ describe("GameSelector.vue", function() {
 
     describe("join game", function() {
         this.beforeEach(async function() {
-            wrapper.find("#game-uuid").setValue(uuid);
+            wrapper.find("#game-id").setValue(gameId);
             await wrapper.find("form").trigger("submit");
             await flushPromises();
         });
 
         it("should emit an event", async function() {
-            expect(wrapper.emitted("game-selected")).to.be.deep.equal([[uuid]]);
+            expect(wrapper.emitted("game-selected")).to.be.deep.equal([[gameId]]);
         });
     });
 });

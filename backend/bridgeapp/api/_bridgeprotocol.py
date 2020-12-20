@@ -18,9 +18,9 @@ _threadlocal = threading.local()
 
 
 class _EventProducer:
-    def __init__(self, game_uuid: uuid.UUID):
+    def __init__(self, game_id: uuid.UUID):
         self._queue = asyncio.Queue()
-        self._game_uuid = game_uuid
+        self._game_id = game_id
 
     def produce(self, event: bridgeprotocol.BridgeEvent):
         """Produce an event about the game"""
@@ -31,9 +31,9 @@ class _EventProducer:
         return await self._queue.get()
 
     @property
-    def game_uuid(self):
+    def game_id(self):
         """The UUID of the game"""
-        return self._game_uuid
+        return self._game_id
 
 
 class EventDemultiplexer:
@@ -47,21 +47,21 @@ class EventDemultiplexer:
         self._event_receiver = event_receiver
         self._producers = defaultdict(list)
 
-    def subscribe(self, game_uuid: uuid.UUID):
+    def subscribe(self, game_id: uuid.UUID):
         """Subscribe to events about a game"""
         if not self._producers:
             loop = asyncio.get_running_loop()
             loop.create_task(self._produce_events())
-        producer = _EventProducer(game_uuid)
-        self._producers[game_uuid].append(producer)
+        producer = _EventProducer(game_id)
+        self._producers[game_id].append(producer)
         return producer
 
     def unsubscribe(self, producer: _EventProducer):
         """Unsubscribe from events about a game"""
-        producers_for_game = self._producers[producer.game_uuid]
+        producers_for_game = self._producers[producer.game_id]
         producers_for_game.remove(producer)
         if not producers_for_game:
-            del self._producers[producer.game_uuid]
+            del self._producers[producer.game_id]
 
     async def _produce_events(self):
         while self._producers:

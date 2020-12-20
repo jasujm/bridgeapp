@@ -23,16 +23,16 @@ from bridgeapp.bridgeprotocol import models as base_models, events as base_event
 _UuidConversion = namedtuple("_UuidConversion", "handler uuidarg")
 
 _UUID_TO_URL_CONVERSION = {
-    base_models.GameUuid: _UuidConversion(handler="game_details", uuidarg="game_uuid",),
+    base_models.GameUuid: _UuidConversion(handler="game_details", uuidarg="game_id",),
     base_models.PlayerUuid: _UuidConversion(
-        handler="player_details", uuidarg="player_uuid"
+        handler="player_details", uuidarg="player_id"
     ),
-    base_models.DealUuid: _UuidConversion(handler="deal_details", uuidarg="deal_uuid"),
+    base_models.DealUuid: _UuidConversion(handler="deal_details", uuidarg="deal_id"),
 }
 
 
 def _apify_field_name(name: str):
-    if name == "uuid":
+    if name == "id":
         return "self"
     return name
 
@@ -69,8 +69,8 @@ def _apify_field(field: pydantic.fields.ModelField):
 def _apify_model(
     model: typing.Type[pydantic.BaseModel],
 ) -> typing.Type[pydantic.BaseModel]:
-    # Rename uuid -> self, otherwise take the name as is
-    # In the API response we prefer URLs to raw UUIDs
+    # Rename id -> self, otherwise take the name as is
+    # In the API response we prefer URLs to raw UUID
     new_fields = {
         _apify_field_name(name): _apify_field(field)
         for (name, field) in model.__fields__.items()

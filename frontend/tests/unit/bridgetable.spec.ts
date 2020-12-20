@@ -19,9 +19,9 @@ import {
 import flushPromises from "flush-promises"
 import _ from "lodash"
 
-const gameUuid = "6bac87b3-8e49-4675-bf69-8c0d6a351f40";
-const playerUuid = "313343df-3c97-42aa-a4f3-3abe10ced3b0";
-const otherPlayerUuid = "fb11eeae-7be2-41d6-a7f9-4dc126c2bf3c";
+const gameId = "6bac87b3-8e49-4675-bf69-8c0d6a351f40";
+const playerId = "313343df-3c97-42aa-a4f3-3abe10ced3b0";
+const otherPlayerId = "fb11eeae-7be2-41d6-a7f9-4dc126c2bf3c";
 
 describe("BridgeTable.vue", function() {
     let clock: any;
@@ -36,7 +36,7 @@ describe("BridgeTable.vue", function() {
         clock = sinon.useFakeTimers();
         game = new Game();
         game.deal = new Deal();
-        game.players.west = otherPlayerUuid;
+        game.players.west = otherPlayerId;
         fakeApi = {
             getGame: sinon.fake.resolves({ game, counter: 0 }),
             getDeal: sinon.fake.resolves(game.deal),
@@ -55,7 +55,7 @@ describe("BridgeTable.vue", function() {
             getters: { isLoggedIn: () => true },
         });
         wrapper = mount(
-            BridgeTable, { localVue, store, propsData: { gameUuid } }
+            BridgeTable, { localVue, store, propsData: { gameId } }
         );
         await flushPromises();
         clock.tick(200);
@@ -66,17 +66,17 @@ describe("BridgeTable.vue", function() {
     });
 
     it("should fetch game data when mounted", function() {
-        expect(fakeApi.subscribe).to.be.calledWith(gameUuid);
-        expect(fakeApi.getGame).to.be.calledWith(gameUuid);
+        expect(fakeApi.subscribe).to.be.calledWith(gameId);
+        expect(fakeApi.getGame).to.be.calledWith(gameId);
     });
 
     it("should fetch game data when game is changed", async function() {
-        const otherUuid = "1e994843-c6e8-4751-9151-b23d44814b8e"
-        wrapper.setProps({ gameUuid: otherUuid });
+        const otherGameId = "1e994843-c6e8-4751-9151-b23d44814b8e"
+        wrapper.setProps({ gameId: otherGameId });
         await flushPromises();
         clock.tick(200);
-        expect(fakeApi.subscribe).to.be.calledWith(otherUuid);
-        expect(fakeApi.getGame).to.be.calledWith(otherUuid);
+        expect(fakeApi.subscribe).to.be.calledWith(otherGameId);
+        expect(fakeApi.getGame).to.be.calledWith(otherGameId);
     });
 
     describe("join", function() {
@@ -85,7 +85,7 @@ describe("BridgeTable.vue", function() {
         });
         it("should join the game when the join button is pressed", async function() {
             await wrapper.find(".join-game.any a").trigger("click");
-            expect(fakeApi.joinGame).to.be.calledWith(gameUuid);
+            expect(fakeApi.joinGame).to.be.calledWith(gameId);
         });
         for (const position of [Position.north, Position.east, Position.south]) {
             it(`should display join buttons for available seats: ${position}`, function() {
@@ -93,7 +93,7 @@ describe("BridgeTable.vue", function() {
             });
             it(`should join the game when the join button is pressed: ${position}`, async function() {
                 await wrapper.find(`.join-game.${position} a`).trigger("click");
-                expect(fakeApi.joinGame).to.be.calledWith(gameUuid, position);
+                expect(fakeApi.joinGame).to.be.calledWith(gameId, position);
             });
         }
         it("should not display join button for unavailable seat", function() {
@@ -103,7 +103,7 @@ describe("BridgeTable.vue", function() {
 
     describe("leave", function() {
         this.beforeEach(async function() {
-            game.players.north = playerUuid;
+            game.players.north = playerId;
             game.me.position = Position.north;
             wrapper.setData({ me: game.me, players: game.players });
             await wrapper.vm.$nextTick();
@@ -114,7 +114,7 @@ describe("BridgeTable.vue", function() {
         });
         it("should leave the game when the leave button is pressed", async function() {
             await wrapper.find(".leave-game").trigger("click");
-            expect(fakeApi.leaveGame).to.be.calledWith(gameUuid);
+            expect(fakeApi.leaveGame).to.be.calledWith(gameId);
         });
     });
 
@@ -141,7 +141,7 @@ describe("BridgeTable.vue", function() {
 
         it("should make call on call event", async function() {
             await wrapper.find(".call-panel button").trigger("click");
-            expect(fakeApi.makeCall).to.be.calledWith(gameUuid, call);
+            expect(fakeApi.makeCall).to.be.calledWith(gameId, call);
         })
 
         it("should fetch player state on 409", async function() {
@@ -149,7 +149,7 @@ describe("BridgeTable.vue", function() {
             await wrapper.find(".call-panel button").trigger("click");
             await flushPromises();
             clock.tick(200);
-            expect(fakeApi.getPlayerState).to.be.calledWith(gameUuid);
+            expect(fakeApi.getPlayerState).to.be.calledWith(gameId);
         });
 
         it("should let other errors through", async function() {
@@ -173,7 +173,7 @@ describe("BridgeTable.vue", function() {
 
         it("should make card on play event", async function() {
             await wrapper.find(".card-panel button").trigger("click");
-            expect(fakeApi.playCard).to.be.calledWith(gameUuid, card);
+            expect(fakeApi.playCard).to.be.calledWith(gameId, card);
         });
 
         it("should fetch player state on 409", async function() {
@@ -181,7 +181,7 @@ describe("BridgeTable.vue", function() {
             await wrapper.find(".card-panel button").trigger("click");
             await flushPromises();
             clock.tick(200);
-            expect(fakeApi.getPlayerState).to.be.calledWith(gameUuid);
+            expect(fakeApi.getPlayerState).to.be.calledWith(gameId);
         });
 
         it("should let other errors through", async function() {
@@ -204,10 +204,10 @@ describe("BridgeTable.vue", function() {
 
         it("should update players on player event", async function() {
             handlers.player!({
-                game: gameUuid,
+                game: gameId,
                 type: "player",
                 position: Position.north,
-                player: playerUuid,
+                player: playerId,
                 counter: 1
             });
             await wrapper.vm.$nextTick();
@@ -216,7 +216,7 @@ describe("BridgeTable.vue", function() {
 
         it("should update players on player event", async function() {
             handlers.player!({
-                game: gameUuid,
+                game: gameId,
                 type: "player",
                 position: Position.west,
                 player: null,
@@ -227,7 +227,7 @@ describe("BridgeTable.vue", function() {
         });
 
         it("should update deal status on deal event", async function() {
-            handlers.deal!({ game: gameUuid, type: "deal", counter: 1 });
+            handlers.deal!({ game: gameId, type: "deal", counter: 1 });
             expect(fakeApi.getGame).to.be.called;
         });
 
@@ -237,7 +237,7 @@ describe("BridgeTable.vue", function() {
             game.me.allowedCards = [{ rank: Rank._2, suit: Suit.clubs }];
             // The player has turn... fetch new actions
             handlers.turn!(
-                { game: gameUuid, type: "turn", position: Position.south, counter: 1 }
+                { game: gameId, type: "turn", position: Position.south, counter: 1 }
             );
             expect(fakeApi.getPlayerState).to.be.called;
             expect(wrapper.vm.deal.positionInTurn).to.be.equal(Position.south);
@@ -245,7 +245,7 @@ describe("BridgeTable.vue", function() {
             expect(wrapper.vm.me.allowedCards).to.be.equal(game.me.allowedCards);
             // Someone else has turn... clear the actions
             handlers.turn!(
-                { game: gameUuid, type: "turn", position: Position.north, counter: 2 }
+                { game: gameId, type: "turn", position: Position.north, counter: 2 }
             );
             expect(wrapper.vm.deal.positionInTurn).to.be.equal(Position.north);
             expect(wrapper.vm.me.allowedCalls).to.be.empty;
@@ -256,7 +256,7 @@ describe("BridgeTable.vue", function() {
             const position = Position.east;
             const call = { type: CallType.pass };
             handlers.call!(
-                { game: gameUuid, type: "call", position, call, index: 0, counter: 1 }
+                { game: gameId, type: "call", position, call, index: 0, counter: 1 }
             );
             expect(wrapper.vm.deal.calls).to.deep.include({ position, call });
         });
@@ -270,7 +270,7 @@ describe("BridgeTable.vue", function() {
 
             this.beforeEach(function() {
                 handlers.bidding!(
-                    { game: gameUuid, type: "bidding", declarer, contract, counter: 1 }
+                    { game: gameId, type: "bidding", declarer, contract, counter: 1 }
                 );
             });
 
@@ -294,19 +294,19 @@ describe("BridgeTable.vue", function() {
             });
 
             it("should add the played card to the trick", function() {
-                handlers.play!({ game: gameUuid, type: "play", position, card, trick: 0, index: 0, counter: 1 });
+                handlers.play!({ game: gameId, type: "play", position, card, trick: 0, index: 0, counter: 1 });
                 expect(wrapper.vm.deal.tricks[0].cards).to.deep.include({ position, card });
             });
 
             it("should remove the played card from the hand", function() {
-                handlers.play!({ game: gameUuid, type: "play", position, card, trick: 0, index: 0, counter: 1 });
+                handlers.play!({ game: gameId, type: "play", position, card, trick: 0, index: 0, counter: 1 });
                 expect(wrapper.vm.deal.cards.west).to.be.empty;
             });
 
             it("should remove the played card from the hand even if unknown", function() {
                 game.deal!.cards.west[0] = null;
                 wrapper.setData({ deal: game.deal });
-                handlers.play!({ game: gameUuid, type: "play", position, card, trick: 0, index: 0, counter: 1 });
+                handlers.play!({ game: gameId, type: "play", position, card, trick: 0, index: 0, counter: 1 });
                 expect(wrapper.vm.deal.cards.west).to.be.empty;
             });
         });
@@ -314,7 +314,7 @@ describe("BridgeTable.vue", function() {
         it("should reveal dummy on dummy event", function() {
             const position = Position.east;
             const cards = [{ rank: Rank.queen, suit: Suit.hearts }];
-            handlers.dummy!({ game: gameUuid, type: "dummy", position, cards, counter: 1 });
+            handlers.dummy!({ game: gameId, type: "dummy", position, cards, counter: 1 });
             expect(wrapper.vm.deal.cards.east).to.be.deep.equal(cards);
         });
 
@@ -324,15 +324,15 @@ describe("BridgeTable.vue", function() {
             it("should record the winner of the trick", function() {
                 game.deal!.tricks = [{ cards: [] }];
                 wrapper.setData({ deal: game.deal });
-                handlers.trick!({ game: gameUuid, type: "trick", winner, index: 0, counter: 1 });
+                handlers.trick!({ game: gameId, type: "trick", winner, index: 0, counter: 1 });
                 expect(wrapper.vm.deal.tricks[0].winner).to.be.equal(winner);
             });
         });
 
         describe("dealend", function() {
-            const dealUuid = "d7a05529-9b95-4678-b6b2-e5ca0ea501fc";
+            const dealId = "d7a05529-9b95-4678-b6b2-e5ca0ea501fc";
             const dealResult = {
-                deal: dealUuid,
+                deal: dealId,
                 result: { partnership: Partnership.northSouth, score: 200 },
             };
             let dealEndEvent: DealEndEvent;
@@ -340,9 +340,9 @@ describe("BridgeTable.vue", function() {
 
             this.beforeEach(function() {
                 dealEndEvent = {
-                    game: gameUuid,
+                    game: gameId,
                     type: "dealend",
-                    deal: dealUuid,
+                    deal: dealId,
                     contract: null,
                     tricksWon: null,
                     result: dealResult.result,
@@ -367,7 +367,7 @@ describe("BridgeTable.vue", function() {
 
             it("should amend the latest result if deal UUID matches", function() {
                 wrapper.setData({
-                    results: [{ deal: dealUuid, result: null }]
+                    results: [{ deal: dealId, result: null }]
                 });
                 handlers.dealend!(dealEndEvent);
                 expect(wrapper.vm.results).to.be.deep.equal([dealResult]);

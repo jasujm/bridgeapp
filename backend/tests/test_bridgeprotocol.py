@@ -76,22 +76,22 @@ def curve_keys():
 
 
 @pytest.fixture
-def game_uuid():
+def game_id():
     return uuid.uuid4()
 
 
 @pytest.fixture
-def game_kwargs(game_uuid):
+def game_kwargs(game_id):
     return {
-        "game": game_uuid,
+        "game": game_id,
         "args": [1, 2, 3],
     }
 
 
 @pytest.fixture
-def game_and_player(game_uuid):
+def game_and_player(game_id):
     return {
-        "game": game_uuid,
+        "game": game_id,
         "player": uuid.uuid4(),
     }
 
@@ -417,13 +417,13 @@ async def test_bridge_client_play_command(server, client, card):
 async def test_get_game_success(server, client, game_and_player):
     deal = models.Deal()
     pubstate = deal.dict()
-    pubstate["deal"] = str(pubstate.pop("uuid"))
+    pubstate["deal"] = str(pubstate.pop("id"))
     privstate = {}
     self = models.PlayerState(position=models.Position.north)
-    results = [models.DealResult(deal=deal.uuid)]
+    results = [models.DealResult(deal=deal.id)]
     players = models.PlayersInGame(north=game_and_player["player"])
     game = models.Game(
-        uuid=game_and_player["game"],
+        id=game_and_player["game"],
         deal=deal,
         self=self,
         results=results,
@@ -501,7 +501,7 @@ class TestBridgeClientGetDealCommand:
         if cards_east := privstate["cards"].get("east"):
             deal.cards.east = copy.deepcopy(cards_east)
         pubstate = pubstate.dict()
-        pubstate["deal"] = str(pubstate.pop("uuid"))
+        pubstate["deal"] = str(pubstate.pop("id"))
         assert await _command_helper(
             server,
             client,
@@ -554,7 +554,7 @@ class TestBridgeClientGetDealCommand:
         self, server, client, game_and_player, pubstate, privstate
     ):
         pubstate = pubstate.dict()
-        pubstate["deal"] = str(pubstate.pop("uuid"))
+        pubstate["deal"] = str(pubstate.pop("id"))
         with pytest.raises(bridgeprotocol.InvalidMessage):
             await _command_helper(
                 server,
@@ -571,7 +571,7 @@ class TestBridgeClientGetDealCommand:
         self, server, client, game_and_player, pubstate, privstate
     ):
         pubstate = pubstate.dict()
-        pubstate["deal"] = str(pubstate.pop("uuid"))
+        pubstate["deal"] = str(pubstate.pop("id"))
         with pytest.raises(bridgeprotocol.InvalidMessage):
             await _command_helper(
                 server,
@@ -591,7 +591,7 @@ class TestBridgeClientGetDealCommand:
         self, server, client, game_and_player, pubstate, privstate
     ):
         pubstate = pubstate.dict()
-        pubstate["deal"] = str(pubstate.pop("uuid"))
+        pubstate["deal"] = str(pubstate.pop("id"))
         with pytest.raises(bridgeprotocol.InvalidMessage):
             await _command_helper(
                 server,
@@ -608,7 +608,7 @@ class TestBridgeClientGetDealCommand:
         self, server, client, game_and_player, pubstate, privstate
     ):
         pubstate = pubstate.dict()
-        pubstate["deal"] = str(pubstate.pop("uuid"))
+        pubstate["deal"] = str(pubstate.pop("id"))
         with pytest.raises(bridgeprotocol.InvalidMessage):
             await _command_helper(
                 server,
@@ -707,13 +707,13 @@ class TestBridgeClientGetSelfCommand:
     ],
 )
 class TestBridgeClientGetResultsCommand:
-    async def test_success(self, server, client, game_uuid, results):
+    async def test_success(self, server, client, game_id, results):
         assert await _command_helper(
             server,
             client,
-            client.get_results(game=game_uuid),
+            client.get_results(game=game_id),
             expected_command=b"get",
-            expected_command_args={"game": game_uuid, "get": ["results"]},
+            expected_command_args={"game": game_id, "get": ["results"]},
             reply_args={
                 "get": {
                     "results": [
@@ -726,28 +726,28 @@ class TestBridgeClientGetResultsCommand:
         ) == (results, 123)
 
     async def test_missing_results_should_lead_to_failure(
-        self, server, client, game_uuid, results
+        self, server, client, game_id, results
     ):
         with pytest.raises(bridgeprotocol.InvalidMessage):
             await _command_helper(
                 server,
                 client,
-                client.get_results(game=game_uuid),
+                client.get_results(game=game_id),
                 expected_command=b"get",
-                expected_command_args={"game": game_uuid, "get": ["results"]},
+                expected_command_args={"game": game_id, "get": ["results"]},
                 reply_args={"get": {}, "counter": 123},
             )
 
     async def test_invalid_results_should_lead_to_failure(
-        self, server, client, game_uuid, results
+        self, server, client, game_id, results
     ):
         with pytest.raises(bridgeprotocol.InvalidMessage):
             await _command_helper(
                 server,
                 client,
-                client.get_results(game=game_uuid),
+                client.get_results(game=game_id),
                 expected_command=b"get",
-                expected_command_args={"game": game_uuid, "get": ["results"]},
+                expected_command_args={"game": game_id, "get": ["results"]},
                 reply_args={"get": {"results": "invalid"}, "counter": 123},
             )
 
@@ -766,39 +766,39 @@ class TestBridgeClientGetResultsCommand:
     ],
 )
 class TestBridgeClientGetPlayersCommand:
-    async def test_success(self, server, client, game_uuid, players):
+    async def test_success(self, server, client, game_id, players):
         assert await _command_helper(
             server,
             client,
-            client.get_players(game=game_uuid),
+            client.get_players(game=game_id),
             expected_command=b"get",
-            expected_command_args={"game": game_uuid, "get": ["players"]},
+            expected_command_args={"game": game_id, "get": ["players"]},
             reply_args={"get": {"players": players.dict()}, "counter": 123},
         ) == (players, 123)
 
     async def test_missing_players_should_lead_to_failure(
-        self, server, client, game_uuid, players
+        self, server, client, game_id, players
     ):
         with pytest.raises(bridgeprotocol.InvalidMessage):
             await _command_helper(
                 server,
                 client,
-                client.get_players(game=game_uuid),
+                client.get_players(game=game_id),
                 expected_command=b"get",
-                expected_command_args={"game": game_uuid, "get": ["players"]},
+                expected_command_args={"game": game_id, "get": ["players"]},
                 reply_args={"get": {}, "counter": 123},
             )
 
     async def test_invalid_players_should_lead_to_failure(
-        self, server, client, game_uuid, players
+        self, server, client, game_id, players
     ):
         with pytest.raises(bridgeprotocol.InvalidMessage):
             await _command_helper(
                 server,
                 client,
-                client.get_players(game=game_uuid),
+                client.get_players(game=game_id),
                 expected_command=b"get",
-                expected_command_args={"game": game_uuid, "get": ["players"]},
+                expected_command_args={"game": game_id, "get": ["players"]},
                 reply_args={"get": {"players": "invalid"}, "counter": 123},
             )
 
@@ -860,26 +860,26 @@ class TestEventReceiver:
     async def test_bridge_event_receiver_get_event(
         self, server, client, event_receiver, event_type, event_arguments
     ):
-        game_uuid = uuid.uuid4()
+        game_id = uuid.uuid4()
         await server.send_event(
-            f"{str(game_uuid)}:{event_type}".encode(),
+            f"{str(game_id)}:{event_type}".encode(),
             client._serialize_all(event_arguments),
         )
         assert await event_receiver.get_event() == bridgeprotocol.BridgeEvent(
-            game=game_uuid, type=event_type, **event_arguments
+            game=game_id, type=event_type, **event_arguments
         )
 
     async def test_invalid_event_from_generator_should_be_ignored_with_warning(
         self, server, client, event_generator, event_type, event_arguments, caplog
     ):
-        game_uuid = uuid.uuid4()
+        game_id = uuid.uuid4()
         await server.send_event(b"invalid-tag", {})
         await server.send_event(
-            f"{str(game_uuid)}:{event_type}".encode(),
+            f"{str(game_id)}:{event_type}".encode(),
             client._serialize_all(event_arguments),
         )
         assert await event_generator.__anext__() == bridgeprotocol.BridgeEvent(
-            game=game_uuid, type=event_type, **event_arguments
+            game=game_id, type=event_type, **event_arguments
         )
         assert [r.levelname for r in caplog.records] == ["WARNING"]
 
@@ -965,14 +965,14 @@ class TestEventReceiver:
     ],
 )
 async def test_bridge_event_receiver_concrete_events(
-    server, client, event_receiver, game_uuid, event_type, event_cls, event_arguments
+    server, client, event_receiver, game_id, event_type, event_cls, event_arguments
 ):
     await server.send_event(
-        f"{str(game_uuid)}:{event_type}".encode(),
+        f"{str(game_id)}:{event_type}".encode(),
         client._serialize_all(event_arguments),
     )
     assert await event_receiver.get_event() == event_cls(
-        game=game_uuid,
+        game=game_id,
         type=bridgeprotocol.events.EventType[event_type],
         **event_arguments,
     )

@@ -40,11 +40,11 @@ router = fastapi.APIRouter()
 security = fastapi.security.HTTPBasic()
 
 
-def _get_player_uuid(
+def _get_player_id(
     credentials: fastapi.security.HTTPBasicCredentials = fastapi.Depends(security),
 ):
     # TODO: Actually authenticate a player
-    return utils.generate_player_uuid(credentials.username)
+    return utils.generate_player_id(credentials.username)
 
 
 @router.post(
@@ -63,14 +63,14 @@ async def post_games(
 ):
     """Handle creating a game"""
     client = await utils.get_bridge_client()
-    game_uuid = await client.game()
-    game_url = request.url_for("game_details", game_uuid=game_uuid)
+    game_id = await client.game()
+    game_url = request.url_for("game_details", game_id=game_id)
     response.headers["Location"] = game_url
     return models.Game(self=game_url)
 
 
 @router.get(
-    "/{game_uuid}",
+    "/{game_id}",
     name="game_details",
     summary="Get information about a game",
     description="""The response contains a representation of the game from the point of view of
@@ -81,13 +81,13 @@ async def post_games(
 )
 async def get_game_details(
     request: fastapi.Request,
-    game_uuid: uuid.UUID,
-    player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid),
+    game_id: uuid.UUID,
+    player_id: uuid.UUID = fastapi.Depends(_get_player_id),
 ):
     """Handle getting game details"""
     client = await utils.get_bridge_client()
     game, request.state.counter_header_value = await client.get_game(
-        game=game_uuid, player=player_uuid
+        game=game_id, player=player_id
     )
     return models.Game(
         self=str(request.url),
@@ -102,7 +102,7 @@ async def get_game_details(
 
 
 @router.get(
-    "/{game_uuid}/deal",
+    "/{game_id}/deal",
     name="game_deal",
     summary="Get the current deal of a game",
     description="""The response contains a representation of the current deal of the game from
@@ -113,19 +113,19 @@ async def get_game_details(
 )
 async def get_game_deal(
     request: fastapi.Request,
-    game_uuid: uuid.UUID,
-    player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid),
+    game_id: uuid.UUID,
+    player_id: uuid.UUID = fastapi.Depends(_get_player_id),
 ):
     """Handle getting the current deal of a game"""
     client = await utils.get_bridge_client()
     deal, request.state.counter_header_value = await client.get_deal(
-        game=game_uuid, player=player_uuid
+        game=game_id, player=player_id
     )
     return models.Deal.from_base_model(deal, request)
 
 
 @router.get(
-    "/{game_uuid}/me",
+    "/{game_id}/me",
     name="game_me",
     summary="Get information about the authenticated player",
     description="""The response contains information about the authenticated player itself
@@ -135,19 +135,19 @@ async def get_game_deal(
 )
 async def get_game_me(
     request: fastapi.Request,
-    game_uuid: uuid.UUID,
-    player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid),
+    game_id: uuid.UUID,
+    player_id: uuid.UUID = fastapi.Depends(_get_player_id),
 ):
     """Handle getting self details"""
     client = await utils.get_bridge_client()
     me_, request.state.counter_header_value = await client.get_self(
-        game=game_uuid, player=player_uuid
+        game=game_id, player=player_id
     )
     return me_
 
 
 @router.get(
-    "/{game_uuid}/results",
+    "/{game_id}/results",
     name="game_results",
     summary="Get deal results of the game",
     description="""The response will contain an array of deal results in the chronological
@@ -157,14 +157,14 @@ async def get_game_me(
 )
 async def get_game_results(
     request: fastapi.Request,
-    game_uuid: uuid.UUID,
-    player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid),
+    game_id: uuid.UUID,
+    player_id: uuid.UUID = fastapi.Depends(_get_player_id),
 ):
     """Handle getting deal results"""
-    del player_uuid
+    del player_id
     client = await utils.get_bridge_client()
     deal_results, request.state.counter_header_value = await client.get_results(
-        game=game_uuid
+        game=game_id
     )
     return [
         models.DealResult.from_base_model(result, request) for result in deal_results
@@ -172,7 +172,7 @@ async def get_game_results(
 
 
 @router.get(
-    "/{game_uuid}/players",
+    "/{game_id}/players",
     name="game_players_list",
     summary="Get the players in a game",
     description="""Retrieve a mapping between positions and players in a game.""",
@@ -181,20 +181,20 @@ async def get_game_results(
 )
 async def get_game_players(
     request: fastapi.Request,
-    game_uuid: uuid.UUID,
-    player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid),
+    game_id: uuid.UUID,
+    player_id: uuid.UUID = fastapi.Depends(_get_player_id),
 ):
     """Handle getting player details"""
-    del player_uuid
+    del player_id
     client = await utils.get_bridge_client()
     players_in_game, request.state.counter_header_value = await client.get_players(
-        game=game_uuid
+        game=game_id
     )
     return models.PlayersInGame.from_base_model(players_in_game, request)
 
 
 @router.post(
-    "/{game_uuid}/players",
+    "/{game_id}/players",
     name="game_players_create",
     summary="Add a player to a game",
     description="""Make the authenticated player join the game, if there are seats available.""",
@@ -208,17 +208,17 @@ async def get_game_players(
     },
 )
 async def post_game_players(
-    game_uuid: uuid.UUID,
-    player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid),
+    game_id: uuid.UUID,
+    player_id: uuid.UUID = fastapi.Depends(_get_player_id),
     position: typing.Optional[base_models.Position] = None,
 ):
     """Handle adding player to a game"""
     client = await utils.get_bridge_client()
-    await client.join(game=game_uuid, player=player_uuid, position=position)
+    await client.join(game=game_id, player=player_id, position=position)
 
 
 @router.delete(
-    "/{game_uuid}/players",
+    "/{game_id}/players",
     name="game_players_delete",
     summary="Remove a player from a game",
     description="""Make the authenticated player leave the game.""",
@@ -226,15 +226,15 @@ async def post_game_players(
     responses={fastapi.status.HTTP_404_NOT_FOUND: _GAME_NOT_FOUND_RESPONSE,},
 )
 async def delete_game_players(
-    game_uuid: uuid.UUID, player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid),
+    game_id: uuid.UUID, player_id: uuid.UUID = fastapi.Depends(_get_player_id),
 ):
     """Handle removing a player from a game"""
     client = await utils.get_bridge_client()
-    await client.leave(game=game_uuid, player=player_uuid)
+    await client.leave(game=game_id, player=player_id)
 
 
 @router.post(
-    "/{game_uuid}/calls",
+    "/{game_id}/calls",
     name="game_calls",
     summary="Add a call to the current bidding",
     description="""Make a call as the authenticated player. Making call is only possible during
@@ -250,17 +250,17 @@ async def delete_game_players(
     },
 )
 async def post_game_calls(
-    game_uuid: uuid.UUID,
+    game_id: uuid.UUID,
     call: base_models.Call,
-    player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid),
+    player_id: uuid.UUID = fastapi.Depends(_get_player_id),
 ):
     """Handle adding call to a bidding"""
     client = await utils.get_bridge_client()
-    await client.call(game=game_uuid, player=player_uuid, call=call)
+    await client.call(game=game_id, player=player_id, call=call)
 
 
 @router.post(
-    "/{game_uuid}/trick",
+    "/{game_id}/trick",
     name="game_trick",
     summary="Add a card to the current trick",
     description="""Play a card the authenticated player. Playing card is only possible possible
@@ -276,22 +276,22 @@ async def post_game_calls(
     },
 )
 async def post_game_trick(
-    game_uuid: uuid.UUID,
+    game_id: uuid.UUID,
     card: base_models.CardType,
-    player_uuid: uuid.UUID = fastapi.Depends(_get_player_uuid),
+    player_id: uuid.UUID = fastapi.Depends(_get_player_id),
 ):
     """Handle adding card to a trick"""
     client = await utils.get_bridge_client()
-    await client.play(game=game_uuid, player=player_uuid, card=card)
+    await client.play(game=game_id, player=player_id, card=card)
 
 
-@router.websocket("/{game_uuid}/ws")
+@router.websocket("/{game_id}/ws")
 async def games_websocket(
-    game_uuid: uuid.UUID, websocket: fastapi.WebSocket,
+    game_id: uuid.UUID, websocket: fastapi.WebSocket,
 ):
     """Open a websocket publishing events about a game"""
     loop = asyncio.get_running_loop()
-    with utils.subscribe_events(game_uuid) as producer:
+    with utils.subscribe_events(game_id) as producer:
 
         def _create_event_task():
             return loop.create_task(producer.get_event())

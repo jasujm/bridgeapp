@@ -258,10 +258,10 @@ class BridgeClient(_base.ClientBase):
         return orjson.loads(obj)
 
     @classmethod
-    def _create_game(cls, game_uuid: uuid.UUID):
+    def _create_game(cls, game_id: uuid.UUID):
         def _create_game_inner(get):
             return models.Game(
-                uuid=game_uuid,
+                id=game_id,
                 deal=cls._create_deal(get),
                 self=cls._create_player_state(get),
                 results=cls._create_deal_results(get),
@@ -279,8 +279,8 @@ class BridgeClient(_base.ClientBase):
         assert isinstance(pubstate, dict)
         assert isinstance(privstate, dict)
         state = utils.merge_patch(pubstate, privstate)
-        deal_uuid = state.pop("deal")
-        return models.Deal(uuid=deal_uuid, **state)
+        deal_id = state.pop("deal")
+        return models.Deal(id=deal_id, **state)
 
     @staticmethod
     def _create_player_state(get):

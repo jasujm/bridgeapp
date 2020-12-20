@@ -5,20 +5,20 @@ Models
 
 import enum
 import typing
-from uuid import UUID, uuid4
+import uuid
 
 import pydantic
 
 # Don't care about warning related to pydantic conventions
 # pylint: disable=no-self-argument,no-self-use,too-few-public-methods,missing-class-docstring,no-member
 
-GameUuid = typing.NewType("GameUuid", UUID)
+GameUuid = typing.NewType("GameUuid", uuid.UUID)
 """Game UUID"""
 
-PlayerUuid = typing.NewType("PlayerUuid", UUID)
+PlayerUuid = typing.NewType("PlayerUuid", uuid.UUID)
 """Player UUID"""
 
-DealUuid = typing.NewType("DealUuid", UUID)
+DealUuid = typing.NewType("DealUuid", uuid.UUID)
 """Deal UUID"""
 
 
@@ -240,7 +240,7 @@ class Deal(pydantic.BaseModel):
     to different players (notably which cards are visible to whom).
     """
 
-    uuid: DealUuid = pydantic.Field(default_factory=uuid4)
+    id: DealUuid = pydantic.Field(default_factory=uuid.uuid4)
     positionInTurn: typing.Optional[Position]
     calls: typing.List[PositionCallPair] = []
     declarer: typing.Optional[Position]
@@ -316,7 +316,7 @@ class PlayersInGame(pydantic.BaseModel):
 class Game(pydantic.BaseModel):
     """A bridge game"""
 
-    uuid: GameUuid = pydantic.Field(default_factory=uuid4)
+    id: GameUuid = pydantic.Field(default_factory=uuid.uuid4)
     deal: typing.Optional[Deal]
     self: PlayerState = PlayerState()
     results: typing.List[DealResult] = []

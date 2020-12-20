@@ -12,13 +12,13 @@ from bridgeapp.settings import settings
 from . import _bridgeprotocol
 
 
-PLAYER_UUID_NS = uuid.uuid5(settings.uuid_namespace, "players")
+PLAYER_ID_NS = uuid.uuid5(settings.uuid_namespace, "players")
 """UUID namespace for bridge players"""
 
 
-def generate_player_uuid(username: str) -> uuid.UUID:
+def generate_player_id(username: str) -> uuid.UUID:
     """Generate UUID for a player from ``username``"""
-    return uuid.uuid5(PLAYER_UUID_NS, username)
+    return uuid.uuid5(PLAYER_ID_NS, username)
 
 
 async def get_bridge_client() -> bridgeprotocol.BridgeClient:
@@ -36,7 +36,7 @@ async def get_bridge_client() -> bridgeprotocol.BridgeClient:
 
 
 @contextlib.contextmanager
-def subscribe_events(game_uuid: uuid.UUID):
+def subscribe_events(game_id: uuid.UUID):
     """Subscribe to events from a game
 
     The return value of this function can be used as a context manager that
@@ -50,13 +50,13 @@ def subscribe_events(game_uuid: uuid.UUID):
                consume(await producer.get_event())
 
     Parameters:
-        game_uuid: The UUID of the game
+        game_id: The UUID of the game
 
     Returns:
         An event producer used to retrieve events about the given game
     """
     event_demultiplexer = _bridgeprotocol.get_event_demultiplexer()
-    producer = event_demultiplexer.subscribe(game_uuid)
+    producer = event_demultiplexer.subscribe(game_id)
     try:
         yield producer
     finally:

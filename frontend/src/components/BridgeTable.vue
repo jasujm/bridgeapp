@@ -129,7 +129,7 @@ function scoreMessage({contract, tricksWon, result}: DealEndEvent, position: Pos
     }
 })
 export default class BridgeTable extends mixins(PositionMixin) {
-    @Prop() private readonly gameUuid!: string;
+    @Prop() private readonly gameId!: string;
     private deal = new Deal();
     private me = new PlayerState();
     private results: Array<DealResult> = [];
@@ -148,9 +148,9 @@ export default class BridgeTable extends mixins(PositionMixin) {
     }
 
     private fetchDealState() {
-        if (this.gameUuid) {
+        if (this.gameId) {
             const api = this.$store.state.api;
-            api.getDeal(this.gameUuid).then(
+            api.getDeal(this.gameId).then(
                 (deal: Deal) => {
                     this.deal = deal || new Deal();
                 }
@@ -159,18 +159,18 @@ export default class BridgeTable extends mixins(PositionMixin) {
     }
 
     private fetchPlayerState() {
-        if (this.gameUuid) {
+        if (this.gameId) {
             const api = this.$store.state.api;
-            api.getPlayerState(this.gameUuid).then(
+            api.getPlayerState(this.gameId).then(
                 (me: PlayerState) => this.me = me
             ).catch((err: Error) => this.$store.dispatch("reportError", err));
         }
     }
 
     private fetchGameState() {
-        if (this.gameUuid) {
+        if (this.gameId) {
             const api = this.$store.state.api;
-            api.getGame(this.gameUuid).then(
+            api.getGame(this.gameId).then(
                 ({ game, counter }: GameCounterPair) => {
                     this.deal = game.deal || new Deal();
                     this.me = game.me;
@@ -195,9 +195,9 @@ export default class BridgeTable extends mixins(PositionMixin) {
     }
 
     private joinGame(position?: Position) {
-        if (this.gameUuid) {
+        if (this.gameId) {
             const api = this.$store.state.api;
-            api.joinGame(this.gameUuid, position).then(
+            api.joinGame(this.gameId, position).then(
                 () => {
                     this.fetchPlayerState();
                     this.fetchDealState();
@@ -209,9 +209,9 @@ export default class BridgeTable extends mixins(PositionMixin) {
     }
 
     private leaveGame() {
-        if (this.gameUuid) {
+        if (this.gameId) {
             const api = this.$store.state.api;
-            api.leaveGame(this.gameUuid).then(
+            api.leaveGame(this.gameId).then(
                 () => {
                     this.me = new PlayerState();
                     this.fetchDealState();
@@ -299,16 +299,16 @@ export default class BridgeTable extends mixins(PositionMixin) {
     }
 
     private makeCall(call: Call) {
-        if (this.gameUuid) {
-            this.$store.state.api.makeCall(this.gameUuid, call).catch(
+        if (this.gameId) {
+            this.$store.state.api.makeCall(this.gameId, call).catch(
                 this.handleConflictError.bind(this)
             );
         }
     }
 
     private playCard(card: Card) {
-        if (this.gameUuid) {
-            this.$store.state.api.playCard(this.gameUuid, card).catch(
+        if (this.gameId) {
+            this.$store.state.api.playCard(this.gameId, card).catch(
                 this.handleConflictError.bind(this)
             );
         }
@@ -341,7 +341,7 @@ export default class BridgeTable extends mixins(PositionMixin) {
     private startGame() {
         this.close();
         this.ws = this.$store.state.api.subscribe(
-            this.gameUuid,
+            this.gameId,
             {
                 open: this.fetchGameState.bind(this),
                 player: this.wrapEventHandler(this.changePlayer),
@@ -376,8 +376,8 @@ export default class BridgeTable extends mixins(PositionMixin) {
         this.close();
     }
 
-    @Watch("gameUuid")
-    private gameUuidChanged() {
+    @Watch("gameId")
+    private gameIdChanged() {
         if (this.$store.getters.isLoggedIn) {
             this.startGame();
         }

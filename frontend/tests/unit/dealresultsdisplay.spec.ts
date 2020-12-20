@@ -1,14 +1,14 @@
 import { localVue, expect } from "./common"
 import { mount, Wrapper } from "@vue/test-utils"
 import DealResultsDisplay from "@/components/DealResultsDisplay.vue"
-import { NIL as uuid } from "uuid"
+import { NIL as deal } from "uuid"
 import { Partnership } from "@/api/types"
 
 describe("DealResultsDisplay.vue", function() {
     const results = [
-        { uuid, result: { partnership: Partnership.northSouth, score: 200 } },
-        { uuid, result: { partnership: Partnership.eastWest, score: 420 } },
-        { uuid, result: { partnership: null, score: 0 } },
+        { deal, result: { partnership: Partnership.northSouth, score: 200 } },
+        { deal, result: { partnership: Partnership.eastWest, score: 420 } },
+        { deal, result: { partnership: null, score: 0 } },
     ];
     let wrapper: Wrapper<DealResultsDisplay>;
 

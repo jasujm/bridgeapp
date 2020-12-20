@@ -13,13 +13,13 @@ router = fastapi.APIRouter()
 
 
 @router.get(
-    "/{player_uuid}",
+    "/{player_id}",
     name="player_details",
     summary="Get infomation about a player",
     description="""This endpoint is a stub ensuring that each player has an URL.""",
     response_model=models.Player,
 )
-def get_player_details(request: fastapi.Request, player_uuid: uuid.UUID):
+def get_player_details(request: fastapi.Request, player_id: uuid.UUID):
     """Handle getting player details"""
-    del player_uuid
+    del player_id
     return models.Player(self=str(request.url))

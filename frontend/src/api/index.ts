@@ -61,41 +61,41 @@ export default class {
         return response.data as Game;
     }
 
-    async joinGame(gameUuid: string, position?: Position) {
+    async joinGame(gameId: string, position?: Position) {
         await this.request({
             method: "post",
-            url: `/games/${gameUuid}/players`,
+            url: `/games/${gameId}/players`,
             params: { position },
         });
     }
 
-    async leaveGame(gameUuid: string) {
+    async leaveGame(gameId: string) {
         await this.request({
             method: "delete",
-            url: `/games/${gameUuid}/players`,
+            url: `/games/${gameId}/players`,
         });
     }
 
-    async makeCall(gameUuid: string, call: Call) {
+    async makeCall(gameId: string, call: Call) {
         await this.request({
             method: "post",
-            url: `/games/${gameUuid}/calls`,
+            url: `/games/${gameId}/calls`,
             data: call,
         });
     }
 
-    async playCard(gameUuid: string, card: Card) {
+    async playCard(gameId: string, card: Card) {
         await this.request({
             method: "post",
-            url: `/games/${gameUuid}/trick`,
+            url: `/games/${gameId}/trick`,
             data: card,
         });
     }
 
-    async getGame(gameUuid: string) {
+    async getGame(gameId: string) {
         const response = await this.request({
             method: "get",
-            url: `/games/${gameUuid}`,
+            url: `/games/${gameId}`,
         });
         return {
             game: response.data as Game | null,
@@ -103,40 +103,40 @@ export default class {
         };
     }
 
-    async getDeal(gameUuid: string) {
+    async getDeal(gameId: string) {
         const response = await this.request({
             method: "get",
-            url: `/games/${gameUuid}/deal`,
+            url: `/games/${gameId}/deal`,
         });
         return response.data as Deal | null;
     }
 
-    async getPlayerState(gameUuid: string) {
+    async getPlayerState(gameId: string) {
         const response = await this.request({
             method: "get",
-            url: `/games/${gameUuid}/me`,
+            url: `/games/${gameId}/me`,
         });
         return response.data as PlayerState;
     }
 
-    async getResults(gameUuid: string) {
+    async getResults(gameId: string) {
         const response = await this.request({
             method: "get",
-            url: `/games/${gameUuid}/results`,
+            url: `/games/${gameId}/results`,
         });
         return response.data as Array<DealResult>;
     }
 
-    async getPlayers(gameUuid: string) {
+    async getPlayers(gameId: string) {
         const response = await this.request({
             method: "get",
-            url: `/games/${gameUuid}/players`,
+            url: `/games/${gameId}/players`,
         });
         return response.data as PlayersInGame;
     }
 
-    subscribe(gameUuid: string, handlers: EventHandlers) {
-        const ws = new ReconnectingWebSocket(`${wsBaseUrl}/games/${gameUuid}/ws`);
+    subscribe(gameId: string, handlers: EventHandlers) {
+        const ws = new ReconnectingWebSocket(`${wsBaseUrl}/games/${gameId}/ws`);
         ws.onopen = function(event) {
             if (handlers.open) {
                 handlers.open(event);

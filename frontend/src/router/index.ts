@@ -11,7 +11,7 @@ const routes: Array<RouteConfig> = [
         redirect: { name: "games" },
     },
     {
-        path: "/games/:gameUuid?",
+        path: "/games/:gameId?",
         name: "games",
         component: BridgeGame,
     },
