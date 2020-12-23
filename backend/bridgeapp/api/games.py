@@ -119,7 +119,7 @@ async def get_game_deal(
 ):
     """Handle getting the current deal of a game"""
     client = await utils.get_bridge_client()
-    deal, request.state.counter_header_value = await client.get_deal(
+    deal, request.state.counter_header_value = await client.get_game_deal(
         game=game_id, player=player_id
     )
     return models.Deal.from_base_model(deal, request)

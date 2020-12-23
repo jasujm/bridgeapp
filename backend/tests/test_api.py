@@ -29,6 +29,7 @@ def mock_bridge_client(monkeypatch):
         join=unittest.mock.AsyncMock(),
         leave=unittest.mock.AsyncMock(),
         get_game=unittest.mock.AsyncMock(),
+        get_game_deal=unittest.mock.AsyncMock(),
         get_deal=unittest.mock.AsyncMock(),
         get_self=unittest.mock.AsyncMock(),
         get_results=unittest.mock.AsyncMock(),
@@ -127,24 +128,44 @@ def test_read_game_should_fail_if_game_not_found(
     mock_bridge_client.get_game.assert_awaited_once()
 
 
-def test_read_deal(client, mock_bridge_client, game_id, username_and_player_id):
+def test_read_game_deal(client, mock_bridge_client, game_id, username_and_player_id):
     username, player_id = username_and_player_id
     deal = models.Deal()
     api_deal = api.models.Deal(
         id=deal.id, self=f"http://testserver/api/v1/deals/{deal.id}"
     )
-    mock_bridge_client.get_deal.return_value = (deal, 123)
+    mock_bridge_client.get_game_deal.return_value = (deal, 123)
     res = client.get(f"/api/v1/games/{game_id}/deal", auth=(username, "secret"))
     assert res.headers[api.games.COUNTER_HEADER] == "123"
     assert api.models.Deal(**res.json()) == api_deal
-    mock_bridge_client.get_deal.assert_awaited_once_with(game=game_id, player=player_id)
+    mock_bridge_client.get_game_deal.assert_awaited_once_with(
+        game=game_id, player=player_id
+    )
 
 
-def test_read_deal_should_fail_if_game_not_found(
+def test_read_game_deal_should_fail_if_game_not_found(
     client, mock_bridge_client, game_id, username
 ):
-    mock_bridge_client.get_deal.side_effect = bridgeprotocol.NotFoundError
+    mock_bridge_client.get_game_deal.side_effect = bridgeprotocol.NotFoundError
     res = client.get(f"/api/v1/games/{game_id}/deal", auth=(username, "secret"))
+    assert res.status_code == fastapi.status.HTTP_404_NOT_FOUND
+    mock_bridge_client.get_game_deal.assert_awaited_once()
+
+
+def test_read_deal(client, mock_bridge_client):
+    deal = models.Deal()
+    api_deal = api.models.Deal(
+        id=deal.id, self=f"http://testserver/api/v1/deals/{deal.id}"
+    )
+    mock_bridge_client.get_deal.return_value = deal
+    res = client.get(f"/api/v1/deals/{deal.id}")
+    assert api.models.Deal(**res.json()) == api_deal
+    mock_bridge_client.get_deal.assert_awaited_once_with(deal=deal.id)
+
+
+def test_read_deal_should_fail_if_deal_not_found(client, mock_bridge_client):
+    mock_bridge_client.get_deal.side_effect = bridgeprotocol.NotFoundError
+    res = client.get(f"/api/v1/deals/{uuid.uuid4()}")
     assert res.status_code == fastapi.status.HTTP_404_NOT_FOUND
     mock_bridge_client.get_deal.assert_awaited_once()
 

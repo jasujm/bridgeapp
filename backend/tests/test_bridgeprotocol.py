@@ -148,6 +148,37 @@ def _any_bid():
     )
 
 
+def _any_deal():
+    # This isn't valid bridge deal state but... whatever
+    return models.Deal(
+        phase=random.choice(list(models.DealPhase)),
+        positionInTurn=_any_position(),
+        calls=[
+            models.PositionCallPair(
+                position=_any_position(),
+                call=models.Call(type=models.CallType.bid, bid=_any_bid()),
+            ),
+            models.PositionCallPair(
+                position=_any_position(), call=models.Call(type=models.CallType.pass_),
+            ),
+        ],
+        declarer=_any_position(),
+        contract=models.Contract(bid=_any_bid(), doubling=models.Doubling.redoubled),
+        cards=models.CardsInHands(north=[_any_card(), _any_card()], east=[None, None]),
+        tricks=[
+            models.Trick(
+                cards=[
+                    models.PositionCardPair(position=_any_position(), card=_any_card())
+                    for i in range(3)
+                ],
+                winner=_any_position(),
+            )
+            for j in range(3)
+        ],
+        vulnerability=models.Vulnerability(northSouth=True, eastWest=False),
+    )
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize("reply_arguments", [{}, {b"rk1": b"rv1", b"rk2": b"rv2"}])
 async def test_successful_command_should_return_with_reply_arguments(
@@ -452,51 +483,11 @@ async def test_get_game_success(server, client, game_and_player):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "pubstate",
-    [
-        models.Deal(),
-        # This isn't valid bridge deal state but... whatever
-        models.Deal(
-            phase=random.choice(list(models.DealPhase)),
-            positionInTurn=_any_position(),
-            calls=[
-                models.PositionCallPair(
-                    position=_any_position(),
-                    call=models.Call(type=models.CallType.bid, bid=_any_bid()),
-                ),
-                models.PositionCallPair(
-                    position=_any_position(),
-                    call=models.Call(type=models.CallType.pass_),
-                ),
-            ],
-            declarer=_any_position(),
-            contract=models.Contract(
-                bid=_any_bid(), doubling=models.Doubling.redoubled
-            ),
-            cards=models.CardsInHands(
-                north=[_any_card(), _any_card()], east=[None, None]
-            ),
-            tricks=[
-                models.Trick(
-                    cards=[
-                        models.PositionCardPair(
-                            position=_any_position(), card=_any_card()
-                        )
-                        for i in range(3)
-                    ],
-                    winner=_any_position(),
-                )
-                for j in range(3)
-            ],
-            vulnerability=models.Vulnerability(northSouth=True, eastWest=False),
-        ),
-    ],
-)
+@pytest.mark.parametrize("pubstate", [_any_deal(), _any_deal()])
 @pytest.mark.parametrize(
     "privstate", [{"cards": {}}, {"cards": {"east": [_any_card(), _any_card()]}},],
 )
-class TestBridgeClientGetDealCommand:
+class TestBridgeClientGetGameDealCommand:
     async def test_success(self, server, client, game_and_player, pubstate, privstate):
         deal = copy.deepcopy(pubstate)
         if cards_east := privstate["cards"].get("east"):
@@ -506,7 +497,7 @@ class TestBridgeClientGetDealCommand:
         assert await _command_helper(
             server,
             client,
-            client.get_deal(**game_and_player),
+            client.get_game_deal(**game_and_player),
             expected_command=b"get",
             expected_command_args=dict(
                 **game_and_player, get=["pubstate", "privstate"]
@@ -524,7 +515,7 @@ class TestBridgeClientGetDealCommand:
             await _command_helper(
                 server,
                 client,
-                client.get_deal(**game_and_player),
+                client.get_game_deal(**game_and_player),
                 expected_command=b"get",
                 expected_command_args=dict(
                     **game_and_player, get=["pubstate", "privstate"]
@@ -540,7 +531,7 @@ class TestBridgeClientGetDealCommand:
             await _command_helper(
                 server,
                 client,
-                client.get_deal(**game_and_player),
+                client.get_game_deal(**game_and_player),
                 expected_command=b"get",
                 expected_command_args=dict(
                     **game_and_player, get=["pubstate", "privstate"]
@@ -560,7 +551,7 @@ class TestBridgeClientGetDealCommand:
             await _command_helper(
                 server,
                 client,
-                client.get_deal(**game_and_player),
+                client.get_game_deal(**game_and_player),
                 expected_command=b"get",
                 expected_command_args=dict(
                     **game_and_player, get=["pubstate", "privstate"]
@@ -577,7 +568,7 @@ class TestBridgeClientGetDealCommand:
             await _command_helper(
                 server,
                 client,
-                client.get_deal(**game_and_player),
+                client.get_game_deal(**game_and_player),
                 expected_command=b"get",
                 expected_command_args=dict(
                     **game_and_player, get=["pubstate", "privstate"]
@@ -597,7 +588,7 @@ class TestBridgeClientGetDealCommand:
             await _command_helper(
                 server,
                 client,
-                client.get_deal(**game_and_player),
+                client.get_game_deal(**game_and_player),
                 expected_command=b"get",
                 expected_command_args=dict(
                     **game_and_player, get=["pubstate", "privstate"]
@@ -614,7 +605,7 @@ class TestBridgeClientGetDealCommand:
             await _command_helper(
                 server,
                 client,
-                client.get_deal(**game_and_player),
+                client.get_game_deal(**game_and_player),
                 expected_command=b"get",
                 expected_command_args=dict(
                     **game_and_player, get=["pubstate", "privstate"]
@@ -627,11 +618,57 @@ class TestBridgeClientGetDealCommand:
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("pubstate", [_any_deal(), _any_deal()])
+class TestBridgeClientGetDealCommand:
+    async def test_success(self, server, client, pubstate):
+        deal = copy.deepcopy(pubstate)
+        pubstate = pubstate.dict()
+        pubstate["deal"] = str(pubstate.pop("id"))
+        assert (
+            await _command_helper(
+                server,
+                client,
+                client.get_deal(deal=deal.id),
+                expected_command=b"get",
+                expected_command_args=dict(deal=deal.id),
+                reply_args={"get": {"pubstate": pubstate}},
+            )
+            == deal
+        )
+
+    async def test_missing_pubstate_should_lead_to_failure(
+        self, server, client, pubstate
+    ):
+        with pytest.raises(bridgeprotocol.InvalidMessage):
+            await _command_helper(
+                server,
+                client,
+                client.get_deal(deal=pubstate.id),
+                expected_command=b"get",
+                expected_command_args=dict(deal=pubstate.id),
+                reply_args={"get": {}},
+            )
+
+    async def test_invalid_pubstate_should_lead_to_failure(
+        self, server, client, pubstate
+    ):
+        with pytest.raises(bridgeprotocol.InvalidMessage):
+            await _command_helper(
+                server,
+                client,
+                client.get_deal(deal=pubstate.id),
+                expected_command=b"get",
+                expected_command_args=dict(deal=pubstate.id),
+                reply_args={"get": {"pubstate": "invalid"}},
+            )
+
+
+@pytest.mark.asyncio
 async def test_null_deal(server, client, game_and_player):
     assert await _command_helper(
         server,
         client,
-        client.get_deal(**game_and_player),
+        client.get_game_deal(**game_and_player),
         expected_command=b"get",
         expected_command_args=dict(**game_and_player, get=["pubstate", "privstate"]),
         reply_args={"get": {"pubstate": None, "privstate": None}, "counter": 123},

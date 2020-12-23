@@ -152,7 +152,7 @@ class BridgeClient(_base.ClientBase):
         )
 
     @_retries_handshake
-    async def get_deal(
+    async def get_game_deal(
         self, *, game: uuid.UUID, player: OptionalUuid = None
     ) -> typing.Tuple[models.Deal, int]:
         """Get the deal state from the server
@@ -171,6 +171,19 @@ class BridgeClient(_base.ClientBase):
             self._convert_reply_safe(self._create_deal, reply, "get", command="get"),
             self._convert_reply_safe(int, reply, "counter", command="get"),
         )
+
+    @_retries_handshake
+    async def get_deal(self, *, deal: uuid.UUID) -> models.Deal:
+        """Get the deal record from the server
+
+        Parameters:
+            deal: The UUID of the game
+
+        Returns:
+            A deal record
+        """
+        reply = await self.command("get", deal=deal)
+        return self._convert_reply_safe(self._create_deal, reply, "get", command="get")
 
     @_retries_handshake
     async def get_self(
@@ -273,7 +286,7 @@ class BridgeClient(_base.ClientBase):
     @staticmethod
     def _create_deal(get):
         pubstate = get["pubstate"]
-        privstate = get["privstate"]
+        privstate = get.get("privstate", {})
         if pubstate is None:
             return None
         assert isinstance(pubstate, dict)

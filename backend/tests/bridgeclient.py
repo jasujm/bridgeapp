@@ -53,7 +53,7 @@ async def _get_results(client: bridgeprotocol.BridgeClient, game_id: uuid.UUID):
 
 
 async def _get_turn_from_deal(client, game, player):
-    deal, _ = await client.get_deal(game=game, player=player)
+    deal, _ = await client.get_game_deal(game=game, player=player)
     return deal.positionInTurn
 
 
