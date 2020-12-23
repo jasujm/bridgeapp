@@ -22,6 +22,14 @@ DealUuid = typing.NewType("DealUuid", uuid.UUID)
 """Deal UUID"""
 
 
+class DealPhase(enum.Enum):
+    """Phase of a bridge deal"""
+
+    dealing = "dealing"
+    bidding = "bidding"
+    playing = "playing"
+    ended = "ended"
+
 class Position(enum.Enum):
     """Position of a bridge player"""
 
@@ -241,6 +249,7 @@ class Deal(pydantic.BaseModel):
     """
 
     id: DealUuid = pydantic.Field(default_factory=uuid.uuid4)
+    phase: DealPhase = DealPhase.dealing
     positionInTurn: typing.Optional[Position]
     calls: typing.List[PositionCallPair] = []
     declarer: typing.Optional[Position]

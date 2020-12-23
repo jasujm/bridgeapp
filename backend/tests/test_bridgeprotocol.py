@@ -458,6 +458,7 @@ async def test_get_game_success(server, client, game_and_player):
         models.Deal(),
         # This isn't valid bridge deal state but... whatever
         models.Deal(
+            phase=random.choice(list(models.DealPhase)),
             positionInTurn=_any_position(),
             calls=[
                 models.PositionCallPair(
