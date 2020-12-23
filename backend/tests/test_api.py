@@ -105,22 +105,17 @@ def test_read_game(client, mock_bridge_client, game_id, username_and_player_id):
     username, player_id = username_and_player_id
     deal = models.Deal()
     api_deal = api.models.Deal(
-        id=deal.id,
-        self=f"http://testserver/api/v1/deals/{deal.id}"
+        id=deal.id, self=f"http://testserver/api/v1/deals/{deal.id}"
     )
     game = models.Game(id=game_id, deal=deal)
     api_game = api.models.Game(
-        id=game_id,
-        self=f"http://testserver/api/v1/games/{game_id}",
-        deal=api_deal,
+        id=game_id, self=f"http://testserver/api/v1/games/{game_id}", deal=api_deal,
     )
     mock_bridge_client.get_game.return_value = (game, 123)
     res = client.get(f"/api/v1/games/{game_id}", auth=(username, "secret"))
     assert res.headers[api.games.COUNTER_HEADER] == "123"
     assert api.models.Game(**res.json()) == api_game
-    mock_bridge_client.get_game.assert_awaited_once_with(
-        game=game_id, player=player_id
-    )
+    mock_bridge_client.get_game.assert_awaited_once_with(game=game_id, player=player_id)
 
 
 def test_read_game_should_fail_if_game_not_found(
@@ -135,14 +130,14 @@ def test_read_game_should_fail_if_game_not_found(
 def test_read_deal(client, mock_bridge_client, game_id, username_and_player_id):
     username, player_id = username_and_player_id
     deal = models.Deal()
-    api_deal = api.models.Deal(id=deal.id, self=f"http://testserver/api/v1/deals/{deal.id}")
+    api_deal = api.models.Deal(
+        id=deal.id, self=f"http://testserver/api/v1/deals/{deal.id}"
+    )
     mock_bridge_client.get_deal.return_value = (deal, 123)
     res = client.get(f"/api/v1/games/{game_id}/deal", auth=(username, "secret"))
     assert res.headers[api.games.COUNTER_HEADER] == "123"
     assert api.models.Deal(**res.json()) == api_deal
-    mock_bridge_client.get_deal.assert_awaited_once_with(
-        game=game_id, player=player_id
-    )
+    mock_bridge_client.get_deal.assert_awaited_once_with(game=game_id, player=player_id)
 
 
 def test_read_deal_should_fail_if_game_not_found(
@@ -160,9 +155,7 @@ def test_read_self(client, mock_bridge_client, game_id, username_and_player_id):
     mock_bridge_client.get_self.return_value = (player_state, 123)
     res = client.get(f"/api/v1/games/{game_id}/me", auth=(username, "secret"))
     assert models.PlayerState(**res.json()) == player_state
-    mock_bridge_client.get_self.assert_awaited_once_with(
-        game=game_id, player=player_id
-    )
+    mock_bridge_client.get_self.assert_awaited_once_with(game=game_id, player=player_id)
 
 
 def test_read_self_should_fail_if_game_not_found(
@@ -273,9 +266,7 @@ def test_remove_player(client, mock_bridge_client, game_id, username_and_player_
     username, player_id = username_and_player_id
     res = client.delete(f"/api/v1/games/{game_id}/players", auth=(username, "secret"))
     assert res.status_code == fastapi.status.HTTP_204_NO_CONTENT
-    mock_bridge_client.leave.assert_awaited_once_with(
-        game=game_id, player=player_id
-    )
+    mock_bridge_client.leave.assert_awaited_once_with(game=game_id, player=player_id)
 
 
 def test_remove_player_should_fail_if_backend_fails(

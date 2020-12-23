@@ -19,10 +19,14 @@ from bridgeapp.bridgeprotocol import models as base_models, events as base_event
 # fields of the base models into API URLs. Botched together with limited
 # knowledge about pydantic and if it could have been done more elegantly.
 
+
 def _get_uuid_converter(handler: str, id_kwarg_name: str):
+    # pylint: disable=redefined-builtin
     def _uuid_converter(request: fastapi.Request, id: str):
         return request.url_for(handler, **{id_kwarg_name: id})
+
     return _uuid_converter
+
 
 _UUID_TO_URL_CONVERTERS = {
     base_models.GameUuid: _get_uuid_converter("game_details", "game_id"),
@@ -39,7 +43,9 @@ def _from_base_model(
     values = {}
     for (name, field) in model.__fields__.items():
         value = getattr(model, name, field.default)
-        if value and (url_converter := (_UUID_TO_URL_CONVERTERS.get(field.outer_type_))):
+        if value and (
+            url_converter := (_UUID_TO_URL_CONVERTERS.get(field.outer_type_))
+        ):
             if name == "id":
                 values["self"] = url_converter(request, value)
             else:
@@ -70,7 +76,9 @@ def _apify_model(
     # model itself. But add an additional `self` field which is the URL of the
     # instance.
     new_fields = {
-        name: _apify_field(field) if name != "id" else (field.outer_type_, field.default)
+        name: _apify_field(field)
+        if name != "id"
+        else (field.outer_type_, field.default)
         for (name, field) in model.__fields__.items()
     }
     if id_field := model.__fields__.get("id"):

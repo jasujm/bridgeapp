@@ -30,6 +30,7 @@ class DealPhase(enum.Enum):
     playing = "playing"
     ended = "ended"
 
+
 class Position(enum.Enum):
     """Position of a bridge player"""
 

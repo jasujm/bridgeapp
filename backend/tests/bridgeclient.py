@@ -101,13 +101,9 @@ async def _play_bridge_game(
         player_id = player_ids[position_in_turn]
         player_state, _ = await client.get_self(game=game_id, player=player_id)
         if calls := player_state.allowedCalls:
-            await client.call(
-                game=game_id, player=player_id, call=random.choice(calls)
-            )
+            await client.call(game=game_id, player=player_id, call=random.choice(calls))
         elif cards := player_state.allowedCards:
-            await client.play(
-                game=game_id, player=player_id, card=random.choice(cards)
-            )
+            await client.play(game=game_id, player=player_id, card=random.choice(cards))
         try:
             position_in_turn = await asyncio.wait_for(
                 _get_turn_from_events(event_receiver), timeout=0.1

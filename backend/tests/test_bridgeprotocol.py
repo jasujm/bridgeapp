@@ -969,8 +969,7 @@ async def test_bridge_event_receiver_concrete_events(
     server, client, event_receiver, game_id, event_type, event_cls, event_arguments
 ):
     await server.send_event(
-        f"{str(game_id)}:{event_type}".encode(),
-        client._serialize_all(event_arguments),
+        f"{str(game_id)}:{event_type}".encode(), client._serialize_all(event_arguments)
     )
     assert await event_receiver.get_event() == event_cls(
         game=game_id,
