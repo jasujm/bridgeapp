@@ -1,4 +1,4 @@
-FROM nginx
+FROM nginx:1.19
 
 RUN set -ex;         \
     apt-get update;  \
