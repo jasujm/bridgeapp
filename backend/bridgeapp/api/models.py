@@ -94,11 +94,19 @@ def _apify_model(
 Deal = _apify_model(base_models.Deal)
 
 
-class Player(pydantic.BaseModel):
+class _PlayerBase(pydantic.BaseModel):
+    username: pydantic.constr(min_length=2, max_length=15)
+
+
+class Player(_PlayerBase):
     """Player taking part in a bridge game"""
 
     id: base_models.PlayerUuid
     self: pydantic.AnyHttpUrl
+
+
+class PlayerCreate(_PlayerBase):
+    """Model for creating a player"""
 
 
 PlayersInGame = _apify_model(base_models.PlayersInGame)

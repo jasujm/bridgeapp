@@ -1,5 +1,5 @@
 import { extend } from "vee-validate";
-import { required } from "vee-validate/dist/rules";
+import { required, min, max } from "vee-validate/dist/rules";
 import { validate as validateUuid } from "uuid"
 import Vue from "vue"
 import Component from "vue-class-component"
@@ -7,7 +7,17 @@ import { ValidationObserver, ValidationProvider } from "vee-validate";
 
 extend("required", {
     ...required,
-    message: "The field is required",
+    message: "{_field_} is required",
+});
+
+extend("min", {
+    ...min,
+    message: "{_field_} too short"
+});
+
+extend("max", {
+    ...max,
+    message: "{_field_} too long"
 });
 
 extend("uuid", function(value: string) {

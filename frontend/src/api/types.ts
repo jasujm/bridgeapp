@@ -219,6 +219,11 @@ export interface DealEndEvent extends Event {
     result: DuplicateResult;
 }
 
+export interface Player {
+    id: string;
+    username: string;
+}
+
 export type AnyEvent = PlayerEvent | DealEvent | TurnEvent | CallEvent |
     BiddingEvent | PlayEvent | DummyEvent | TrickEvent | DealEndEvent;
 

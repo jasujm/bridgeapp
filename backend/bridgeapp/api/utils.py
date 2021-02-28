@@ -7,18 +7,8 @@ import contextlib
 import uuid
 
 from bridgeapp import bridgeprotocol
-from bridgeapp.settings import settings
 
 from . import _bridgeprotocol
-
-
-PLAYER_ID_NS = uuid.uuid5(settings.uuid_namespace, "players")
-"""UUID namespace for bridge players"""
-
-
-def generate_player_id(username: str) -> uuid.UUID:
-    """Generate UUID for a player from ``username``"""
-    return uuid.uuid5(PLAYER_ID_NS, username)
 
 
 async def get_bridge_client() -> bridgeprotocol.BridgeClient:

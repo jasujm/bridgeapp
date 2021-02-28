@@ -22,6 +22,8 @@ class Settings(BaseSettings):
 
     api_v1_prefix = Field("/api/v1", title="The API URL prefix")
 
+    database_url: str = Field("sqlite://", title="Database URL")
+
     backend_endpoint: str = Field(
         "tcp://localhost:5555",
         title="Bridge backend server endpoint",

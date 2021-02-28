@@ -4,6 +4,7 @@
 import axios, { AxiosRequestConfig, AxiosError } from "axios"
 import ReconnectingWebSocket from "reconnecting-websocket"
 import {
+    Player,
     Game,
     Deal,
     Call,
@@ -51,6 +52,15 @@ export default class {
 
     authenticate(username: string) {
         this.username = username;
+    }
+
+    async createPlayer(username: string) {
+        const response = await this.request({
+            method: "post",
+            url: "/players",
+            data: { username },
+        });
+        return response.data as Player;
     }
 
     async createGame() {

@@ -4,7 +4,7 @@ import fastapi
 
 from bridgeapp import bridgeprotocol
 
-from . import models, games, deals, players
+from . import models, games, deals, players, db_utils
 
 subapp = fastapi.FastAPI(
     title="Contract bridge API",
@@ -51,3 +51,10 @@ def handle_rule_violation(request, ex):
     """Convert :exc:`bridgeprotocol.RuleViolationError` into HTTP error"""
     del request
     return _exception_response(fastapi.status.HTTP_409_CONFLICT, ex)
+
+
+@subapp.exception_handler(db_utils.NotFoundError)
+def handle_not_found_db(request, ex):
+    """Convert :exc:`db_utils.NotFoundError` into HTTP error"""
+    del request
+    return _exception_response(fastapi.status.HTTP_404_NOT_FOUND, ex)

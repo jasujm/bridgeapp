@@ -26,6 +26,12 @@ services:
     - "bridge_data_dir=/var/lib/bridge"
     env_file:
     - "./.env.bridge"
+  db:
+    image: "postgres:13"
+    volumes:
+    - "dbdata:/var/lib/postgresql"
+    env_file:
+    - "./.env.postgres"
   nginx:
     image: "jasujm/bridgeapp-nginx"
     build: "nginx/"
@@ -56,5 +62,6 @@ services:
 volumes:
   bridgedata:
   frontendwww:
+  dbdata:
   certbotetc:
   certbotwww:

@@ -12,7 +12,8 @@ import orjson
 
 from bridgeapp.bridgeprotocol import models as base_models
 
-from . import models, utils
+from . import models, utils, db_utils
+from .. import db
 
 COUNTER_HEADER = "X-Counter"
 """Header containing the running counter of game state"""
@@ -40,11 +41,18 @@ router = fastapi.APIRouter()
 security = fastapi.security.HTTPBasic()
 
 
-def _get_player_id(
+async def _get_player_id(
     credentials: fastapi.security.HTTPBasicCredentials = fastapi.Depends(security),
 ):
     # TODO: Actually authenticate a player
-    return utils.generate_player_id(credentials.username)
+    try:
+        player_uuid = uuid.UUID(credentials.username)
+        await db_utils.load(db.players, player_uuid)
+    except (ValueError, db_utils.NotFoundError) as ex:
+        raise fastapi.HTTPException(
+            status_code=fastapi.status.HTTP_401_UNAUTHORIZED
+        ) from ex
+    return player_uuid
 
 
 @router.post(
@@ -59,7 +67,7 @@ def _get_player_id(
 async def post_games(
     request: fastapi.Request,
     response: fastapi.Response,
-    _credentials: fastapi.security.HTTPBasicCredentials = fastapi.Depends(security),
+    _player_id: uuid.UUID = fastapi.Depends(_get_player_id),
 ):
     """Handle creating a game"""
     client = await utils.get_bridge_client()

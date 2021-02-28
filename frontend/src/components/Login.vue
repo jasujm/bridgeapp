@@ -7,14 +7,12 @@
         title="Welcome to contract bridge!"
         hide-footer>
         <p>
-            Choose a name for yourself. There is no actual authentication, so
-            anyone can claim any username at any time. The application just uses
-            it to distinguish players from each other. The name will not be
-            saved. All data collected by the server is pseudonymized.
+            Choose a name for yourself. There is no actual registration or
+            authentication, so anyone can claim any username at any time.
         </p>
         <validation-observer v-slot="{ handleSubmit }" slim>
             <b-form @submit.stop.prevent="handleSubmit(login)">
-                <validation-provider name="Username" rules="required" v-slot="validationContext">
+                <validation-provider name="Username" rules="required|min:2|max:15" v-slot="validationContext">
                     <b-form-group label-for="username" label="Username">
                         <b-form-input
                             id="username"
@@ -47,8 +45,10 @@ export default class Login extends mixins(ValidationMixin) {
         return process.env.NODE_ENV == "test";
     }
 
-    login() {
-        this.$store.dispatch("login", this.username);
+    async login() {
+        const api = this.$store.state.api;
+        const { id } = await api.createPlayer(this.username);
+        this.$store.dispatch("login", id);
     }
 }
 </script>
