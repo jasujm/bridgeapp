@@ -37,10 +37,10 @@ async def load(table: sqlalchemy.Table, obj_id: uuid.UUID, *, database=None):
         :exc:`NotFoundError`: If the object is not found in the database
     """
     database = _get_database(database)
-    if obj := await database.fetch_all(
+    if obj := await database.fetch_one(
         query=sqlalchemy.select([table]).where(table.c.id == obj_id)
     ):
-        return obj[0]
+        return obj
     raise NotFoundError(f"{obj_id} not found")
 
 
