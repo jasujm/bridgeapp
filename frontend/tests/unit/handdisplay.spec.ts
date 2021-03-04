@@ -8,11 +8,6 @@ describe("HandDisplay.vue", function() {
         const wrapper = mount(HandDisplay, { localVue });
         expect(wrapper.find(".card-list").exists()).to.be.false;
     });
-    it("should display label", function() {
-        const propsData = { label: "Cards" };
-        const wrapper = mount(HandDisplay, { localVue, propsData });
-        expect(wrapper.text()).to.include("Cards");
-    });
     it("should display cards grouped by suit", function() {
         const propsData = {
             cards: [

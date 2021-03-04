@@ -45,6 +45,7 @@
             <b-col lg="8" class="mb-4">
                 <h3 class="d-none">Table</h3>
                 <TableDisplay
+                    :players="players"
                     :selfPosition="me.position"
                     :positionInTurn="deal.positionInTurn"
                     :declarer="deal.declarer"
@@ -59,7 +60,7 @@
 </template>
 
 <script lang="ts">
-    import Component, { mixins } from "vue-class-component"
+import Component, { mixins } from "vue-class-component"
 import { Prop, Watch } from "vue-property-decorator"
 import { AxiosError } from "axios"
 import Bidding from "./Bidding.vue"

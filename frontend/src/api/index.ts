@@ -37,6 +37,13 @@ function callHandler<Event>(event: Event, handler?: (event: Event) => void) {
     }
 }
 
+function getUrl(idOrUrl: string, base: string) {
+    if (idOrUrl.match(/^https?:\/\//)) {
+        return idOrUrl;
+    }
+    return base + idOrUrl;
+}
+
 export default class {
     private username?: string;
 
@@ -59,6 +66,14 @@ export default class {
             method: "post",
             url: "/players",
             data: { username },
+        });
+        return response.data as Player;
+    }
+
+    async getPlayer(playerId: string) {
+        const response = await this.request({
+            method: "get",
+            url: getUrl(playerId, "/players/"),
         });
         return response.data as Player;
     }
@@ -105,7 +120,7 @@ export default class {
     async getGame(gameId: string) {
         const response = await this.request({
             method: "get",
-            url: `/games/${gameId}`,
+            url: getUrl(gameId, "/games/"),
         });
         return {
             game: response.data as Game | null,

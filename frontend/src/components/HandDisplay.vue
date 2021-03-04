@@ -1,6 +1,5 @@
 <template>
 <div class="hand">
-    <span class="label">{{ label }}</span>
     <ul>
         <li v-for="group in groupedCards" :key="group.suit">
             <CardListDisplay :suit="group.suit" :ranks="group.ranksInSuit" />
@@ -21,7 +20,6 @@ import CardListDisplay from "./CardListDisplay.vue"
     }
 })
 export default class HandDisplay extends Vue {
-    @Prop() private readonly label!: string;
     @Prop({ default: () => [] }) private readonly cards!: Array<Card | null>;
 
     private get groupedCards() {
@@ -51,24 +49,8 @@ export default class HandDisplay extends Vue {
 @import "../styles/mixins";
 
 .hand {
-  &.turn .label {
-    font-weight: bolder;
-  }
-
   ul {
     @include bulletless-list;
-  }
-
-  &.self, &.partner {
-    text-align: center;
-
-    ul {
-      @include inline-list-down;
-    }
-  }
-
-  &.lho {
-    text-align: right;
   }
 }
 </style>

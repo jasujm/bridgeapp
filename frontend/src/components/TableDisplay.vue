@@ -2,42 +2,47 @@
 <div class="table-display">
     <b-row>
         <b-col md="4" offset-md="4">
-            <HandDisplay
-                :label="handLabel('Partner', partnerPosition)"
-                :cards="cardsFor(partnerPosition)"
-                class="partner"
-                :class="handClasses(partnerPosition)" />
+            <div class="seat partner" :class="handClasses(partnerPosition)">
+                <SeatLabel
+                    :player="players[partnerPosition]"
+                    :position="partnerPosition" />
+                <HandDisplay :cards="cardsFor(partnerPosition)" />
+            </div>
         </b-col>
     </b-row>
     <b-row>
         <b-col cols="4">
-            <HandDisplay
-                :label="handLabel('LHO', lhoPosition)"
-                :cards="cardsFor(lhoPosition)"
-                class="lho"
-                :class="handClasses(lhoPosition)" />
+            <div class="seat lho" :class="handClasses(lhoPosition)">
+                <SeatLabel
+                    :player="players[lhoPosition]"
+                    :position="lhoPosition" />
+                <HandDisplay :cards="cardsFor(lhoPosition)" />
+            </div>
         </b-col>
         <b-col id="trick-display-col" cols="4">
             <TrickDisplay
                 v-if="trick"
+                :player="players[selfPosition]"
                 :trick="trick"
                 :selfPosition="selfPosition" />
         </b-col>
         <b-col cols="4">
-            <HandDisplay
-                :label="handLabel('RHO', rhoPosition)"
-                :cards="cardsFor(rhoPosition)"
-                class="rho"
-                :class="handClasses(rhoPosition)" />
+            <div class="seat rho" :class="handClasses(rhoPosition)">
+                <SeatLabel
+                    :player="players[rhoPosition]"
+                    :position="rhoPosition" />
+                <HandDisplay :cards="cardsFor(rhoPosition)" />
+            </div>
         </b-col>
     </b-row>
     <b-row>
         <b-col md="4" offset-md="4">
-            <HandDisplay
-                :label="handLabel('You', playerPosition)"
-                :cards="cardsFor(playerPosition)"
-                class="self"
-                :class="handClasses(playerPosition)" />
+            <div class="seat self" :class="handClasses(playerPosition)">
+                <SeatLabel
+                    :player="players[playerPosition]"
+                    :position="playerPosition" />
+                <HandDisplay :cards="cardsFor(playerPosition)" />
+            </div>
         </b-col>
     </b-row>
 </div>
@@ -46,19 +51,22 @@
 <script lang="ts">
 import Component, { mixins } from 'vue-class-component'
 import { Prop } from "vue-property-decorator"
+import SeatLabel from "./SeatLabel.vue"
 import HandDisplay from "./HandDisplay.vue"
 import TrickDisplay from "./TrickDisplay.vue"
-import { Position, Cards, Trick } from "@/api/types"
+import { PlayersInGame, Position, Cards, Trick } from "@/api/types"
 import SelfPositionMixin from "./selfposition"
 import { partnerFor } from "@/utils"
 
 @Component({
     components: {
+        SeatLabel,
         HandDisplay,
         TrickDisplay,
     }
 })
 export default class TableDisplay extends mixins(SelfPositionMixin) {
+    @Prop({ default: () => new PlayersInGame() }) private readonly players!: PlayersInGame;
     @Prop({ default: () => new Cards() }) private readonly cards!: Cards;
     @Prop() private readonly trick?: Trick;
     @Prop() private readonly positionInTurn?: Position;
@@ -66,14 +74,6 @@ export default class TableDisplay extends mixins(SelfPositionMixin) {
 
     private cardsFor(position: Position) {
         return this.cards[position];
-    }
-
-    private handLabel(seat: string, position: Position) {
-        if (this.joined) {
-            return `${seat} (${this.positionAbbrev(position)})`;
-        } else {
-            return this.positionText(position);
-        }
     }
 
     private handClasses(position: Position) {
@@ -95,6 +95,7 @@ export default class TableDisplay extends mixins(SelfPositionMixin) {
 @import "~bootstrap/scss/functions";
 @import "~bootstrap/scss/variables";
 @import "~bootstrap/scss/mixins";
+@import "../styles/mixins";
 
 #trick-display-col {
   background-color: #f2ffe6;
@@ -106,17 +107,29 @@ export default class TableDisplay extends mixins(SelfPositionMixin) {
   min-height: 8rem;
 }
 
-.hand {
-  display: none;
-
+.seat {
   &.self, &.dummy {
-    display: block;
-  }
-}
+    display: none;
 
-@include media-breakpoint-up(md) {
-  .hand {
-    display: block;
+    @include media-breakpoint-up(md) {
+      display: block;
+    }
+  }
+
+  &.self, &.partner {
+    text-align: center;
+
+    ul {
+      @include inline-list-down;
+    }
+  }
+
+  &.lho {
+    text-align: right;
+  }
+
+  &.turn .player {
+    font-weight: bold;
   }
 }
 </style>

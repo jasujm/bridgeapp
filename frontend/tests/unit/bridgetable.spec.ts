@@ -38,6 +38,7 @@ describe("BridgeTable.vue", function() {
         game.deal = new Deal();
         game.players.west = otherPlayerId;
         fakeApi = {
+            getPlayer: sinon.fake.resolves({ id: playerId, username: "player" }),
             getGame: sinon.fake.resolves({ game, counter: 0 }),
             getDeal: sinon.fake.resolves(game.deal),
             getPlayerState: sinon.stub().resolves(game.me),
