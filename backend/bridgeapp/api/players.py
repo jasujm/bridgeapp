@@ -4,6 +4,7 @@ Players endpoints
 """
 
 import uuid
+import typing
 
 import fastapi
 
@@ -22,6 +23,12 @@ router = fastapi.APIRouter()
     the response.""",
     status_code=fastapi.status.HTTP_201_CREATED,
     response_model=models.Player,
+    responses={
+        fastapi.status.HTTP_409_CONFLICT: {
+            "model": models.Error,
+            "description": "Player with the given username already exists",
+        }
+    },
 )
 async def post_players(
     request: fastapi.Request, response: fastapi.Response, player: models.PlayerCreate
@@ -39,7 +46,8 @@ async def post_players(
     "/{player_id}",
     name="player_details",
     summary="Get infomation about a player",
-    description="""Returns information about the player identified by ``player_id``.""",
+    description="""Returns information about the player identified by ``player_id``. The
+    parameter is either the ID or the username of the player.""",
     response_model=models.Player,
     responses={
         fastapi.status.HTTP_404_NOT_FOUND: {
@@ -48,7 +56,10 @@ async def post_players(
         },
     },
 )
-async def get_player_details(request: fastapi.Request, player_id: uuid.UUID):
+async def get_player_details(
+    request: fastapi.Request, player_id: typing.Union[uuid.UUID, models.Username]
+):
     """Handle getting player details"""
-    player_attrs = await dbu.load(db.players, player_id)
+    key = db.players.c.id if isinstance(player_id, uuid.UUID) else db.players.c.username
+    player_attrs = await dbu.load(db.players, player_id, key=key)
     return models.Player(**player_attrs, self=str(request.url))

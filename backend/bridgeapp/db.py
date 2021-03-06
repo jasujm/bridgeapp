@@ -9,7 +9,17 @@ import sqlalchemy_utils.types as sqlt
 
 from .settings import settings
 
-database = databases.Database(settings.database_url)
+
+def _get_database_url():
+    # TODO: Using aiopg since the default (asyncpg) doesn't work with
+    # sqlalchemy_utils UUID type. Needs to be investigated.
+    url = databases.DatabaseURL(settings.database_url)
+    if url.dialect == "postgresql":
+        url = url.replace(dialect="postgresql+aiopg")
+    return url
+
+
+database = databases.Database(_get_database_url())
 
 engine = sqlalchemy.create_engine(settings.database_url)
 meta = sqlalchemy.MetaData()
@@ -18,7 +28,7 @@ players = sqlalchemy.Table(
     "players",
     meta,
     sqlalchemy.Column("id", sqlt.uuid.UUIDType, primary_key=True),
-    sqlalchemy.Column("username", sqlalchemy.String(15)),
+    sqlalchemy.Column("username", sqlalchemy.String(15), index=True, unique=True),
 )
 
 meta.create_all(engine)

@@ -1,4 +1,18 @@
 [[package]]
+name = "aiopg"
+version = "1.1.0"
+description = "Postgres integration with asyncio."
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+psycopg2-binary = ">=2.8.4"
+
+[package.extras]
+sa = ["sqlalchemy[postgresql_psycopg2binary] (>=1.1)"]
+
+[[package]]
 name = "aiosqlite"
 version = "0.17.0"
 description = "asyncio bridge to the standard sqlite3 module"
@@ -763,9 +777,13 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "10bf008bc300630be47da6f6550f14b3e87b8c46c8c870d62daf7aa95a5eaa3b"
+content-hash = "b16815210257701b1cae11bcf08a3d76076655d5bd63d363227083b16f54b9db"
 
 [metadata.files]
+aiopg = [
+    {file = "aiopg-1.1.0-py3-none-any.whl", hash = "sha256:c154475eedf04d39030bd07d686c1728c804d3f714f50061551b85aaf49da109"},
+    {file = "aiopg-1.1.0.tar.gz", hash = "sha256:7583b2a5477072c41e83ffb252f27ec3188abf281dfa88645d389be4cd0aa098"},
+]
 aiosqlite = [
     {file = "aiosqlite-0.17.0-py3-none-any.whl", hash = "sha256:6c49dc6d3405929b1d08eeccc72306d3677503cc5e5e43771efc1e00232e8231"},
     {file = "aiosqlite-0.17.0.tar.gz", hash = "sha256:f0e6acc24bc4864149267ac82fb46dfb3be4455f99fe21df82609cc6e6baee51"},

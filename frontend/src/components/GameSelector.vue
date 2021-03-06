@@ -1,10 +1,9 @@
 <template>
 <div class="game-selector">
     <p>
-        <span v-if="$store.state.username">Hello, {{ $store.state.username
-        }}!</span>  Please enter the UUID of the game and click “Go”. Or to
-        create a new game, click “+”. After creating a game, you can just share
-        the URL of the page with your three bridge buddies.
+        Please enter the UUID of the game and click “Go”. Or to create a new
+        game, click “+”. After creating a game, you can just share the URL of
+        the page with your three bridge buddies.
     </p>
     <validation-observer v-slot="{ handleSubmit }" slim>
         <b-form @submit.prevent="handleSubmit(selectGame)">

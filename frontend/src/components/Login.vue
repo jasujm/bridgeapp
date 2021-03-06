@@ -35,6 +35,7 @@
 <script lang="ts">
 import Component, { mixins } from "vue-class-component";
 import { ValidationMixin } from "./validation";
+import { AxiosError } from "axios"
 
 @Component
 export default class Login extends mixins(ValidationMixin) {
@@ -47,8 +48,19 @@ export default class Login extends mixins(ValidationMixin) {
 
     async login() {
         const api = this.$store.state.api;
-        const { id } = await api.createPlayer(this.username);
-        this.$store.dispatch("login", id);
+        let id: string | undefined;
+        try {
+            ({ id } = await api.getPlayer(this.username));
+        } catch (err) {
+            const axiosError = err as AxiosError;
+            if (axiosError.isAxiosError && axiosError.response && axiosError.response.status == 404) {
+                // TODO: display errors if creating player fails
+                ({ id } = await api.createPlayer(this.username));
+            }
+        }
+        if (id) {
+            this.$store.dispatch("login", id);
+        }
     }
 }
 </script>

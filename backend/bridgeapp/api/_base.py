@@ -58,3 +58,10 @@ def handle_not_found_db(request, ex):
     """Convert :exc:`db_utils.NotFoundError` into HTTP error"""
     del request
     return _exception_response(fastapi.status.HTTP_404_NOT_FOUND, ex)
+
+
+@subapp.exception_handler(db_utils.AlreadyExistsError)
+def handle_already_exists_db(request, ex):
+    """Convert :exc:`db_utils.AlreadyExistsError` into HTTP error"""
+    del request
+    return _exception_response(fastapi.status.HTTP_409_CONFLICT, ex)
