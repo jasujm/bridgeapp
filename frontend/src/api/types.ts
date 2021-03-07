@@ -248,3 +248,8 @@ export enum ErrorSeverity {
 export class ErrorMessage {
     constructor(readonly message = "", readonly severity: ErrorSeverity = ErrorSeverity.danger) { }
 }
+
+export interface ValidationError {
+    loc: Array<string>;
+    msg: string;
+}

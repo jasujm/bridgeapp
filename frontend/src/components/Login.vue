@@ -10,9 +10,9 @@
             Choose a name for yourself. There is no actual registration or
             authentication, so anyone can claim any username at any time.
         </p>
-        <validation-observer v-slot="{ handleSubmit }" slim>
+        <validation-observer ref="validationObserver" v-slot="{ handleSubmit }" slim>
             <b-form @submit.stop.prevent="handleSubmit(login)">
-                <validation-provider name="Username" rules="required|min:2|max:15" v-slot="validationContext">
+                <validation-provider name="username" rules="required|min:2|max:15" v-slot="validationContext">
                     <b-form-group label-for="username" label="Username">
                         <b-form-input
                             id="username"
@@ -33,12 +33,18 @@
 </template>
 
 <script lang="ts">
-import Component, { mixins } from "vue-class-component";
-import { ValidationMixin } from "./validation";
+import Component, { mixins } from "vue-class-component"
+import { Ref } from "vue-property-decorator"
+import { ValidationMixin } from "./validation"
 import { AxiosError } from "axios"
+import { ValidationError } from "@/api/types"
+import _ from "lodash"
 
 @Component
 export default class Login extends mixins(ValidationMixin) {
+    // This is ValidationObserver but I don't know how to use it with typescript
+    // eslint-disable-next-line
+    @Ref() readonly validationObserver!: any;
     private readonly username = "";
 
     private get testing() {
@@ -50,12 +56,23 @@ export default class Login extends mixins(ValidationMixin) {
         const api = this.$store.state.api;
         let id: string | undefined;
         try {
-            ({ id } = await api.getPlayer(this.username));
+            ({ id } = await api.createPlayer(this.username));
         } catch (err) {
             const axiosError = err as AxiosError;
-            if (axiosError.isAxiosError && axiosError.response && axiosError.response.status == 404) {
-                // TODO: display errors if creating player fails
-                ({ id } = await api.createPlayer(this.username));
+            if (axiosError.isAxiosError && axiosError.response) {
+                const status = axiosError.response.status;
+                const data = axiosError.response.data;
+                if (status == 409) {
+                    ({ id } = await api.getPlayer(this.username));
+                } else if (status == 422 && _.isArray(data.detail)) {
+                    // TODO: This handling is generic. Could be abstracted in the ValidationMixin somehow.
+                    const errors = _.fromPairs(
+                        data.detail.map(
+                            ({ loc, msg }: ValidationError) => [_.last(loc), msg]
+                        )
+                    );
+                    this.validationObserver.setErrors(errors);
+                }
             }
         }
         if (id) {
