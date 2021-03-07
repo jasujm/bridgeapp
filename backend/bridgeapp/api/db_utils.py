@@ -7,6 +7,7 @@ import uuid
 import sqlite3
 import typing
 
+import psycopg2
 import sqlalchemy
 import sqlalchemy.exc as sqlexc
 
@@ -73,5 +74,11 @@ async def create(
     database = _get_database(database)
     try:
         await database.execute(query=table.insert(), values={"id": obj_id, **attrs})
-    except (sqlexc.IntegrityError, sqlite3.IntegrityError) as ex:
+    except (
+        sqlexc.IntegrityError,
+        sqlite3.IntegrityError,
+        psycopg2.IntegrityError,
+    ) as ex:
+        # ^ TODO: Does the databases library use common wrapper for different
+        # drivers?
         raise AlreadyExistsError(f"{obj_id} already exists") from ex
