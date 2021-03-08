@@ -47,9 +47,6 @@ export default class GameSelector extends mixins(ValidationMixin) {
     }
 
     async createGame() {
-        // TODO: The game id from the API response (URL) is parsed, just so that
-        // the URL is constructed over and over again. Instead just pass the URL
-        // around.
         const game = await this.$store.state.api.createGame();
         this.gameId = game.id;
         await this.$store.state.api.joinGame(game.id);

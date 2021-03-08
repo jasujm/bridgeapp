@@ -1,6 +1,3 @@
-// TODO: The methods here could just accept the URL of a game, since that's what
-// is returned in the response when a game is created/queried
-
 import axios, { AxiosRequestConfig, AxiosError } from "axios"
 import ReconnectingWebSocket from "reconnecting-websocket"
 import {
