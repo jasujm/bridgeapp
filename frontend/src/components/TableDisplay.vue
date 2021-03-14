@@ -108,19 +108,11 @@ export default class TableDisplay extends mixins(SelfPositionMixin) {
 }
 
 .seat {
-  &.self, &.dummy {
-    display: none;
-
-    @include media-breakpoint-up(md) {
-      display: block;
-    }
-  }
-
   &.self, &.partner {
     text-align: center;
 
-    ul {
-      @include inline-list-down;
+    ::v-deep ul {
+      @include inline-list-down(md);
     }
   }
 
