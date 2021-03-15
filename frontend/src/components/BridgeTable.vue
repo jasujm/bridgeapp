@@ -31,6 +31,7 @@
                 <Bidding
                     :northSouthVulnerable="deal.vulnerability.northSouth"
                     :eastWestVulnerable="deal.vulnerability.eastWest"
+                    :positionInTurn="deal.positionInTurn"
                     :calls="deal.calls" />
                 <BiddingResult
                     v-if="deal.declarer && deal.contract"
@@ -438,5 +439,10 @@ export default class BridgeTable extends mixins(PositionMixin) {
   height: 10rem;
   overflow-y: scroll;
   margin-bottom: $spacer;
+}
+
+::v-deep .turn::before {
+  content: "\25B8";
+  padding-right: 0.25*$spacer;
 }
 </style>

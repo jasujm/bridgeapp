@@ -1,5 +1,5 @@
 <template>
-<span class="player">{{ seatLabel }}</span>
+<strong class="player">{{ seatLabel }}</strong>
 </template>
 
 <script lang="ts">

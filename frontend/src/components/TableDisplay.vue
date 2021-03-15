@@ -119,9 +119,5 @@ export default class TableDisplay extends mixins(SelfPositionMixin) {
   &.lho {
     text-align: right;
   }
-
-  &.turn .player {
-    font-weight: bold;
-  }
 }
 </style>

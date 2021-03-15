@@ -59,6 +59,13 @@ describe("Bidding.vue", function() {
         expect(wrapper.findAll("tbody tr").length).to.be.equal(2);
     });
 
+    it("should display turn", function() {
+        const propsData = { positionInTurn: Position.north };
+        const wrapper = mount(Bidding, { localVue, propsData });
+        expect(wrapper.find(".north.turn").exists()).to.be.true;
+        expect(wrapper.find(".south.turn").exists()).to.be.false;
+    });
+
     it("should display north south vulnerability", function() {
         const propsData = { northSouthVulnerable: true };
         const wrapper = mount(Bidding, { localVue, propsData });
