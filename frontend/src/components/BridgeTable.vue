@@ -51,11 +51,12 @@
                     :positionInTurn="deal.positionInTurn"
                     :declarer="deal.declarer"
                     :cards="deal.cards"
-                    :trick="displayTrick" />
+                    :trick="displayTrick"
+                    :allowedCards="me.allowedCards"
+                    @play="playCard($event)" />
             </b-col>
         </b-row>
         <CallPanel :allowedCalls="me.allowedCalls" @call="makeCall($event)" />
-        <CardPanel :allowedCards="me.allowedCards" @play="playCard($event)" />
     </b-container>
 </div>
 </template>
@@ -69,7 +70,6 @@ import BiddingResult from "./BiddingResult.vue"
 import TricksWonDisplay from "./TricksWonDisplay.vue"
 import TableDisplay from "./TableDisplay.vue"
 import CallPanel from "./CallPanel.vue"
-import CardPanel from "./CardPanel.vue"
 import DealResultsDisplay from "./DealResultsDisplay.vue"
 import { partnershipText } from "./partnership"
 import PositionMixin from "./position"
@@ -126,7 +126,6 @@ function scoreMessage({contract, tricksWon, result}: DealEndEvent, position: Pos
         TricksWonDisplay,
         TableDisplay,
         CallPanel,
-        CardPanel,
         DealResultsDisplay,
     }
 })

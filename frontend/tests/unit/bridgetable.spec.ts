@@ -172,14 +172,14 @@ describe("BridgeTable.vue", function() {
             await wrapper.vm.$nextTick();
         });
 
-        it("should make card on play event", async function() {
-            await wrapper.find(".card-panel button").trigger("click");
+        it("should play card on play event", async function() {
+            await wrapper.find(".table-display").vm.$emit("play", card);
             expect(fakeApi.playCard).to.be.calledWith(gameId, card);
         });
 
         it("should fetch player state on 409", async function() {
             fakeApi.playCard.rejects({ isAxiosError: true, response: { status: 409 } });
-            await wrapper.find(".card-panel button").trigger("click");
+            await wrapper.find(".table-display").vm.$emit("play", card);
             await flushPromises();
             clock.tick(200);
             expect(fakeApi.getPlayerState).to.be.calledWith(gameId);
@@ -187,7 +187,7 @@ describe("BridgeTable.vue", function() {
 
         it("should let other errors through", async function() {
             fakeApi.playCard.rejects();
-            await wrapper.find(".card-panel button").trigger("click");
+            await wrapper.find(".table-display").vm.$emit("play", card);
             await flushPromises();
             clock.tick(200);
             expect(fakeApi.getPlayerState).not.to.be.called;

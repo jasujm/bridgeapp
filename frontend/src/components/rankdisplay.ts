@@ -1,4 +1,3 @@
-import { Vue, Component } from "vue-property-decorator"
 import { Rank } from "@/api/types"
 
 const rankTexts: Partial<Record<Rank, string>> = {
@@ -8,13 +7,10 @@ const rankTexts: Partial<Record<Rank, string>> = {
     jack: "J",
 }
 
-@Component
-export default class RankDisplayMixin extends Vue {
-    protected rankClass(rank: Rank) {
-        return rank.replace(/^(?=\d)/, "_");
-    }
+export function rankClass(rank: Rank) {
+    return rank.replace(/^(?=\d)/, "_");
+}
 
-    protected rankText(rank: Rank) {
-        return rankTexts[rank] || rank;
-    }
+export function rankText(rank: Rank) {
+    return rankTexts[rank] || rank;
 }

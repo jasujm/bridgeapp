@@ -1,8 +1,10 @@
 <template>
 <div class="hand">
     <ul>
-        <li v-for="group in groupedCards" :key="group.suit">
-            <CardListDisplay :suit="group.suit" :ranks="group.ranksInSuit" />
+        <li v-for="group in groupedCards" :key="group.suit" class="suit" :class="group.suit">
+            <span v-for="rank in group.ranksInSuit" :key="rank" class="rank" :class="rankClass(rank)">
+                <CardDisplay :rank="rank" :suit="group.suit" @play="$emit('play', $event)" :allowed="isAllowed(rank, group.suit)" />
+            </span>
         </li>
     </ul>
 </div>
@@ -11,16 +13,18 @@
 <script lang="ts">
 import { Vue, Component, Prop } from "vue-property-decorator";
 import { Card, Rank, Suit } from "@/api/types"
+import CardDisplay from "./CardDisplay.vue"
+import { rankClass } from "./rankdisplay"
 import _ from "lodash"
-import CardListDisplay from "./CardListDisplay.vue"
 
 @Component({
     components: {
-        CardListDisplay,
+        CardDisplay
     }
 })
 export default class HandDisplay extends Vue {
     @Prop({ default: () => [] }) private readonly cards!: Array<Card | null>;
+    @Prop({ default: () => [] }) private readonly allowedCards!: Array<Card>;
 
     private get groupedCards() {
         // This might not be an optimal performer due to repeatedly doing
@@ -42,6 +46,14 @@ export default class HandDisplay extends Vue {
         }
         return cards2;
     }
+
+    private isAllowed(rank: Rank, suit: Suit) {
+        return this.allowedCards.some(
+            card => card.rank == rank && card.suit == suit
+        );
+    }
+
+    private rankClass = rankClass;
 }
 </script>
 
@@ -49,6 +61,10 @@ export default class HandDisplay extends Vue {
 @import "../styles/mixins";
 
 .hand {
+  margin-left: $card-overlap;
+  ::v-deep .card-display {
+    margin-left: -$card-overlap;
+  }
   ul {
     @include bulletless-list;
   }

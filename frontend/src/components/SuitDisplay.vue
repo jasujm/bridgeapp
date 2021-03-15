@@ -3,31 +3,18 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from "vue-property-decorator"
-import { Suit } from "@/api/types"
-
-const suitTexts = {
-    clubs: "&clubs;",
-    diamonds: "&diams;",
-    hearts: "&hearts;",
-    spades: "&spades;",
-};
+import Component, { mixins } from "vue-class-component"
+import SuitDisplayMixin from "./suitdisplaymixin"
 
 @Component
-export default class SuitDisplay extends Vue {
-    @Prop() private readonly suit!: Suit;
-
-    private get suitText() {
-        return suitTexts[this.suit];
-    }
-}
+export default class SuitDisplay extends mixins(SuitDisplayMixin) {}
 </script>
 
 <style lang="scss" scoped>
+@import "../styles/mixins";
+
 .suit {
-  &.clubs { color: black; }
-  &.diamonds { color: red; }
-  &.hearts { color: red; }
-  &.spades { color: black; }
+  &.diamonds, &.hearts { color: $red-suit-color; }
+  &.clubs, &.spades { color: $black-suit-color; }
 }
 </style>

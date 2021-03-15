@@ -1,12 +1,15 @@
 <template>
 <div class="table-display">
     <b-row>
-        <b-col md="4" offset-md="4">
+        <b-col md="12">
             <div class="seat partner" :class="handClasses(partnerPosition)">
                 <SeatLabel
                     :player="players[partnerPosition]"
                     :position="partnerPosition" />
-                <HandDisplay :cards="cardsFor(partnerPosition)" />
+                <HandDisplay
+                    :cards="cardsFor(partnerPosition)"
+                    :allowedCards="allowedCards"
+                    @play="$emit('play', $event)" />
             </div>
         </b-col>
     </b-row>
@@ -36,12 +39,15 @@
         </b-col>
     </b-row>
     <b-row>
-        <b-col md="4" offset-md="4">
+        <b-col md="12">
             <div class="seat self" :class="handClasses(playerPosition)">
                 <SeatLabel
                     :player="players[playerPosition]"
                     :position="playerPosition" />
-                <HandDisplay :cards="cardsFor(playerPosition)" />
+                <HandDisplay
+                    :cards="cardsFor(playerPosition)"
+                    :allowedCards="allowedCards"
+                    @play="$emit('play', $event)" />
             </div>
         </b-col>
     </b-row>
@@ -49,12 +55,12 @@
 </template>
 
 <script lang="ts">
-import Component, { mixins } from 'vue-class-component'
+    import Component, { mixins } from 'vue-class-component'
 import { Prop } from "vue-property-decorator"
 import SeatLabel from "./SeatLabel.vue"
 import HandDisplay from "./HandDisplay.vue"
 import TrickDisplay from "./TrickDisplay.vue"
-import { PlayersInGame, Position, Cards, Trick } from "@/api/types"
+import { PlayersInGame, Position, Cards, Trick, Card } from "@/api/types"
 import SelfPositionMixin from "./selfposition"
 import { partnerFor } from "@/utils"
 
@@ -68,6 +74,7 @@ import { partnerFor } from "@/utils"
 export default class TableDisplay extends mixins(SelfPositionMixin) {
     @Prop({ default: () => new PlayersInGame() }) private readonly players!: PlayersInGame;
     @Prop({ default: () => new Cards() }) private readonly cards!: Cards;
+    @Prop({ default: () => [] }) allowedCards!: Array<Card>;
     @Prop() private readonly trick?: Trick;
     @Prop() private readonly positionInTurn?: Position;
     @Prop() private readonly declarer?: Position;
@@ -100,11 +107,12 @@ export default class TableDisplay extends mixins(SelfPositionMixin) {
 #trick-display-col {
   background-color: #f2ffe6;
   border: 1px solid #479900;
-  min-height: 8rem;
-}
+  padding: 10px;
+  height: 4*$card-height + 1rem;
 
-.trick {
-  min-height: 8rem;
+  .trick {
+    height: 100%;
+  }
 }
 
 .seat {
@@ -112,7 +120,7 @@ export default class TableDisplay extends mixins(SelfPositionMixin) {
     text-align: center;
 
     ::v-deep ul {
-      @include inline-list-down(md);
+      @include inline-list;
     }
   }
 
