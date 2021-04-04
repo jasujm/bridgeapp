@@ -1,6 +1,6 @@
 <template>
 <div class="call-panel">
-    <b-dropdown text="Call" variant="primary">
+    <b-dropdown text="Call" variant="primary" size="sm">
         <b-dropdown-item
             v-for="call in allowedCalls"
             :key="callKey(call)"
