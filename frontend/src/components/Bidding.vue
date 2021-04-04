@@ -1,69 +1,104 @@
 <template>
 <div class="bidding">
-    <b-table-simple>
-        <b-thead>
-            <b-tr>
-                <b-th class="north" :class="positionClasses('north')">North</b-th>
-                <b-th class="east" :class="positionClasses('east')">East</b-th>
-                <b-th class="south" :class="positionClasses('south')">South</b-th>
-                <b-th class="west" :class="positionClasses('west')">West</b-th>
-            </b-tr>
-        </b-thead>
-        <b-tbody>
-            <b-tr v-for="(callRow, index) in tabulatedCalls" :key="index">
-                <b-td v-for="(call, index) in callRow" :key="index">
-                    <CallDisplay v-if="call" :type="call.type" :bid="call.bid" />
-                </b-td>
-            </b-tr>
-        </b-tbody>
-    </b-table-simple>
+    <div class="d-flex positions">
+        <div v-for="position in positions" class="position" :class="positionClasses(position)">
+            {{ positionText(position) }}
+        </div>
+    </div>
+    <div class="d-flex flex-wrap calls" :class="'player-position-' + playerPosition">
+        <div v-for="(call, index) in calls" :key="index" class="call-cell" :class="callClasses(call)">
+            <CallDisplay :type="call.call.type" :bid="call.call.bid" />
+        </div>
+        <div v-if="displayCallPanel" class="call-cell" :class="callPositionClasses(playerPosition)">
+            <CallPanel :allowedCalls="allowedCalls" @call="$emit('call', $event)" />
+        </div>
+    </div>
 </div>
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from "vue-property-decorator"
+import Component, { mixins } from "vue-class-component"
+import { Prop } from "vue-property-decorator"
 import _ from "lodash"
 import CallDisplay from "./CallDisplay.vue"
-import { Position, PositionCallPair } from "@/api/types"
+import CallPanel from "./CallPanel.vue"
+import { Position, Call, PositionCallPair } from "@/api/types"
+import SelfPositionMixin from "./selfposition"
 
 @Component({
     components: {
         CallDisplay,
+        CallPanel,
     }
 })
-export default class Bidding extends Vue {
+export default class Bidding extends mixins(SelfPositionMixin) {
     @Prop({ default: () => [] }) private readonly calls!: Array<PositionCallPair>;
     @Prop() private readonly positionInTurn?: Position;
     @Prop({ default: false }) private readonly northSouthVulnerable!: boolean;
     @Prop({ default: false }) private readonly eastWestVulnerable!: boolean;
+    @Prop({ default: () => [] }) private readonly allowedCalls!: Array<Call>;
+
+    private get positions() {
+        return [
+            this.lhoPosition,
+            this.partnerPosition,
+            this.rhoPosition,
+            this.playerPosition,
+        ];
+    }
 
     private positionClasses(position: Position) {
         return {
+            [position]: true,
             vulnerable: ([Position.north, Position.south].includes(position)) ?
                 this.northSouthVulnerable : this.eastWestVulnerable,
-            turn: this.positionInTurn == position,
         };
     }
 
-    private get tabulatedCalls() {
-        if (this.calls.length == 0) {
-            return [];
-        } else {
-            const paddingLeft = _.values(Position).indexOf(this.calls[0].position);
-            const paddingRight = 3 - (this.calls.length + paddingLeft - 1) % 4;
-            const callsWithPadding = _.concat(
-                Array(paddingLeft).fill(null),
-                this.calls.map(call => call.call),
-                Array(paddingRight).fill(null),
-            );
-            return _.chunk(callsWithPadding, 4);
-        }
+    private callClasses(call: PositionCallPair) {
+        return this.callPositionClasses(call.position);
+    }
+
+    private get displayCallPanel() {
+        return !_.isEmpty(this.allowedCalls) &&
+            this.positionInTurn == this.playerPosition;
+    }
+
+    private callPositionClasses(position: Position) {
+        return `position-${position}`;
     }
 }
 </script>
 
 <style lang="scss" scoped>
-.vulnerable {
-  color: var(--danger);
+$positions: north east south west;
+
+.bidding {
+  .position, .call-cell {
+    width: 25%;
+  }
+  .positions {
+    font-weight: bold;
+  }
+  .calls {
+    // This is for offsetting the call sequence to the table columns based on the
+    // player position and whoever starts the call sequence
+    @for $i from 1 through length($positions) {
+      @for $j from 1 through length($positions) {
+        $margin: ((3 + $j - $i) % 4) * 25%;
+        $player-position: nth($positions, $i);
+        $position: nth($positions, $j);
+        &.player-position-#{$player-position} .call-cell.position-#{$position}:first-child {
+          margin-left: $margin;
+        }
+      }
+    }
+  }
+  ::v-deep .call {
+    font-size: 1.25em;
+  }
+  .vulnerable {
+    color: var(--danger);
+  }
 }
 </style>

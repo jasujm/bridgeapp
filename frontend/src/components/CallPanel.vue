@@ -1,13 +1,13 @@
 <template>
 <div class="call-panel">
-    <b-button
-        v-for="call in allowedCalls"
-        :key="callKey(call)"
-        class="m-1"
-        variant="outline-dark"
-        @click="$emit('call', call)">
-        <CallDisplay :type="call.type" :bid="call.bid" />
-    </b-button>
+    <b-dropdown text="Call" variant="primary">
+        <b-dropdown-item
+            v-for="call in allowedCalls"
+            :key="callKey(call)"
+            @click="$emit('call', call)">
+            <CallDisplay :type="call.type" :bid="call.bid" />
+        </b-dropdown-item>
+    </b-dropdown>
 </div>
 </template>
 
@@ -33,3 +33,10 @@ export default class CallPanel extends Vue {
     }
 }
 </script>
+
+<style lang="scss" scoped>
+::v-deep .dropdown-menu {
+  max-height: 10rem;
+  overflow-y: auto;
+}
+</style>

@@ -42,29 +42,9 @@ describe("Bidding.vue", function() {
     for (const { propsData, expectedClass } of calls) {
         it(`should display ${propsData.calls[0].call.type}`, function() {
             const wrapper = mount(Bidding, { localVue, propsData });
-            expect(wrapper.find(`.call${expectedClass}`).exists()).to.be.true;
+            expect(wrapper.find(`.position-north .call${expectedClass}`).exists()).to.be.true;
         });
     }
-
-    it("should tabulate calls", function() {
-        const propsData = {
-            calls: [
-                makeCall(Position.east, CallType.pass),
-                makeCall(Position.south, CallType.pass),
-                makeCall(Position.west, CallType.bid),
-                makeCall(Position.north, CallType.pass),
-            ]
-        }
-        const wrapper = mount(Bidding, { localVue, propsData });
-        expect(wrapper.findAll("tbody tr").length).to.be.equal(2);
-    });
-
-    it("should display turn", function() {
-        const propsData = { positionInTurn: Position.north };
-        const wrapper = mount(Bidding, { localVue, propsData });
-        expect(wrapper.find(".north.turn").exists()).to.be.true;
-        expect(wrapper.find(".south.turn").exists()).to.be.false;
-    });
 
     it("should display north south vulnerability", function() {
         const propsData = { northSouthVulnerable: true };

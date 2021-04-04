@@ -55,7 +55,7 @@
 </template>
 
 <script lang="ts">
-    import Component, { mixins } from 'vue-class-component'
+import Component, { mixins } from "vue-class-component"
 import { Prop } from "vue-property-decorator"
 import SeatLabel from "./SeatLabel.vue"
 import HandDisplay from "./HandDisplay.vue"

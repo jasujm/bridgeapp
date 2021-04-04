@@ -29,10 +29,13 @@
                 <DealResultsDisplay :results="results" />
                 <h3>Bidding</h3>
                 <Bidding
+                    :selfPosition="me.position"
+                    :positionInTurn="deal.positionInTurn"
                     :northSouthVulnerable="deal.vulnerability.northSouth"
                     :eastWestVulnerable="deal.vulnerability.eastWest"
-                    :positionInTurn="deal.positionInTurn"
-                    :calls="deal.calls" />
+                    :calls="deal.calls"
+                    :allowedCalls="me.allowedCalls"
+                    @call="makeCall($event)"/>
                 <BiddingResult
                     v-if="deal.declarer && deal.contract"
                     :selfPosition="me.position"
@@ -56,7 +59,6 @@
                     @play="playCard($event)" />
             </b-col>
         </b-row>
-        <CallPanel :allowedCalls="me.allowedCalls" @call="makeCall($event)" />
     </b-container>
 </div>
 </template>
@@ -69,7 +71,6 @@ import Bidding from "./Bidding.vue"
 import BiddingResult from "./BiddingResult.vue"
 import TricksWonDisplay from "./TricksWonDisplay.vue"
 import TableDisplay from "./TableDisplay.vue"
-import CallPanel from "./CallPanel.vue"
 import DealResultsDisplay from "./DealResultsDisplay.vue"
 import { partnershipText } from "./partnership"
 import PositionMixin from "./position"
@@ -125,7 +126,6 @@ function scoreMessage({contract, tricksWon, result}: DealEndEvent, position: Pos
         BiddingResult,
         TricksWonDisplay,
         TableDisplay,
-        CallPanel,
         DealResultsDisplay,
     }
 })
