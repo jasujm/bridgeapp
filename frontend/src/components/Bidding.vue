@@ -1,8 +1,8 @@
 <template>
 <div class="bidding">
     <div class="d-flex positions">
-        <div v-for="position in positions" class="position" :class="positionClasses(position)">
-            {{ positionText(position) }}
+        <div v-for="position in positions" class="position-cell" :class="positionClasses(position)">
+            <PositionDisplay :position="position" />
         </div>
     </div>
     <div class="d-flex flex-wrap calls" :class="'player-position-' + playerPosition">
@@ -20,6 +20,7 @@
 import Component, { mixins } from "vue-class-component"
 import { Prop } from "vue-property-decorator"
 import _ from "lodash"
+import PositionDisplay from "./PositionDisplay.vue"
 import CallDisplay from "./CallDisplay.vue"
 import CallPanel from "./CallPanel.vue"
 import { Position, Call, PositionCallPair } from "@/api/types"
@@ -27,6 +28,7 @@ import SelfPositionMixin from "./selfposition"
 
 @Component({
     components: {
+        PositionDisplay,
         CallDisplay,
         CallPanel,
     }
@@ -49,7 +51,6 @@ export default class Bidding extends mixins(SelfPositionMixin) {
 
     private positionClasses(position: Position) {
         return {
-            [position]: true,
             vulnerable: ([Position.north, Position.south].includes(position)) ?
                 this.northSouthVulnerable : this.eastWestVulnerable,
         };
@@ -74,7 +75,7 @@ export default class Bidding extends mixins(SelfPositionMixin) {
 $positions: north east south west;
 
 .bidding {
-  .position, .call-cell {
+  .position-cell, .call-cell {
     width: 25%;
   }
   .positions {

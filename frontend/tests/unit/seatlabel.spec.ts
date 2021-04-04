@@ -1,7 +1,6 @@
 import { localVue, expect } from "./common"
 import { mount } from "@vue/test-utils"
 import SeatLabel from "@/components/SeatLabel.vue"
-import { positionText } from "@/components/position"
 import Vuex from "vuex"
 import sinon from "sinon"
 import { Position } from "@/api/types"
@@ -40,6 +39,6 @@ describe("SeatLabel.vue", function() {
     it("should display position when there is no player in the seat", async function() {
         wrapper.setProps({ player: null });
         await wrapper.vm.$nextTick();
-        expect(wrapper.find(".player").text()).to.contain(positionText(position));
+        expect(wrapper.find(".position.north").exists()).to.be.true;
     })
 });

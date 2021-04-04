@@ -49,14 +49,14 @@ describe("Bidding.vue", function() {
     it("should display north south vulnerability", function() {
         const propsData = { northSouthVulnerable: true };
         const wrapper = mount(Bidding, { localVue, propsData });
-        expect(wrapper.find(".north.vulnerable").exists()).to.be.true;
-        expect(wrapper.find(".south.vulnerable").exists()).to.be.true;
+        expect(wrapper.find(".vulnerable .north").exists()).to.be.true;
+        expect(wrapper.find(".vulnerable .south").exists()).to.be.true;
     });
 
     it("should display east west vulnerability", function() {
         const propsData = { eastWestVulnerable: true };
         const wrapper = mount(Bidding, { localVue, propsData });
-        expect(wrapper.find(".east.vulnerable").exists()).to.be.true;
-        expect(wrapper.find(".west.vulnerable").exists()).to.be.true;
+        expect(wrapper.find(".vulnerable .east").exists()).to.be.true;
+        expect(wrapper.find(".vulnerable .west").exists()).to.be.true;
     });
 });

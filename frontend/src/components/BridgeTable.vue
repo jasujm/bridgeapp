@@ -13,7 +13,9 @@
                 class="join-game"
                 :class="position"
                 :key="position"
-                @click="joinGame(position)">{{ positionText(position) }}</b-dropdown-item>
+                @click="joinGame(position)">
+                <PositionDisplay :position="position" />
+            </b-dropdown-item>
         </b-dropdown>
         <b-button
             v-else
@@ -64,16 +66,15 @@
 </template>
 
 <script lang="ts">
-import Component, { mixins } from "vue-class-component"
-import { Prop, Watch } from "vue-property-decorator"
+import { Vue, Component, Prop, Watch } from "vue-property-decorator"
 import { AxiosError } from "axios"
 import Bidding from "./Bidding.vue"
 import BiddingResult from "./BiddingResult.vue"
 import TricksWonDisplay from "./TricksWonDisplay.vue"
 import TableDisplay from "./TableDisplay.vue"
 import DealResultsDisplay from "./DealResultsDisplay.vue"
+import PositionDisplay from "./PositionDisplay.vue"
 import { partnershipText } from "./partnership"
-import PositionMixin from "./position"
 import {
     GameCounterPair,
     Deal,
@@ -127,9 +128,10 @@ function scoreMessage({contract, tricksWon, result}: DealEndEvent, position: Pos
         TricksWonDisplay,
         TableDisplay,
         DealResultsDisplay,
+        PositionDisplay,
     }
 })
-export default class BridgeTable extends mixins(PositionMixin) {
+export default class BridgeTable extends Vue {
     @Prop() private readonly gameId!: string;
     private deal = new Deal();
     private me = new PlayerState();
