@@ -119,8 +119,8 @@ export default class TableDisplay extends mixins(SelfPositionMixin) {
   &.self, &.partner {
     text-align: center;
 
-    ::v-deep ul {
-      @include inline-list;
+    ::v-deep ul.suits {
+      @include inline-list($margin: false);
     }
   }
 

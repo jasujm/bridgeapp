@@ -37,6 +37,7 @@ export default class CardDisplay extends mixins(RankDisplayMixin, SuitDisplayMix
 @import "../styles/mixins";
 
 .card-display {
+  cursor: default;
   height: $card-height;
   width: 0.72*$card-height;
   font: bold 0.45*$card-height sans-serif;

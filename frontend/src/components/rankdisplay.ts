@@ -7,10 +7,6 @@ const rankTexts: Partial<Record<Rank, string>> = {
     jack: "J",
 }
 
-export function rankClass(rank: Rank) {
-    return rank.replace(/^(?=\d)/, "_");
-}
-
 export function rankText(rank: Rank) {
     return rankTexts[rank] || rank;
 }

@@ -1,10 +1,12 @@
 <template>
 <div class="hand">
-    <ul>
-        <li v-for="group in groupedCards" :key="group.suit" class="suit" :class="group.suit">
-            <span v-for="rank in group.ranksInSuit" :key="rank" class="rank" :class="rankClass(rank)">
-                <CardDisplay :rank="rank" :suit="group.suit" @play="$emit('play', $event)" :allowed="isAllowed(rank, group.suit)" />
-            </span>
+    <ul class="suits">
+        <li v-for="group in groupedCards" :key="group.suit">
+            <ul class="cards" :class="'suit-' + group.suit">
+                <li v-for="rank in group.ranksInSuit" :key="rank">
+                    <CardDisplay :rank="rank" :suit="group.suit" @play="$emit('play', $event)" :allowed="isAllowed(rank, group.suit)" />
+                </li>
+            </ul>
         </li>
     </ul>
 </div>
@@ -14,7 +16,6 @@
 import { Vue, Component, Prop } from "vue-property-decorator";
 import { Card, Rank, Suit } from "@/api/types"
 import CardDisplay from "./CardDisplay.vue"
-import { rankClass } from "./rankdisplay"
 import _ from "lodash"
 
 @Component({
@@ -52,8 +53,6 @@ export default class HandDisplay extends Vue {
             card => card.rank == rank && card.suit == suit
         );
     }
-
-    private rankClass = rankClass;
 }
 </script>
 
@@ -65,8 +64,14 @@ export default class HandDisplay extends Vue {
   ::v-deep .card-display {
     margin-left: -$card-overlap;
   }
-  ul {
+  ul.suits {
     @include bulletless-list;
+
+    ul.cards {
+      @include bulletless-list;
+      @include inline-list($margin: false);
+      display: inline;
+    }
   }
 }
 </style>

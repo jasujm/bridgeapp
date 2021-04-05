@@ -1,18 +1,18 @@
 <template>
 <div class="bidding">
-    <div class="d-flex positions">
-        <div v-for="position in positions" class="position-cell" :class="positionClasses(position)">
+    <div class="positions">
+        <div v-for="position in positions" class="position-item" :class="positionClasses(position)">
             <PositionDisplay :position="position" />
         </div>
     </div>
-    <div class="d-flex flex-wrap calls" :class="'player-position-' + playerPosition">
-        <div v-for="(call, index) in calls" :key="index" class="call-cell" :class="callClasses(call)">
+    <ul class="calls" :class="'player-position-' + playerPosition">
+        <li v-for="(call, index) in calls" :key="index" class="call-item" :class="callClasses(call)">
             <CallDisplay :type="call.call.type" :bid="call.call.bid" />
-        </div>
-        <div v-if="displayCallPanel" class="call-cell" :class="callPositionClasses(playerPosition)">
+        </li>
+        <li v-if="displayCallPanel" class="call-item" :class="callPositionClasses(playerPosition)">
             <CallPanel :allowedCalls="allowedCalls" @call="$emit('call', $event)" />
-        </div>
-    </div>
+        </li>
+    </ul>
 </div>
 </template>
 
@@ -72,24 +72,29 @@ export default class Bidding extends mixins(SelfPositionMixin) {
 </script>
 
 <style lang="scss" scoped>
+@import "../styles/mixins";
 $positions: north east south west;
 
 .bidding {
-  .position-cell, .call-cell {
+  .position-item, .call-item {
     width: 25%;
   }
   .positions {
+    display: flex;
     font-weight: bold;
   }
   .calls {
+    display: flex;
+    flex-wrap: wrap;
     // This is for offsetting the call sequence to the table columns based on the
     // player position and whoever starts the call sequence
+    @include bulletless-list;
     @for $i from 1 through length($positions) {
       @for $j from 1 through length($positions) {
         $margin: ((3 + $j - $i) % 4) * 25%;
         $player-position: nth($positions, $i);
         $position: nth($positions, $j);
-        &.player-position-#{$player-position} .call-cell.position-#{$position}:first-child {
+        &.player-position-#{$player-position} .call-item.position-#{$position}:first-child {
           margin-left: $margin;
         }
       }

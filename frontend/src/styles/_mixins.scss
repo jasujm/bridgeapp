@@ -7,10 +7,12 @@
   padding-left: 0;
 }
 
-@mixin inline-list {
-  li {
+@mixin inline-list($margin: true) {
+  > li {
     display: inline;
-    margin-right: ($spacer * 0.5);
+    @if $margin {
+      margin-right: ($spacer * 0.5);
+    }
   }
 }
 

@@ -17,9 +17,9 @@ describe("HandDisplay.vue", function() {
             ]
         };
         const wrapper = mount(HandDisplay, { localVue, propsData });
-        expect(wrapper.find(".suit.diamonds .rank._7").exists()).to.be.true;
-        expect(wrapper.find(".suit.diamonds .rank._2").exists()).to.be.true;
-        expect(wrapper.find(".suit.spades .rank.ace").exists()).to.be.true;
+        expect(wrapper.find(".suit-diamonds .card-display.rank-7").exists()).to.be.true;
+        expect(wrapper.find(".suit-diamonds .card-display.rank-2").exists()).to.be.true;
+        expect(wrapper.find(".suit-spades .card-display.rank-ace").exists()).to.be.true;
     });
     it("should not display unknown cards", function() {
         const propsData = {
