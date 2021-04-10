@@ -94,7 +94,7 @@ def _apify_model(
 Deal = _apify_model(base_models.Deal)
 
 
-Username = pydantic.constr(min_length=2, max_length=15, regex=r"^[\w\d_-]{2,15}$")
+Username = pydantic.constr(min_length=2, max_length=31, regex=r"^[\s\w\d_ -]{1,31}$")
 """Username string"""
 
 

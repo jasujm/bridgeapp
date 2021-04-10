@@ -12,7 +12,7 @@
         </p>
         <validation-observer ref="validationObserver" v-slot="{ handleSubmit }" slim>
             <b-form @submit.stop.prevent="handleSubmit(login)">
-                <validation-provider name="username" rules="required|min:2|max:15" v-slot="validationContext">
+                <validation-provider name="username" rules="required|min:2|max:31" v-slot="validationContext">
                     <b-form-group label-for="username" label="Username">
                         <b-form-input
                             id="username"
