@@ -3,6 +3,7 @@ import App from "./App.vue"
 import store from "./store"
 import router from "./router"
 import { BootstrapVue } from "bootstrap-vue"
+import UniqueId from "vue-unique-id"
 
 Vue.config.productionTip = false
 Vue.config.errorHandler = function(err, vm) {
@@ -13,6 +14,7 @@ import "bootstrap/dist/css/bootstrap.css"
 import "bootstrap-vue/dist/bootstrap-vue.css"
 
 Vue.use(BootstrapVue)
+Vue.use(UniqueId)
 
 new Vue({
     store,

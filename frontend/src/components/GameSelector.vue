@@ -5,41 +5,38 @@
         game, click “+”. After creating a game, you can just share the URL of
         the page with your three bridge buddies.
     </p>
-    <validation-observer v-slot="{ handleSubmit }" slim>
-        <b-form @submit.prevent="handleSubmit(selectGame)">
-            <validation-provider name="Game UUID" rules="required|uuid" v-slot="validationContext">
-                <b-form-group :disabled="!$store.getters.isLoggedIn">
-                    <b-input-group>
-                        <b-button
-                            variant="secondary"
-                            @click="createGame()">+</b-button>
-                        <b-form-input
-                            id="game-id"
-                            placeholder="Game UUID"
-                            v-model="gameId"
-                            :state="getValidationState(validationContext)"
-                            aria-describedby="game-id-feedback"
-                            ></b-form-input>
-                        <b-button
-                            type="submit"
-                            variant="primary">Go</b-button>
-                        <b-form-invalid-feedback id="game-id-feedback">
-                            {{ validationContext.errors[0] }}
-                        </b-form-invalid-feedback>
-                    </b-input-group>
-                </b-form-group>
-            </validation-provider>
-        </b-form>
-    </validation-observer>
+    <ValidatedForm :submitHandler="selectGame">
+        <validatedFormGroup name="Game UUID" rules="required|uuid" v-slot="{ state }" no-label>
+            <b-input-group>
+                <b-button
+                    variant="secondary"
+                    @click="createGame()">+</b-button>
+                <b-form-input
+                    :state="state"
+                    placeholder="Game UUID"
+                    v-model="gameId">
+                </b-form-input>
+                <b-button
+                    type="submit"
+                    variant="primary">Go</b-button>
+            </b-input-group>
+        </ValidatedFormGroup>
+    </ValidatedForm>
 </div>
 </template>
 
 <script lang="ts">
-import Component, { mixins } from "vue-class-component"
-import { ValidationMixin } from "./validation"
+import { Vue, Component } from "vue-property-decorator"
+import ValidatedForm from "./ValidatedForm.vue"
+import ValidatedFormGroup from "./ValidatedFormGroup.vue"
 
-@Component
-export default class GameSelector extends mixins(ValidationMixin) {
+@Component({
+    components: {
+        ValidatedForm,
+        ValidatedFormGroup,
+    }
+})
+export default class GameSelector extends Vue {
     private gameId = "";
 
     setGameId(gameId: string) {

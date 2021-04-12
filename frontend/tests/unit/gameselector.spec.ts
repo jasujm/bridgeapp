@@ -42,7 +42,7 @@ describe("GameSelector.vue", function() {
 
     describe("join game", function() {
         this.beforeEach(async function() {
-            wrapper.find("#game-id").setValue(gameId);
+            wrapper.find("input").setValue(gameId);
             await wrapper.find("form").trigger("submit");
             await flushPromises();
         });

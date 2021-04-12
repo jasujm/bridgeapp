@@ -30,7 +30,7 @@ describe("Login.vue", function() {
     });
 
     it("should create player on login", async function() {
-        wrapper.find("#username").setValue("user");
+        wrapper.find("input").setValue("user");
         await wrapper.find("form").trigger("submit");
         await flushPromises();
         expect(api.createPlayer).to.be.calledWith(player.username);
@@ -39,7 +39,7 @@ describe("Login.vue", function() {
 
     it("should get the existing player if it exists", async function() {
         api.createPlayer.rejects({ isAxiosError: true, response: { status: 409 } });
-        wrapper.find("#username").setValue("user");
+        wrapper.find("input").setValue("user");
         await wrapper.find("form").trigger("submit");
         await flushPromises();
         expect(api.createPlayer).to.be.calledWith(player.username);
