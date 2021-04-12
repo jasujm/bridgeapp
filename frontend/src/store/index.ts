@@ -2,13 +2,13 @@ import Vue from "vue"
 import Vuex from "vuex"
 import { ActionContext as BaseActionContext } from "vuex"
 import Api from "@/api"
-import { getErrorMessage } from "@/api"
+import { getErrorMessage, BasicAuth } from "@/api"
 import { ErrorMessage } from "@/api/types"
 
 Vue.use(Vuex);
 
 export class State {
-    username = "";
+    isLoggedIn = false;
     api = new Api();
     error = new ErrorMessage();
 }
@@ -16,19 +16,18 @@ export class State {
 export type ActionContext = BaseActionContext<State, State>;
 
 export const mutations = {
-    updateUsername(state: State, username: string) {
-        state.username = username;
-    },
     setError(state: State, error: ErrorMessage) {
         state.error = error;
     }
 };
 
 export const actions = {
-    login(context: ActionContext, username: string) {
-        if (username) {
-            context.commit("updateUsername", username);
-            context.state.api.authenticate(username);
+    async login(context: ActionContext, auth: BasicAuth) {
+        if (auth) {
+            const success = await context.state.api.authenticate(auth);
+            if (success) {
+                context.state.isLoggedIn = true;
+            }
         }
     },
     reportError(context: ActionContext, err: Error) {
@@ -41,7 +40,7 @@ export const actions = {
 
 export const getters = {
     isLoggedIn(state: State) {
-        return Boolean(state.username);
+        return state.isLoggedIn;
     },
 };
 

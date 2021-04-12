@@ -5,6 +5,8 @@ import * as api from "@/api"
 import { stubInterface } from "ts-sinon"
 import sinon, { SinonStub } from "sinon"
 
+const auth = { username: "user", password: "secret" };
+
 describe("store", function() {
     let state: State;
     let context: ActionContext;
@@ -15,49 +17,41 @@ describe("store", function() {
         context.state = state;
     });
 
-    it("should initially have no user logged in", function() {
-        expect(getters.isLoggedIn(state)).to.be.false;
-    });
-
-    it("should update username when committing login", function() {
-        mutations.updateUsername(state, "user");
-        expect(state.username).to.be.equal("user");
-    })
-
-    it("should be logged in after committing login", function() {
-        mutations.updateUsername(state, "user");
-        expect(getters.isLoggedIn(state)).to.be.true;
-    });
-
     it("should set error", function() {
         const error = new ErrorMessage("error");
         mutations.setError(state, error);
         expect(state.error).to.be.equal(error);
     });
 
+    it("should initially have no user logged in", function() {
+        expect(getters.isLoggedIn(state)).to.be.false;
+    });
+
     describe("login action", function() {
         let stubAuthenticate: SinonStub;
 
         this.beforeEach(function() {
-            stubAuthenticate = sinon.stub(state.api, "authenticate");
+            stubAuthenticate = sinon.stub(state.api, "authenticate").resolves(true);
         });
 
         this.afterEach(function() {
             stubAuthenticate.restore();
         });
 
-        it("should update username", function() {
-            actions.login(context, "user");
-            expect(context.commit).to.be.calledWith("updateUsername", "user");
+        it("should authenticate API", async function() {
+            await actions.login(context, auth);
+            expect(stubAuthenticate).to.be.calledWith(auth);
         });
-        it("should authenticate API", function() {
-            actions.login(context, "user");
-            expect(stubAuthenticate).to.be.calledWith("user");
+
+        it("should update the logged in status on success", async function() {
+            await actions.login(context, auth);
+            expect(getters.isLoggedIn(state)).to.be.true;
         });
-        it("should not update when username is empty", function() {
-            actions.login(context, "");
-            expect(context.commit).not.to.be.called;
-            expect(stubAuthenticate).not.to.be.called;
+
+        it("should not update the logged in status on failure", async function() {
+            stubAuthenticate.resolves(false);
+            await actions.login(context, auth);
+            expect(getters.isLoggedIn(state)).to.be.false;
         });
     });
 
@@ -79,6 +73,7 @@ describe("store", function() {
             expect(stubReportError).to.be.calledWith(error);
             expect(context.commit).not.to.be.called;
         });
+
         it("should not do anything on null", function() {
             const errorMessage = new ErrorMessage("error");
             stubReportError.returns(errorMessage);

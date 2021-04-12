@@ -16,7 +16,7 @@
 <script lang="ts">
 import { Vue, Component, Prop } from "vue-property-decorator"
 import { extend } from "vee-validate";
-import { required, min, max } from "vee-validate/dist/rules";
+import { required, min, max, confirmed } from "vee-validate/dist/rules";
 import { validate as validateUuid } from "uuid"
 import { ValidationProvider } from "vee-validate";
 
@@ -33,6 +33,11 @@ extend("min", {
 extend("max", {
     ...max,
     message: "{_field_} too long"
+});
+
+extend("confirmed", {
+    ...confirmed,
+    message: "{_field_} must match",
 });
 
 extend("uuid", function(value: string) {

@@ -16,6 +16,11 @@ import {
     PlayersInGame,
 } from "./types"
 
+export interface BasicAuth {
+    username: string;
+    password: string;
+}
+
 function defaultWsBaseUrl() {
     const protocol = window.location.protocol.includes("https") ? "wss:" : "ws:";
     return `${protocol}//${window.location.hostname}`;
@@ -42,27 +47,34 @@ function getUrl(idOrUrl: string, base: string) {
 }
 
 export default class {
-    private username?: string;
+    private auth?: BasicAuth;
 
     private request(config: AxiosRequestConfig) {
-        if (this.username) {
-            config.auth = {
-                username: this.username,
-                password: "",
-            };
+        if (this.auth) {
+            config.auth = this.auth;
         }
         return client(config);
     }
 
-    authenticate(username: string) {
-        this.username = username;
+    async authenticate(auth: BasicAuth) {
+        try {
+            await client({
+                method: "get",
+                url: "/players/me",
+                auth
+            });
+            this.auth = auth;
+            return true;
+        } catch (err) {
+            return false;
+        }
     }
 
-    async createPlayer(username: string) {
+    async createPlayer(username: string, password: string) {
         const response = await this.request({
             method: "post",
             url: "/players",
-            data: { username },
+            data: { username, password },
         });
         return response.data as Player;
     }

@@ -12,8 +12,7 @@ import orjson
 
 from bridgeapp.bridgeprotocol import models as base_models
 
-from . import models, utils, db_utils
-from .. import db
+from . import models, utils, auth
 
 COUNTER_HEADER = "X-Counter"
 """Header containing the running counter of game state"""
@@ -38,21 +37,6 @@ _GAME_RESPONSES = {
 }
 
 router = fastapi.APIRouter()
-security = fastapi.security.HTTPBasic()
-
-
-async def _get_player_id(
-    credentials: fastapi.security.HTTPBasicCredentials = fastapi.Depends(security),
-):
-    # TODO: Actually authenticate a player
-    try:
-        player_uuid = uuid.UUID(credentials.username)
-        await db_utils.load(db.players, player_uuid)
-    except (ValueError, db_utils.NotFoundError) as ex:
-        raise fastapi.HTTPException(
-            status_code=fastapi.status.HTTP_401_UNAUTHORIZED
-        ) from ex
-    return player_uuid
 
 
 @router.post(
@@ -67,9 +51,10 @@ async def _get_player_id(
 async def post_games(
     request: fastapi.Request,
     response: fastapi.Response,
-    _player_id: uuid.UUID = fastapi.Depends(_get_player_id),
+    player: uuid.UUID = fastapi.Depends(auth.get_authenticated_player),
 ):
     """Handle creating a game"""
+    del player
     client = await utils.get_bridge_client()
     game_id = await client.game()
     game_url = request.url_for("game_details", game_id=game_id)
@@ -90,12 +75,12 @@ async def post_games(
 async def get_game_details(
     request: fastapi.Request,
     game_id: uuid.UUID,
-    player_id: uuid.UUID = fastapi.Depends(_get_player_id),
+    player: uuid.UUID = fastapi.Depends(auth.get_authenticated_player),
 ):
     """Handle getting game details"""
     client = await utils.get_bridge_client()
     game, request.state.counter_header_value = await client.get_game(
-        game=game_id, player=player_id
+        game=game_id, player=player.id
     )
     return models.Game(
         id=game.id,
@@ -123,12 +108,12 @@ async def get_game_details(
 async def get_game_deal(
     request: fastapi.Request,
     game_id: uuid.UUID,
-    player_id: uuid.UUID = fastapi.Depends(_get_player_id),
+    player: uuid.UUID = fastapi.Depends(auth.get_authenticated_player),
 ):
     """Handle getting the current deal of a game"""
     client = await utils.get_bridge_client()
     deal, request.state.counter_header_value = await client.get_game_deal(
-        game=game_id, player=player_id
+        game=game_id, player=player.id
     )
     return models.Deal.from_base_model(deal, request)
 
@@ -145,12 +130,12 @@ async def get_game_deal(
 async def get_game_me(
     request: fastapi.Request,
     game_id: uuid.UUID,
-    player_id: uuid.UUID = fastapi.Depends(_get_player_id),
+    player: uuid.UUID = fastapi.Depends(auth.get_authenticated_player),
 ):
     """Handle getting self details"""
     client = await utils.get_bridge_client()
     me_, request.state.counter_header_value = await client.get_self(
-        game=game_id, player=player_id
+        game=game_id, player=player.id
     )
     return me_
 
@@ -167,10 +152,10 @@ async def get_game_me(
 async def get_game_results(
     request: fastapi.Request,
     game_id: uuid.UUID,
-    player_id: uuid.UUID = fastapi.Depends(_get_player_id),
+    player: uuid.UUID = fastapi.Depends(auth.get_authenticated_player),
 ):
     """Handle getting deal results"""
-    del player_id
+    del player
     client = await utils.get_bridge_client()
     deal_results, request.state.counter_header_value = await client.get_results(
         game=game_id
@@ -191,10 +176,10 @@ async def get_game_results(
 async def get_game_players(
     request: fastapi.Request,
     game_id: uuid.UUID,
-    player_id: uuid.UUID = fastapi.Depends(_get_player_id),
+    player: uuid.UUID = fastapi.Depends(auth.get_authenticated_player),
 ):
     """Handle getting player details"""
-    del player_id
+    del player
     client = await utils.get_bridge_client()
     players_in_game, request.state.counter_header_value = await client.get_players(
         game=game_id
@@ -218,12 +203,12 @@ async def get_game_players(
 )
 async def post_game_players(
     game_id: uuid.UUID,
-    player_id: uuid.UUID = fastapi.Depends(_get_player_id),
+    player: uuid.UUID = fastapi.Depends(auth.get_authenticated_player),
     position: typing.Optional[base_models.Position] = None,
 ):
     """Handle adding player to a game"""
     client = await utils.get_bridge_client()
-    await client.join(game=game_id, player=player_id, position=position)
+    await client.join(game=game_id, player=player.id, position=position)
 
 
 @router.delete(
@@ -235,11 +220,12 @@ async def post_game_players(
     responses={fastapi.status.HTTP_404_NOT_FOUND: _GAME_NOT_FOUND_RESPONSE,},
 )
 async def delete_game_players(
-    game_id: uuid.UUID, player_id: uuid.UUID = fastapi.Depends(_get_player_id),
+    game_id: uuid.UUID,
+    player: uuid.UUID = fastapi.Depends(auth.get_authenticated_player),
 ):
     """Handle removing a player from a game"""
     client = await utils.get_bridge_client()
-    await client.leave(game=game_id, player=player_id)
+    await client.leave(game=game_id, player=player.id)
 
 
 @router.post(
@@ -261,11 +247,11 @@ async def delete_game_players(
 async def post_game_calls(
     game_id: uuid.UUID,
     call: base_models.Call,
-    player_id: uuid.UUID = fastapi.Depends(_get_player_id),
+    player: uuid.UUID = fastapi.Depends(auth.get_authenticated_player),
 ):
     """Handle adding call to a bidding"""
     client = await utils.get_bridge_client()
-    await client.call(game=game_id, player=player_id, call=call)
+    await client.call(game=game_id, player=player.id, call=call)
 
 
 @router.post(
@@ -287,11 +273,11 @@ async def post_game_calls(
 async def post_game_trick(
     game_id: uuid.UUID,
     card: base_models.CardType,
-    player_id: uuid.UUID = fastapi.Depends(_get_player_id),
+    player: uuid.UUID = fastapi.Depends(auth.get_authenticated_player),
 ):
     """Handle adding card to a trick"""
     client = await utils.get_bridge_client()
-    await client.play(game=game_id, player=player_id, card=card)
+    await client.play(game=game_id, player=player.id, card=card)
 
 
 @router.websocket("/{game_id}/ws")

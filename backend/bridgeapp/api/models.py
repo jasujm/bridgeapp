@@ -112,6 +112,8 @@ class Player(_PlayerBase):
 class PlayerCreate(_PlayerBase):
     """Model for creating a player"""
 
+    password: str  # pydantic.SecretStr
+
 
 PlayersInGame = _apify_model(base_models.PlayersInGame)
 DealResult = _apify_model(base_models.DealResult)

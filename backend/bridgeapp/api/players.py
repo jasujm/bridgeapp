@@ -8,8 +8,9 @@ import typing
 
 import fastapi
 
-from . import models, db_utils as dbu
-from .. import db
+from bridgeapp import db
+
+from . import models, db_utils as dbu, auth
 
 router = fastapi.APIRouter()
 
@@ -37,9 +38,32 @@ async def post_players(
     player_id = uuid.uuid4()
     player_url = request.url_for("player_details", player_id=player_id)
     player_attrs = player.dict()
-    await dbu.create(db.players, player_id, player_attrs)
+    print(player_attrs)
+    try:
+        await dbu.create(db.players, player_id, player_attrs)
+    except dbu.AlreadyExistsError as ex:
+        raise fastapi.HTTPException(
+            status_code=fastapi.status.HTTP_409_CONFLICT,
+            detail="Player already exists",
+        ) from ex
     response.headers["Location"] = player_url
     return models.Player(id=player_id, self=player_url, **player_attrs)
+
+
+@router.get(
+    "/me",
+    name="player_self",
+    summary="Get information about the authenticated player",
+    description="""Returns information about the authenticated player.""",
+    response_model=models.Player,
+)
+async def get_player_self(
+    request: fastapi.Request,
+    player: uuid.UUID = fastapi.Depends(auth.get_authenticated_player),
+):
+    """Handle getting authenticated player"""
+    player_url = request.url_for("player_details", player_id=player.id)
+    return models.Player(**player, self=player_url)
 
 
 @router.get(

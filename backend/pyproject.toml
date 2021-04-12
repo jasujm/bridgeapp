@@ -18,6 +18,7 @@ SQLAlchemy-Utils = "^0.36.8"
 databases = {extras = ["postgresql"], version = "^0.4.1"}
 psycopg2-binary = "^2.8.6"
 aiopg = "^1.1.0"
+passlib = "^1.7.4"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

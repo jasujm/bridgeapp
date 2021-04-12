@@ -28,7 +28,10 @@ players = sqlalchemy.Table(
     "players",
     meta,
     sqlalchemy.Column("id", sqlt.uuid.UUIDType, primary_key=True),
-    sqlalchemy.Column("username", sqlalchemy.String(15), index=True, unique=True),
+    sqlalchemy.Column("username", sqlalchemy.String(31), index=True, unique=True),
+    sqlalchemy.Column(
+        "password", sqlt.password.PasswordType(schemes=["pbkdf2_sha512"])
+    ),
 )
 
 meta.create_all(engine)

@@ -49,4 +49,4 @@ def player_id():
 @pytest.fixture
 def username():
     """Yield a username for player"""
-    return "".join(random.sample("abcdefghijklmnopqrstuvwxyz", 15))
+    return "".join(random.choices("abcdefghijklmnopqrstuvwxyz", k=31))

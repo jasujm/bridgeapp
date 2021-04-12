@@ -17,11 +17,20 @@ def client():
 
 
 @pytest.fixture
-def credentials(player_id, username, database):
+def password(username):
+    """Yield a password for player"""
+    return username[::-1]
+
+
+@pytest.fixture
+def credentials(player_id, username, password, database):
     """Yield credentials for API call"""
     asyncio.run(
         db_utils.create(
-            db.players, player_id, {"username": username}, database=database
+            db.players,
+            player_id,
+            {"username": username, "password": password},
+            database=database,
         )
     )
-    return str(player_id), ""
+    return username, password
