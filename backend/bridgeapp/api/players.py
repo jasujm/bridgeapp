@@ -38,7 +38,7 @@ async def post_players(
     player_id = uuid.uuid4()
     player_url = request.url_for("player_details", player_id=player_id)
     player_attrs = player.dict()
-    print(player_attrs)
+    player_attrs["password"] = player.password.get_secret_value()
     try:
         await dbu.create(db.players, player_id, player_attrs)
     except dbu.AlreadyExistsError as ex:
