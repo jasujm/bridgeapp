@@ -1,6 +1,6 @@
 <template>
 <ValidatedForm ref="signupForm" :submitHandler="signup">
-    <ValidatedFormGroup vid="username" name="Username" rules="required|min:2|max:31" v-slot="{ labelId, state }">
+    <ValidatedFormGroup name="Username" rules="required|min:2|max:31" v-slot="{ labelId, state }">
         <b-form-input
             :id="labelId"
             :state="state"
@@ -26,6 +26,19 @@
             name="password_confirm">
         </b-form-input>
     </ValidatedFormGroup>
+    <ValidatedFormGroup
+        name="Accepting terms and conditions and privacy policy"
+        :rules="{ required: { allowFalse: false } }"
+        v-slot="{ state }"
+        no-label>
+        <b-form-checkbox
+            :state="state" v-model="termsAccepted" name="terms_accepted">
+            Accept <a href="https://www.websitepolicies.com/policies/view/RTZfOT2W">terms
+            and conditions</a>
+            and <a href="https://www.websitepolicies.com/policies/view/STbelXSV">privacy
+            policy</a>
+        </b-form-checkbox>
+    </ValidatedFormGroup>
     <b-button type="submit" variant="primary">Sign up</b-button>
 </ValidatedForm>
 </template>
@@ -35,13 +48,11 @@ import { Vue, Component, Ref } from "vue-property-decorator"
 import ValidatedForm from "./ValidatedForm.vue"
 import ValidatedFormGroup from "./ValidatedFormGroup.vue"
 import { AxiosError } from "axios"
-import { ValidationProvider } from "vee-validate";
 import _ from "lodash"
 
 @Component({
     components: {
         ValidatedForm,
-        ValidationProvider,
         ValidatedFormGroup,
     }
 })
@@ -50,6 +61,7 @@ export default class SignupForm extends Vue {
     private readonly username = "";
     private readonly password = "";
     private readonly passwordConfirm = "";
+    private readonly termsAccepted = false;
 
     async signup() {
         const api = this.$store.state.api;

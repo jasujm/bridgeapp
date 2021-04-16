@@ -1,6 +1,6 @@
 <template>
 <ValidatedForm ref="loginForm" :submitHandler="login">
-    <ValidatedFormGroup vid="username" name="Username" rules="required|min:2|max:31" v-slot="{ labelId, state }">
+    <ValidatedFormGroup name="Username" rules="required|min:2|max:31" v-slot="{ labelId, state }">
         <b-form-input
             :id="labelId"
             :state="state"
@@ -25,12 +25,10 @@
 import { Vue, Component, Ref } from "vue-property-decorator"
 import ValidatedForm from "./ValidatedForm.vue"
 import ValidatedFormGroup from "./ValidatedFormGroup.vue"
-import { ValidationProvider } from "vee-validate";
 
 @Component({
     components: {
         ValidatedForm,
-        ValidationProvider,
         ValidatedFormGroup,
     }
 })

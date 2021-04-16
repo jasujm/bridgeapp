@@ -1,5 +1,5 @@
 <template>
-    <validation-provider :vid="vid" :name="name" :rules="rules" v-slot="validationContext">
+    <validation-provider :name="name" :rules="rules" v-slot="validationContext">
         <b-form-group
             :label-for="noLabel ? undefined : labelId"
             :label="noLabel ? undefined : name"
@@ -56,7 +56,6 @@ export default class ValidatedFormGroup extends Vue {
     @Prop() private readonly name!: string;
     @Prop({ type: Boolean, default: false }) private readonly noLabel!: boolean;
     @Prop() private readonly rules!: string;
-    @Prop() private readonly vid?: string;
 
     private getValidationState({ dirty, validated, valid = null }: { dirty: boolean; validated: boolean; valid: boolean | null }) {
         return dirty || validated ? valid : null;

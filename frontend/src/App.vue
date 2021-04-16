@@ -18,7 +18,12 @@
                 Copyright &copy; <a href="https://www.jmoisio.eu/about/">Jaakko
                 Moisio</a> 2020&ndash;2021. The application is open source and
                 available
-                in <a href="https://github.com/jasujm/bridgeapp">GitHub</a>.
+                in <a href="https://github.com/jasujm/bridgeapp">GitHub</a>. By
+                using this website you agree to
+                our <a href="https://www.websitepolicies.com/policies/view/RTZfOT2W">terms
+                and conditions</a>
+                and <a href="https://www.websitepolicies.com/policies/view/STbelXSV">privacy
+                policy</a>.
             </small>
         </footer>
     </div>
