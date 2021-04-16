@@ -28,9 +28,9 @@ players = sqlalchemy.Table(
     "players",
     meta,
     sqlalchemy.Column("id", sqlt.uuid.UUIDType, primary_key=True),
-    sqlalchemy.Column("username", sqlalchemy.String(31), index=True, unique=True),
+    sqlalchemy.Column("username", sqlalchemy.String(31), nullable=False, index=True, unique=True),
     sqlalchemy.Column(
-        "password", sqlt.password.PasswordType(schemes=["pbkdf2_sha512"])
+        "password", sqlt.password.PasswordType(schemes=["pbkdf2_sha512"]), nullable=False
     ),
 )
 

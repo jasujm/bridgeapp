@@ -23,8 +23,7 @@ def password(username):
 
 
 @pytest.fixture
-def credentials(player_id, username, password, database):
-    """Yield credentials for API call"""
+def db_player(player_id, username, password, database):
     asyncio.run(
         db_utils.create(
             db.players,
@@ -33,4 +32,9 @@ def credentials(player_id, username, password, database):
             database=database,
         )
     )
+
+
+@pytest.fixture
+def credentials(username, password, db_player):
+    """Yield credentials for API call"""
     return username, password

@@ -7,8 +7,7 @@ from bridgeapp.api import db_utils as dbu
 
 
 @pytest.mark.asyncio
-def test_get_player(database, client, player_id, username):
-    asyncio.run(dbu.create(db.players, player_id, {"username": username}))
+def test_get_player(database, client, player_id, username, db_player):
     res = client.get(f"/api/v1/players/{player_id}")
     assert api.models.Player(**res.json()) == api.models.Player(
         id=player_id,
@@ -22,8 +21,8 @@ def test_nonexistent_user(client, database):
     assert res.status_code == fastapi.status.HTTP_401_UNAUTHORIZED
 
 
-def test_wrong_password(client, credentials):
-    res = client.get("/api/v1/players/me", auth=(credentials[0], "incorrect"))
+def test_wrong_password(client, username, db_player):
+    res = client.get("/api/v1/players/me", auth=(username, "incorrect"))
     assert res.status_code == fastapi.status.HTTP_401_UNAUTHORIZED
 
 
