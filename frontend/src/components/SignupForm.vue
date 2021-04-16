@@ -1,6 +1,6 @@
 <template>
 <ValidatedForm ref="signupForm" :submitHandler="signup">
-    <ValidatedFormGroup name="Username" rules="required|min:2|max:31" v-slot="{ labelId, state }">
+    <ValidatedFormGroup vid="username" name="Username" rules="required|min:2|max:31" v-slot="{ labelId, state }">
         <b-form-input
             :id="labelId"
             :state="state"
@@ -8,7 +8,7 @@
             name="username">
         </b-form-input>
     </ValidatedFormGroup>
-    <ValidatedFormGroup name="Password" rules="required" v-slot="{ labelId, state }">
+    <ValidatedFormGroup vid="password" name="Password" rules="required" v-slot="{ labelId, state }">
         <b-form-input
             :id="labelId"
             :state="state"
@@ -17,7 +17,7 @@
             name="password">
         </b-form-input>
     </ValidatedFormGroup>
-    <ValidatedFormGroup name="Confirm password" rules="required|confirmed:Password" v-slot="{ labelId, state }">
+    <ValidatedFormGroup name="Confirm password" rules="required|confirmed:password" v-slot="{ labelId, state }">
         <b-form-input
             :id="labelId"
             :state="state"

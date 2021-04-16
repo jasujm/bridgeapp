@@ -1,6 +1,6 @@
 <template>
 <ValidatedForm ref="loginForm" :submitHandler="login">
-    <ValidatedFormGroup name="Username" rules="required|min:2|max:31" v-slot="{ labelId, state }">
+    <ValidatedFormGroup vid="username" name="Username" rules="required|min:2|max:31" v-slot="{ labelId, state }">
         <b-form-input
             :id="labelId"
             :state="state"
