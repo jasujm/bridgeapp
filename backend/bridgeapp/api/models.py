@@ -115,6 +115,12 @@ class PlayerCreate(_PlayerBase):
     password: pydantic.SecretStr
 
 
+class PlayerUpdate(pydantic.BaseModel):
+    """Model for updating a player"""
+
+    password: typing.Optional[pydantic.SecretStr]
+
+
 PlayersInGame = _apify_model(base_models.PlayersInGame)
 DealResult = _apify_model(base_models.DealResult)
 BridgeEvent = _apify_model(base_events.BridgeEvent)

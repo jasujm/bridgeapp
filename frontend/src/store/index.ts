@@ -30,6 +30,10 @@ export const actions = {
             }
         }
     },
+    logout(context: ActionContext) {
+        context.state.api.forgetAuth();
+        context.state.isLoggedIn = false;
+    },
     reportError(context: ActionContext, err: Error) {
         const error = getErrorMessage(err);
         if (error) {

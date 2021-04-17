@@ -82,3 +82,27 @@ async def create(
         # ^ TODO: Does the databases library use common wrapper for different
         # drivers?
         raise AlreadyExistsError(f"{obj_id} already exists") from ex
+
+
+async def update(
+    table: sqlalchemy.Table,
+    obj_id: uuid.UUID,
+    attrs: typing.Mapping[str, typing.Any],
+    *,
+    database=None,
+):
+    """Update object in a database
+
+    This is a thin wrapper over updating a row in a table
+
+    Parameters:
+        table: The database table
+        obj_id: The id of the object to modify
+        attrs: The new attributes
+        database: The database connection to use, or ``None`` to use the
+                  default database
+    """
+    database = _get_database(database)
+    await database.execute(
+        query=sqlalchemy.update(table).where(table.c.id == obj_id).values(**attrs)
+    )

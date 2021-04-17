@@ -55,6 +55,29 @@ describe("store", function() {
         });
     });
 
+    describe("logout action", function() {
+        let stubForgetAuth: SinonStub;
+
+        this.beforeEach(function() {
+            state.isLoggedIn = true;
+            stubForgetAuth = sinon.stub(state.api, "forgetAuth");
+        });
+
+        this.afterEach(function() {
+            stubForgetAuth.restore();
+        });
+
+        it("should forget auth credentials", async function() {
+            await actions.logout(context);
+            expect(stubForgetAuth).to.be.called;
+        });
+
+        it("should update the logged in status", async function() {
+            await actions.logout(context);
+            expect(getters.isLoggedIn(state)).to.be.false;
+        });
+    });
+
     describe("report error action", function() {
         const error = new Error();
         let stubReportError: SinonStub;

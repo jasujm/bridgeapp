@@ -66,6 +66,26 @@ async def get_player_self(
     return models.Player(**player, self=player_url)
 
 
+@router.patch(
+    "/me",
+    name="player_self_update",
+    summary="Update the attributes of the authenticated player",
+    description="""Updates the attributes of the authenticated player to the new attributes
+    given in the body. Attributes may be omitted, in which case they are left
+    intact.""",
+    status_code=fastapi.status.HTTP_204_NO_CONTENT,
+)
+async def patch_player_self(
+    player: models.PlayerUpdate,
+    authenticated_player: uuid.UUID = fastapi.Depends(auth.get_authenticated_player),
+):
+    """Handle getting authenticated player"""
+    player_attrs = player.dict(exclude_unset=True)
+    if player.password:
+        player_attrs["password"] = player.password.get_secret_value()
+    await dbu.update(db.players, authenticated_player.id, player_attrs)
+
+
 @router.get(
     "/{player_id}",
     name="player_details",

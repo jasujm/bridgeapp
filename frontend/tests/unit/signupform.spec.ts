@@ -33,6 +33,7 @@ describe("SignupForm.vue", function() {
 
     it("should not send incomplete form", async function() {
         wrapper.find("input[type=text]").setValue(username);
+        wrapper.findAll("input[type=password]").setValue(password);
         await wrapper.find("form").trigger("submit");
         await flushPromises();
         expect(api.createPlayer).not.to.be.called;
@@ -43,6 +44,7 @@ describe("SignupForm.vue", function() {
         this.beforeEach(async function() {
             wrapper.find("input[type=text]").setValue(username);
             wrapper.findAll("input[type=password]").setValue(password);
+            await wrapper.find("input[type=checkbox]").setChecked(true);
             await wrapper.find("form").trigger("submit");
             await flushPromises();
         });

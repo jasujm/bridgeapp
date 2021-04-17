@@ -1,17 +1,17 @@
 <template>
-<div class="login">
+<div class="login" v-b-modal.login-modal>
+    Log in / Sign up
     <b-modal
         id="login-modal"
         :visible="!$store.getters.isLoggedIn"
         title="Welcome to contract bridge!"
         hide-footer>
-        <p>Login or create an account to continue.</p>
+        <p>Log in or create an account to continue.</p>
         <b-tabs content-class="mt-3">
-            <b-tab title="Login"><LoginForm /></b-tab>
+            <b-tab title="Log in"><LoginForm /></b-tab>
             <b-tab title="Sign up"><SignupForm /></b-tab>
         </b-tabs>
     </b-modal>
-    <b-button v-if="!$store.getters.isLoggedIn" v-b-modal.login-modal>Login</b-button>
 </div>
 </template>
 

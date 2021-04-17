@@ -68,6 +68,8 @@ export default class SignupForm extends Vue {
         try {
             await api.createPlayer(this.username, this.password);
         } catch (err) {
+            // TODO: This pattern repeats itself in form validation. Make a
+            // proper abstraction.
             const axiosError = err as AxiosError;
             if (axiosError.isAxiosError && axiosError.response) {
                 const status = axiosError.response.status;

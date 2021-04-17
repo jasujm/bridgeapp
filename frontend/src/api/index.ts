@@ -70,11 +70,39 @@ export default class {
         }
     }
 
+    forgetAuth() {
+        this.auth = undefined;
+    }
+
     async createPlayer(username: string, password: string) {
         const response = await this.request({
             method: "post",
             url: "/players",
             data: { username, password },
+        });
+        return response.data as Player;
+    }
+
+    async changePassword(currentPassword: string, password: string) {
+        if (this.auth) {
+            await client({
+                method: "patch",
+                url: "/players/me",
+                auth: {
+                    username: this.auth.username,
+                    password: currentPassword,
+                },
+                data: {
+                    password,
+                }
+            });
+        }
+    }
+
+    async getMe() {
+        const response = await this.request({
+            method: "get",
+            url: "/players/me",
         });
         return response.data as Player;
     }

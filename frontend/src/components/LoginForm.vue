@@ -17,7 +17,7 @@
             name="password">
         </b-form-input>
     </ValidatedFormGroup>
-    <b-button type="submit" variant="primary">Login</b-button>
+    <b-button type="submit" variant="primary">Log in</b-button>
 </ValidatedForm>
 </template>
 

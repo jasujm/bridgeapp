@@ -44,7 +44,6 @@ def test_get_player_not_found(database, client, player_id):
     assert res.status_code == fastapi.status.HTTP_404_NOT_FOUND
 
 
-@pytest.mark.asyncio
 def test_create_player(database, client, username, password):
     player_create = api.models.PlayerCreate(username=username, password=password)
     res = client.post("/api/v1/players", data=player_create.json())
@@ -63,3 +62,13 @@ def test_create_player(database, client, username, password):
         player_id,
         player_in_response.username,
     )
+
+
+def test_change_password(client, credentials):
+    new_password = "newpass"
+    res = client.patch(
+        "/api/v1/players/me", json={"password": new_password}, auth=credentials
+    )
+    assert res.status_code == fastapi.status.HTTP_204_NO_CONTENT
+    res = client.get("/api/v1/players/me", auth=(credentials[0], new_password))
+    assert res.status_code == fastapi.status.HTTP_200_OK

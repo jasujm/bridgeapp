@@ -1,5 +1,6 @@
 <template>
 <div class="bridge-game">
+    <h1>Play contract bridge</h1>
     <ErrorDisplay :severity="$store.state.error.severity" :message="$store.state.error.message" />
     <b-alert variant="info" :show="!$store.getters.isLoggedIn">Login to get started.</b-alert>
     <GameSelector ref="selector" @game-selected="updateGame($event)" />

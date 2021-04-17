@@ -1,13 +1,13 @@
 <template>
-    <validation-observer ref="validationObserver" v-slot="{ handleSubmit }" slim>
-        <b-form @submit.prevent="handleSubmit(submitHandler)">
-            <slot></slot>
-        </b-form>
-    </validation-observer>
+<validation-observer ref="validationObserver" v-slot="{ handleSubmit }" slim>
+    <b-form @submit.prevent="handleSubmit(submitHandler)">
+        <slot></slot>
+    </b-form>
+</validation-observer>
 </template>
 
 <script lang="ts">
-    import { Vue, Component, Prop, Ref } from "vue-property-decorator"
+import { Vue, Component, Prop, Ref } from "vue-property-decorator"
 import { ValidationObserver } from "vee-validate";
 import { ValidationError } from "@/api/types"
 import _ from "lodash"
@@ -22,6 +22,10 @@ export default class ValidatedForm extends Vue {
     // eslint-disable-next-line
     @Ref() private readonly validationObserver!: any;
     @Prop() private readonly submitHandler!: Function;
+
+    public reset() {
+        this.validationObserver.reset();
+    }
 
     public setError(field: string, error: string) {
         this.validationObserver.setErrors({ [field]: error });
