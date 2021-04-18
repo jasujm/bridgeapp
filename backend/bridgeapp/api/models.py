@@ -126,19 +126,35 @@ DealResult = _apify_model(base_models.DealResult)
 BridgeEvent = _apify_model(base_events.BridgeEvent)
 
 
-class Game(pydantic.BaseModel):
+class _GameBase(pydantic.BaseModel):
+    name: pydantic.constr(min_length=2, max_length=63)
+
+
+class GameSummary(_GameBase):
+    """Bridge game summary
+
+    Contains static information about a game, excluding any game state.
+    """
+
+    id: base_models.GameUuid
+    self: pydantic.AnyHttpUrl
+
+
+class Game(GameSummary):
     """Bridge game
 
     Model containing the full description of the state of a game, from the point
     of view of a player.
     """
 
-    id: base_models.GameUuid
-    self: pydantic.AnyHttpUrl
     deal: typing.Optional[Deal]
     me: base_models.PlayerState = base_models.PlayerState()
     results: typing.List[DealResult] = []
     players: PlayersInGame = PlayersInGame()
+
+
+class GameCreate(_GameBase):
+    """Model for creating a bridge game"""
 
 
 class Error(pydantic.BaseModel):

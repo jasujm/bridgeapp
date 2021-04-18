@@ -138,9 +138,16 @@ export class PlayersInGame {
     west: string | null = null;
 }
 
+export class GameSummary {
+    id = "";
+    self = "";
+    name = "";
+}
+
 export class Game {
     id = "";
     self = "";
+    name = "";
     deal: Deal | null = null;
     me = new PlayerState()
     results: Array<DealResult> = [];

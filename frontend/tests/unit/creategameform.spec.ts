@@ -1,14 +1,15 @@
 import { localVue, expect } from "./common"
 import { mount } from "@vue/test-utils"
-import GameSelector from "@/components/GameSelector.vue"
+import CreateGameForm from "@/components/CreateGameForm.vue"
 import Vuex from "vuex"
 import sinon from "sinon"
 import flushPromises from "flush-promises"
 
+const name = "my game";
 const gameId = "6bac87b3-8e49-4675-bf69-8c0d6a351f40";
 const gameUrl = `http://testserver/api/v1/games/${gameId}`;
 
-describe("GameSelector.vue", function() {
+describe("CreateGameForm.vue", function() {
     let fakeApi: any;
     let store: any;
     let state: any;
@@ -16,38 +17,38 @@ describe("GameSelector.vue", function() {
 
     this.beforeEach(function() {
         fakeApi = {
-            createGame: sinon.fake.resolves({ id: gameId, self: gameUrl }),
+            createGame: sinon.fake.resolves({ id: gameId, self: gameUrl, name }),
             joinGame: sinon.fake.resolves(null),
         }
-        state = { username: "user", api: fakeApi };
+        state = { api: fakeApi };
         store = new Vuex.Store({
             state,
-            getters: { isLoggedIn: () => true },
         });
-        wrapper = mount(GameSelector, { localVue, store });
+        wrapper = mount(CreateGameForm, { localVue, store });
     });
 
-    it("should create a game when requested", async function() {
-        await wrapper.find(".btn-secondary").trigger("click");
-        await flushPromises();
-        expect(fakeApi.createGame).to.be.called;
-        expect(fakeApi.joinGame).to.be.calledWith(gameId);
-    });
-
-    it("should not join a game if UUID is invalid", async function() {
+    it("should not create game without name", async function() {
         await wrapper.find("form").trigger("submit");
         await flushPromises();
-        expect(wrapper.emitted("game-selected")).to.be.undefined;
+        expect(fakeApi.createGame).not.to.be.called;
     });
 
-    describe("join game", function() {
+    describe("submit form", function() {
         this.beforeEach(async function() {
-            wrapper.find("input").setValue(gameId);
+            wrapper.find("input").setValue(name);
             await wrapper.find("form").trigger("submit");
             await flushPromises();
         });
 
-        it("should emit an event", async function() {
+        it("should create a game", function() {
+            expect(fakeApi.createGame).to.be.calledWith(name);
+        });
+
+        it("should join the created game", function() {
+            expect(fakeApi.joinGame).to.be.calledWith(gameId);
+        });
+
+        it("emit an event", function() {
             expect(wrapper.emitted("game-selected")).to.be.deep.equal([[gameId]]);
         });
     });

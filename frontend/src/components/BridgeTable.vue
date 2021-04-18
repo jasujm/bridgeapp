@@ -1,5 +1,6 @@
 <template>
 <div class="bridge-table">
+    <h2>{{ name }}</h2>
     <b-form-group>
         <b-dropdown
             v-if="me.position === null"
@@ -133,6 +134,7 @@ function scoreMessage({contract, tricksWon, result}: DealEndEvent, position: Pos
 })
 export default class BridgeTable extends Vue {
     @Prop() private readonly gameId!: string;
+    private name = "";
     private deal = new Deal();
     private me = new PlayerState();
     private results: Array<DealResult> = [];
@@ -175,6 +177,7 @@ export default class BridgeTable extends Vue {
             const api = this.$store.state.api;
             api.getGame(this.gameId).then(
                 ({ game, counter }: GameCounterPair) => {
+                    this.name = game.name;
                     this.deal = game.deal || new Deal();
                     this.me = game.me;
                     this.results = game.results;

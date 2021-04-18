@@ -3,6 +3,7 @@ import ReconnectingWebSocket from "reconnecting-websocket"
 import {
     Player,
     Game,
+    GameSummary,
     Deal,
     Call,
     Card,
@@ -116,10 +117,20 @@ export default class {
         return response.data as Player;
     }
 
-    async createGame() {
+    async searchGames(q: string) {
+        const response = await this.request({
+            method: "get",
+            url: "/games",
+            params: { q },
+        });
+        return response.data as Array<GameSummary>;
+    }
+
+    async createGame(name: string) {
         const response = await this.request({
             method: "post",
             url: "/games",
+            data: { name },
         });
         return response.data as Game;
     }

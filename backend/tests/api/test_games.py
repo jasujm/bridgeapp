@@ -2,6 +2,7 @@
 Tests for the :mod:`bridgeapp.api` module
 """
 
+import asyncio
 import itertools
 import unittest.mock
 import uuid
@@ -10,7 +11,8 @@ import fastapi
 import fastapi.testclient
 import pytest
 
-from bridgeapp import api, bridgeprotocol
+from bridgeapp import api, bridgeprotocol, db
+from bridgeapp.api import db_utils as dbu
 
 from bridgeapp.bridgeprotocol import models, events
 
@@ -65,23 +67,50 @@ def _get_event(game_id, event_type):
     )
 
 
-def test_create_game(client, mock_bridge_client, game_id, credentials):
+def test_list_games_no_result(client, db_game, credentials):
+    res = client.get("/api/v1/games", auth=credentials, params={"q": "nothing"})
+    assert res.status_code == fastapi.status.HTTP_200_OK
+    assert res.json() == []
+
+
+def test_list_games_with_result(client, game_id, db_game, credentials):
+    res = client.get("/api/v1/games", auth=credentials, params={"q": db_game})
+    assert res.status_code == fastapi.status.HTTP_200_OK
+    j = res.json()
+    assert len(j) == 1
+    assert api.models.Game(**j[0]) == api.models.Game(
+        id=game_id, self=f"http://testserver/api/v1/games/{game_id}", name=db_game
+    )
+
+
+@pytest.mark.parametrize("name", ["my game", "other game"])
+def test_create_game(client, mock_bridge_client, game_id, name, credentials, database):
     mock_bridge_client.game.return_value = game_id
-    res = client.post("/api/v1/games", auth=credentials)
+    game_create = api.models.GameCreate(name=name)
+    res = client.post("/api/v1/games", auth=credentials, json=game_create.dict())
     assert res.status_code == fastapi.status.HTTP_201_CREATED
     game_url = f"http://testserver/api/v1/games/{game_id}"
     assert res.headers["Location"] == game_url
-    assert api.models.Game(**res.json()) == api.models.Game(id=game_id, self=game_url)
+    assert api.models.Game(**res.json()) == api.models.Game(
+        id=game_id, self=game_url, name=name
+    )
+    game_in_db = asyncio.run(dbu.load(db.games, game_id, database=database))
+    assert game_in_db.name == name
 
 
-def test_read_game(client, mock_bridge_client, game_id, player_id, credentials):
+def test_read_game(
+    client, mock_bridge_client, game_id, db_game, player_id, credentials
+):
     deal = models.Deal()
     api_deal = api.models.Deal(
         id=deal.id, self=f"http://testserver/api/v1/deals/{deal.id}"
     )
     game = models.Game(id=game_id, deal=deal)
     api_game = api.models.Game(
-        id=game_id, self=f"http://testserver/api/v1/games/{game_id}", deal=api_deal,
+        id=game_id,
+        self=f"http://testserver/api/v1/games/{game_id}",
+        name=db_game,
+        deal=api_deal,
     )
     mock_bridge_client.get_game.return_value = (game, 123)
     res = client.get(f"/api/v1/games/{game_id}", auth=credentials)
@@ -91,7 +120,7 @@ def test_read_game(client, mock_bridge_client, game_id, player_id, credentials):
 
 
 def test_read_game_should_fail_if_game_not_found(
-    client, mock_bridge_client, game_id, credentials
+    client, mock_bridge_client, game_id, credentials, database
 ):
     mock_bridge_client.get_game.side_effect = bridgeprotocol.NotFoundError
     res = client.get(f"/api/v1/games/{game_id}", auth=credentials)
@@ -99,7 +128,9 @@ def test_read_game_should_fail_if_game_not_found(
     mock_bridge_client.get_game.assert_awaited_once()
 
 
-def test_read_game_deal(client, mock_bridge_client, game_id, player_id, credentials):
+def test_read_game_deal(
+    client, mock_bridge_client, game_id, db_game, player_id, credentials
+):
     deal = models.Deal()
     api_deal = api.models.Deal(
         id=deal.id, self=f"http://testserver/api/v1/deals/{deal.id}"
@@ -114,7 +145,7 @@ def test_read_game_deal(client, mock_bridge_client, game_id, player_id, credenti
 
 
 def test_read_game_deal_should_fail_if_game_not_found(
-    client, mock_bridge_client, game_id, credentials
+    client, mock_bridge_client, game_id, credentials, database
 ):
     mock_bridge_client.get_game_deal.side_effect = bridgeprotocol.NotFoundError
     res = client.get(f"/api/v1/games/{game_id}/deal", auth=credentials)

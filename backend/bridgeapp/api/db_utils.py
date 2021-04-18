@@ -53,6 +53,28 @@ async def load(table: sqlalchemy.Table, obj_id: uuid.UUID, *, key=None, database
     raise NotFoundError(f"{obj_id} not found")
 
 
+async def select(expression: sqlalchemy.sql.Select, *, database=None):
+    """Execute general SELECT expression
+
+    This is a very thin wrapper over selecting rows from a
+    database. It does little more than provide the database handle for
+    you, and return the fetched rows.
+
+    For retrieving a single row by primary/unique key, consider using
+    :func:`load()` instead.
+
+    Parameters:
+        expression: The SELECT expression
+        database: The database connection to use, or ``None`` to use the
+                  default database
+
+    Returns:
+        The selected rows
+    """
+    database = _get_database(database)
+    return await database.fetch_all(expression)
+
+
 async def create(
     table: sqlalchemy.Table,
     obj_id: uuid.UUID,

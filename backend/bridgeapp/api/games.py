@@ -9,10 +9,12 @@ import typing
 
 import fastapi
 import orjson
+import sqlalchemy
 
+from bridgeapp import db
 from bridgeapp.bridgeprotocol import models as base_models
 
-from . import models, utils, auth
+from . import models, utils, db_utils, auth
 
 COUNTER_HEADER = "X-Counter"
 """Header containing the running counter of game state"""
@@ -51,15 +53,40 @@ router = fastapi.APIRouter()
 async def post_games(
     request: fastapi.Request,
     response: fastapi.Response,
+    game: models.GameCreate,
     player: uuid.UUID = fastapi.Depends(auth.get_authenticated_player),
 ):
     """Handle creating a game"""
     del player
     client = await utils.get_bridge_client()
     game_id = await client.game()
+    game_attrs = game.dict()
+    await db_utils.create(db.games, game_id, game_attrs)
     game_url = request.url_for("game_details", game_id=game_id)
     response.headers["Location"] = game_url
-    return models.Game(id=game_id, self=game_url)
+    return models.Game(id=game_id, self=game_url, **game_attrs)
+
+
+@router.get(
+    "",
+    name="games_list",
+    summary="List games",
+    description="""List all games matching the query parameter ``q``.""",
+    response_model=typing.List[models.GameSummary],
+)
+async def get_games_list(request: fastapi.Request, q: str):
+    """Handle listing games"""
+    rows = await db_utils.select(
+        sqlalchemy.select([db.games]).where(
+            db.games.c.name.startswith(q, autoescape=True)
+        ).limit(10)
+    )
+    return [
+        models.GameSummary(
+            **attrs, self=request.url_for("game_details", game_id=attrs.id)
+        )
+        for attrs in rows
+    ]
 
 
 @router.get(
@@ -79,11 +106,12 @@ async def get_game_details(
 ):
     """Handle getting game details"""
     client = await utils.get_bridge_client()
-    game, request.state.counter_header_value = await client.get_game(
+    (game, request.state.counter_header_value) = await client.get_game(
         game=game_id, player=player.id
     )
+    game_attrs = await db_utils.load(db.games, game_id)
     return models.Game(
-        id=game.id,
+        **game_attrs,
         self=str(request.url),
         deal=models.Deal.from_base_model(game.deal, request),
         me=game.self,
