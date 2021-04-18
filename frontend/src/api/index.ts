@@ -83,7 +83,7 @@ export default class {
         return response.data as Player;
     }
 
-    async changePassword(currentPassword: string, password: string) {
+    async changePassword(currentPassword: string, newPassword: string) {
         if (this.auth) {
             await client({
                 method: "patch",
@@ -93,9 +93,10 @@ export default class {
                     password: currentPassword,
                 },
                 data: {
-                    password,
+                    password: newPassword,
                 }
             });
+            this.auth.password = newPassword;
         }
     }
 

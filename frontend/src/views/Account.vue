@@ -13,16 +13,16 @@
                 name="current_password">
             </b-form-input>
         </ValidatedFormGroup>
-        <ValidatedFormGroup vid="password" name="New password" rules="required" v-slot="{ labelId, state }">
+        <ValidatedFormGroup vid="newPassword" name="New password" rules="required" v-slot="{ labelId, state }">
             <b-form-input
                 :id="labelId"
                 :state="state"
                 type="password"
-                v-model="password"
-                name="password">
+                v-model="newPassword"
+                name="newPassword">
             </b-form-input>
         </ValidatedFormGroup>
-        <ValidatedFormGroup name="Confirm password" rules="required|confirmed:password" v-slot="{ labelId, state }">
+        <ValidatedFormGroup name="Confirm password" rules="required|confirmed:newPassword" v-slot="{ labelId, state }">
             <b-form-input
                 :id="labelId"
                 :state="state"
@@ -54,7 +54,7 @@ export default class Account extends Vue {
     @Ref() private readonly changePasswordForm!: ValidatedForm;
     private player: Player | null = null;
     private currentPassword = "";
-    private password = "";
+    private newPassword = "";
     private passwordConfirm = "";
     private passwordChanged = false;
 
@@ -70,7 +70,7 @@ export default class Account extends Vue {
     async changePassword() {
         try {
             await this.$store.state.api.changePassword(
-                this.currentPassword, this.password
+                this.currentPassword, this.newPassword
             );
         } catch (err) {
             // TODO: This pattern repeats itself in form validation. Make a
@@ -90,7 +90,7 @@ export default class Account extends Vue {
             return;
         }
         this.currentPassword = "";
-        this.password = "";
+        this.newPassword = "";
         this.passwordConfirm = "";
         this.changePasswordForm.reset();
         this.passwordChanged = true;
