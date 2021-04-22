@@ -1,5 +1,5 @@
 <template>
-<ValidatedForm ref="signupForm" :submitHandler="signup">
+<ValidatedForm ref="signupForm" :submitHandler="signup" :errorHandler="signupError">
     <ValidatedFormGroup vid="username" name="Username" rules="required|min:2|max:31" v-slot="{ labelId, state }">
         <b-form-input
             :id="labelId"
@@ -48,7 +48,6 @@ import { Vue, Component, Ref } from "vue-property-decorator"
 import ValidatedForm from "./ValidatedForm.vue"
 import ValidatedFormGroup from "./ValidatedFormGroup.vue"
 import { AxiosError } from "axios"
-import _ from "lodash"
 
 @Component({
     components: {
@@ -63,26 +62,18 @@ export default class SignupForm extends Vue {
     private readonly passwordConfirm = "";
     private readonly termsAccepted = false;
 
-    async signup() {
-        const api = this.$store.state.api;
-        try {
-            await api.createPlayer(this.username, this.password);
-        } catch (err) {
-            // TODO: This pattern repeats itself in form validation. Make a
-            // proper abstraction.
-            const axiosError = err as AxiosError;
-            if (axiosError.isAxiosError && axiosError.response) {
-                const status = axiosError.response.status;
-                const data = axiosError.response.data;
-                if (status == 409) {
-                    this.signupForm.setError("username", data.detail);
-                } else if (status == 422 && _.isArray(data.detail)) {
-                    this.signupForm.setErrorsFromResponse(data.detail);
-                }
-            }
-            return;
+    private async signup() {
+        await this.$store.state.api.createPlayer(this.username, this.password);
+        await this.$store.dispatch(
+            "login",
+            { username: this.username, password: this.password }
+        );
+    }
+
+    private signupError(err: AxiosError) {
+        if (err.response && err.response.status == 409) {
+            this.signupForm.setError("username", err.response.data.detail);
         }
-        await this.$store.dispatch("login", { username: this.username, password: this.password });
     }
 }
 </script>

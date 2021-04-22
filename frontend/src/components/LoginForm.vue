@@ -38,7 +38,10 @@ export default class LoginForm extends Vue {
     private readonly password = "";
 
     async login() {
-        await this.$store.dispatch("login", { username: this.username, password: this.password });
+        await this.$store.dispatch(
+            "login",
+            { username: this.username, password: this.password }
+        );
         if (!this.$store.state.isLoggedIn) {
             this.loginForm.setError("username", "Incorrect username or password");
         }

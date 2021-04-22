@@ -2,7 +2,7 @@
 <div class="account">
     <h1>Account settings: {{ player && player.username }}</h1>
     <h2>Change password</h2>
-    <ValidatedForm ref="changePasswordForm" :submitHandler="changePassword">
+    <ValidatedForm ref="changePasswordForm" :submitHandler="changePassword" :errorHandler="changePasswordError">
         <b-alert variant="success" :show="passwordChanged">Password changed</b-alert>
         <ValidatedFormGroup vid="currentPassword" name="Current password" rules="required" v-slot="{ labelId, state }">
             <b-form-input
@@ -42,7 +42,6 @@ import { Player } from "@/api/types"
 import ValidatedForm from "@/components/ValidatedForm.vue"
 import ValidatedFormGroup from "@/components/ValidatedFormGroup.vue"
 import { AxiosError } from "axios"
-import _ from "lodash"
 
 @Component({
     components: {
@@ -68,32 +67,22 @@ export default class Account extends Vue {
     }
 
     async changePassword() {
-        try {
-            await this.$store.state.api.changePassword(
-                this.currentPassword, this.newPassword
-            );
-        } catch (err) {
-            // TODO: This pattern repeats itself in form validation. Make a
-            // proper abstraction.
-            const axiosError = err as AxiosError;
-            if (axiosError.isAxiosError && axiosError.response) {
-                const status = axiosError.response.status;
-                const data = axiosError.response.data;
-                if (status == 401) {
-                    this.changePasswordForm.setError(
-                        "currentPassword", "Incorrect password"
-                    );
-                } else if (status == 422 && _.isArray(data.detail)) {
-                    this.changePasswordForm.setErrorsFromResponse(data.detail);
-                }
-            }
-            return;
-        }
+        await this.$store.state.api.changePassword(
+            this.currentPassword, this.newPassword
+        );
         this.currentPassword = "";
         this.newPassword = "";
         this.passwordConfirm = "";
         this.changePasswordForm.reset();
         this.passwordChanged = true;
+    }
+
+    changePasswordError(err: AxiosError) {
+        if (err.response && err.response.status == 401) {
+            this.changePasswordForm.setError(
+                "currentPassword", "Incorrect password"
+            );
+        }
     }
 }
 </script>
