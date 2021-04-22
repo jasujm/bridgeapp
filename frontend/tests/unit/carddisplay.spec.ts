@@ -25,6 +25,7 @@ describe("CardDisplay.vue", function() {
 
         it("should play card when pressed", async function() {
             wrapper.setProps({ allowed: true });
+            await wrapper.vm.$nextTick();
             await wrapper.trigger("mousedown");
             expect(wrapper.emitted("play")).to.be.deep.equal([[card]]);
         });
