@@ -67,24 +67,30 @@ def _get_event(game_id, event_type):
     )
 
 
-def test_list_games_no_result(client, db_game, credentials):
+def test_list_games_no_result(client, credentials, mock_search):
+    mock_search.search.return_value = []
     res = client.get("/api/v1/games", auth=credentials, params={"q": "nothing"})
     assert res.status_code == fastapi.status.HTTP_200_OK
     assert res.json() == []
+    mock_search.search.assert_awaited_once_with("games", "nothing")
 
 
-def test_list_games_with_result(client, game_id, db_game, credentials):
-    res = client.get("/api/v1/games", auth=credentials, params={"q": db_game})
+def test_list_games_with_result(client, game_id, credentials, mock_search):
+    mock_search.search.return_value = [(game_id, {"name": "hello"})]
+    res = client.get("/api/v1/games", auth=credentials, params={"q": "hello"})
     assert res.status_code == fastapi.status.HTTP_200_OK
     j = res.json()
     assert len(j) == 1
     assert api.models.Game(**j[0]) == api.models.Game(
-        id=game_id, self=f"http://testserver/api/v1/games/{game_id}", name=db_game
+        id=game_id, self=f"http://testserver/api/v1/games/{game_id}", name="hello"
     )
+    mock_search.search.assert_awaited_once_with("games", "hello")
 
 
 @pytest.mark.parametrize("name", ["my game", "other game"])
-def test_create_game(client, mock_bridge_client, game_id, name, credentials, database):
+def test_create_game(
+    client, mock_bridge_client, game_id, name, credentials, database, mock_search
+):
     mock_bridge_client.game.return_value = game_id
     game_create = api.models.GameCreate(name=name)
     res = client.post("/api/v1/games", auth=credentials, json=game_create.dict())
@@ -96,6 +102,7 @@ def test_create_game(client, mock_bridge_client, game_id, name, credentials, dat
     )
     game_in_db = asyncio.run(dbu.load(db.games, game_id, database=database))
     assert game_in_db.name == name
+    mock_search.index.assert_awaited_once_with("games", game_id, {"name": name})
 
 
 def test_read_game(

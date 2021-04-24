@@ -33,7 +33,7 @@ async def load(table: sqlalchemy.Table, obj_id: uuid.UUID, *, key=None, database
 
     Parameters:
         table: The database table
-        id: The id to access
+        obj_id: The id to access
         key: The column used as key (defaults to ``id``)
         database: The database connection to use, or ``None`` to use the
                   default database

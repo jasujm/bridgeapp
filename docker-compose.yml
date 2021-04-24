@@ -13,6 +13,7 @@ services:
     environment:
     - "bridgeapp_backend_endpoint=tcp://bridge:5555"
     - "bridgeapp_backend_event_endpoint=tcp://bridge:5556"
+    - "bridgeapp_elasticsearch_host=elasticsearch:9200"
     env_file:
     - "./.env.backend"
   bridge:
@@ -32,6 +33,12 @@ services:
     - "dbdata:/var/lib/postgresql"
     env_file:
     - "./.env.postgres"
+  elasticsearch:
+    image: "docker.elastic.co/elasticsearch/elasticsearch:7.12.0"
+    environment:
+    - "discovery.type=single-node"
+    volumes:
+    - "elasticsearchdata:/usr/share/elasticsearch/data:rw"
   nginx:
     image: "jasujm/bridgeapp-nginx"
     build: "nginx/"
@@ -63,5 +70,6 @@ volumes:
   bridgedata:
   frontendwww:
   dbdata:
+  elasticsearchdata:
   certbotetc:
   certbotwww:

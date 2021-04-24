@@ -9,12 +9,11 @@ import typing
 
 import fastapi
 import orjson
-import sqlalchemy
 
 from bridgeapp import db
 from bridgeapp.bridgeprotocol import models as base_models
 
-from . import models, utils, db_utils, auth
+from . import auth, db_utils, models, search_utils, utils
 
 COUNTER_HEADER = "X-Counter"
 """Header containing the running counter of game state"""
@@ -62,6 +61,7 @@ async def post_games(
     game_id = await client.game()
     game_attrs = game.dict()
     await db_utils.create(db.games, game_id, game_attrs)
+    await search_utils.index("games", game_id, game_attrs)
     game_url = request.url_for("game_details", game_id=game_id)
     response.headers["Location"] = game_url
     return models.Game(id=game_id, self=game_url, **game_attrs)
@@ -76,16 +76,12 @@ async def post_games(
 )
 async def get_games_list(request: fastapi.Request, q: str):
     """Handle listing games"""
-    rows = await db_utils.select(
-        sqlalchemy.select([db.games]).where(
-            db.games.c.name.startswith(q, autoescape=True)
-        ).limit(10)
-    )
+    rows = await search_utils.search("games", q)
     return [
         models.GameSummary(
-            **attrs, self=request.url_for("game_details", game_id=attrs.id)
+            id=game_id, self=request.url_for("game_details", game_id=game_id), **attrs
         )
-        for attrs in rows
+        for (game_id, attrs) in rows
     ]
 
 

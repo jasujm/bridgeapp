@@ -3,11 +3,20 @@ API test config
 """
 
 import asyncio
+import dataclasses
+import unittest.mock
+
 import fastapi
 import pytest
 
 from bridgeapp import application, db
-from bridgeapp.api import db_utils
+from bridgeapp.api import db_utils, search_utils
+
+
+@dataclasses.dataclass
+class MockSeach:
+    index: unittest.mock.AsyncMock
+    search: unittest.mock.AsyncMock
 
 
 @pytest.fixture
@@ -45,3 +54,11 @@ def db_game(request, game_id, database):
     name = request.param
     asyncio.run(db_utils.create(db.games, game_id, {"name": name}, database=database))
     return name
+
+
+@pytest.fixture
+def mock_search(monkeypatch):
+    ret = MockSeach(index=unittest.mock.AsyncMock(), search=unittest.mock.AsyncMock())
+    monkeypatch.setattr(search_utils, "index", ret.index)
+    monkeypatch.setattr(search_utils, "search", ret.search)
+    return ret

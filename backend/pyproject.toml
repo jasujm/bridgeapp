@@ -20,6 +20,7 @@ aiopg = "^1.1.0"
 passlib = "^1.7.4"
 fastpbkdf2 = "^0.2"
 uvicorn = {extras = ["standard"], version = "^0.13.4"}
+elasticsearch = {extras = ["async"], version = "^7.12.0"}
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

@@ -60,6 +60,8 @@ keys, use ZeroMQ CURVE mechanism to connect securely with the bridge backend.
 """,
     )
 
+    elasticsearch_host: str = Field("localhost:9200", title="ElasticSearch host")
+
     uuid_namespace: uuid.UUID = Field(
         default_factory=uuid.uuid4,
         title="Root namespace for UUIDs",
