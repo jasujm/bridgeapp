@@ -42,7 +42,7 @@ export default class SearchGamesForm extends Vue {
         if (this.q) {
             this.$store.state.api.searchGames(this.q).then(
                 (games: Array<GameSummary>) => this.games = games
-            );
+            ).catch((err: Error) => this.$store.dispatch("reportError", err));
         } else {
             this.games = [];
         }
