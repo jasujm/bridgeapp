@@ -30,7 +30,7 @@ services:
   db:
     image: "postgres:13"
     volumes:
-    - "dbdata:/var/lib/postgresql"
+    - "dbdata:/var/lib/postgresql/data:rw"
     env_file:
     - "./.env.postgres"
   elasticsearch:
