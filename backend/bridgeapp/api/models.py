@@ -15,9 +15,10 @@ import pydantic
 
 from bridgeapp.bridgeprotocol import models as base_models, events as base_events
 
-# Some funky Python magic for creating models which automagically convert UUID
-# fields of the base models into API URLs. Botched together with limited
-# knowledge about pydantic and if it could have been done more elegantly.
+# Some funky Python magic for creating models that automagically
+# convert UUID fields of source models into API URLs. Botched together
+# with limited knowledge about pydantic and if it could have been done
+# more elegantly.
 
 GameUrl = typing.NewType("GameUrl", pydantic.AnyHttpUrl)
 """Game URL"""
@@ -56,16 +57,19 @@ def _from_attributes(
     request: typing.Union[fastapi.Request, fastapi.WebSocket],
 ):
     values = {}
+    source_fields = getattr(attrs, "__fields__", {})
     obj_id = None
     for (name, value) in attrs:
         if name == "id":
             obj_id = value
-        if field := cls.__fields__.get(name, None):
+        if field := (cls.__fields__.get(name, None) or source_fields.get(name, None)):
             if value and (url_converter := (_URL_CONVERTERS.get(field.outer_type_))):
                 value = url_converter(request, value)
-            values[name] = value
-    if obj_id and (self_field := cls.__fields__.get("self")) and (
-        url_converter := _URL_CONVERTERS.get(self_field.outer_type_)
+        values[name] = value
+    if (
+        obj_id
+        and (field := cls.__fields__.get("self"))
+        and (url_converter := _URL_CONVERTERS.get(field.outer_type_))
     ):
         values["self"] = url_converter(request, obj_id)
     return cls(**values)
@@ -138,7 +142,13 @@ class PlayerUpdate(pydantic.BaseModel):
     password: typing.Optional[pydantic.SecretStr]
 
 
-PlayersInGame = _apify_model(base_models.PlayersInGame)
+class PlayersInGame(pydantic.BaseModel):
+    north: typing.Optional[Player]
+    east: typing.Optional[Player]
+    south: typing.Optional[Player]
+    west: typing.Optional[Player]
+
+
 DealResult = _apify_model(base_models.DealResult)
 BridgeEvent = _apify_model(base_events.BridgeEvent)
 
@@ -155,6 +165,7 @@ class GameSummary(_GameBase):
     """
 
     id: base_models.GameUuid
+    players: PlayersInGame = PlayersInGame()
 
 
 class Game(GameSummary):
@@ -167,7 +178,6 @@ class Game(GameSummary):
     deal: typing.Optional[Deal]
     me: base_models.PlayerState = base_models.PlayerState()
     results: typing.List[DealResult] = []
-    players: PlayersInGame = PlayersInGame()
 
 
 class GameCreate(_GameBase):

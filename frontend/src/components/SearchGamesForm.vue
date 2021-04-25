@@ -11,27 +11,48 @@
         <li class="game-summary" v-for="game in games" :key="game.id">
             <b-button
                 class="join-game"
-                size="sm"
                 variant="success"
                 @click="selectGame(game.id)">Select</b-button>
-            <strong>{{ game.name }}</strong>
+            <b-row no-gutters>
+                <b-col cols="12"><strong>{{ game.name }}</strong></b-col>
+            </b-row>
+            <b-row no-gutters>
+                <b-col
+                    v-for="{ position, username } in playerList(game.players)" :key="`${position}-${username}`"
+                    sm="3">
+                    <PositionDisplay :position="position" />: {{ username }}
+                </b-col>
+            </b-row>
         </li>
     </ul>
 </div>
 </template>
 
 <script lang="ts">
-import { Vue, Component } from "vue-property-decorator"
-import { GameSummary } from "@/api/types"
+import { Component, Vue } from "vue-property-decorator"
+import { GameSummary, PlayersInGame, Position, Player } from "@/api/types"
+import PositionDisplay from "./PositionDisplay.vue"
 import _ from "lodash"
 
-@Component
+@Component({
+    components: {
+        PositionDisplay,
+    }
+})
 export default class SearchGamesForm extends Vue {
     private q = "";
     private games: Array<GameSummary> = [];
 
     private get hasGames() {
         return this.q && !_.isEmpty(this.games);
+    }
+
+    private playerList(players: PlayersInGame) {
+        //  typescript doesn't understand that filter removes non-null
+        //  players, so perform a cast to suppress warning
+        return _.values(Position).filter(position => players[position] !== null).map(
+            position => ({ position, username: (players[position] as Player).username })
+        );
     }
 
     private selectGame(gameId: string) {

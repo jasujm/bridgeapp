@@ -95,6 +95,7 @@ import {
     Card,
     DealResult,
     PlayersInGame,
+    Player,
 } from "@/api/types"
 import { partnershipFor } from "@/utils.ts"
 import _ from "lodash"
@@ -229,7 +230,14 @@ export default class BridgeTable extends Vue {
     }
 
     private changePlayer({ position, player }: PlayerEvent) {
-        this.players[position] = player;
+        if (player) {
+            const api = this.$store.state.api;
+            api.getPlayer(player).then(
+                (p: Player) => this.players[position] = p
+            ).catch((err: Error) => this.$store.dispatch("reportError", err));
+        } else {
+            this.players[position] = null;
+        }
     }
 
     private addCall({ position, call, index }: CallEvent) {

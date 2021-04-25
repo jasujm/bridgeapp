@@ -16,6 +16,8 @@ from bridgeapp.api import db_utils, search_utils
 @dataclasses.dataclass
 class MockSeach:
     index: unittest.mock.AsyncMock
+    update: unittest.mock.AsyncMock
+    remove: unittest.mock.AsyncMock
     search: unittest.mock.AsyncMock
 
 
@@ -58,7 +60,14 @@ def db_game(request, game_id, database):
 
 @pytest.fixture
 def mock_search(monkeypatch):
-    ret = MockSeach(index=unittest.mock.AsyncMock(), search=unittest.mock.AsyncMock())
+    ret = MockSeach(
+        index=unittest.mock.AsyncMock(),
+        update=unittest.mock.AsyncMock(),
+        remove=unittest.mock.AsyncMock(),
+        search=unittest.mock.AsyncMock(),
+    )
     monkeypatch.setattr(search_utils, "index", ret.index)
+    monkeypatch.setattr(search_utils, "update", ret.update)
+    monkeypatch.setattr(search_utils, "remove", ret.remove)
     monkeypatch.setattr(search_utils, "search", ret.search)
     return ret

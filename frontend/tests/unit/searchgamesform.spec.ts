@@ -1,9 +1,10 @@
 import { localVue, expect } from "./common"
-import { mount } from "@vue/test-utils"
+import { mount, Wrapper } from "@vue/test-utils"
 import SearchGamesForm from "@/components/SearchGamesForm.vue"
 import Vuex from "vuex"
 import sinon from "sinon"
 import flushPromises from "flush-promises"
+import { PlayersInGame } from "@/api/types"
 
 const name = "my game"
 const gameId = "6bac87b3-8e49-4675-bf69-8c0d6a351f40";
@@ -14,13 +15,20 @@ describe("SearchGamesForm.vue", function() {
     let fakeApi: any;
     let store: any;
     let state: any;
-    let wrapper: any;
+    let wrapper: Wrapper<SearchGamesForm>;
 
     this.beforeEach(function() {
         clock = sinon.useFakeTimers();
         fakeApi = {
             searchGames: sinon.fake.resolves(
-                [{ id: gameId, self: gameUrl, name }]
+                [
+                    {
+                        id: gameId,
+                        self: gameUrl,
+                        name,
+                        players: new PlayersInGame()
+                    }
+                ]
             ),
             joinGame: sinon.fake.resolves(null),
         }

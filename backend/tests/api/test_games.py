@@ -75,14 +75,33 @@ def test_list_games_no_result(client, credentials, mock_search):
     mock_search.search.assert_awaited_once_with("games", "nothing")
 
 
-def test_list_games_with_result(client, game_id, credentials, mock_search):
-    mock_search.search.return_value = [(game_id, {"name": "hello"})]
+def test_list_games_with_result(
+    client, game_id, player_id, username, credentials, mock_search
+):
+    mock_search.search.return_value = [
+        (
+            game_id,
+            {
+                "name": "hello",
+                "players": {"north": {"id": player_id, "username": username}},
+            },
+        )
+    ]
     res = client.get("/api/v1/games", auth=credentials, params={"q": "hello"})
     assert res.status_code == fastapi.status.HTTP_200_OK
     j = res.json()
     assert len(j) == 1
     assert api.models.Game(**j[0]) == api.models.Game(
-        id=game_id, self=f"http://testserver/api/v1/games/{game_id}", name="hello"
+        id=game_id,
+        self=f"http://testserver/api/v1/games/{game_id}",
+        name="hello",
+        players=api.models.PlayersInGame(
+            north=api.models.Player(
+                id=player_id,
+                self=f"http://testserver/api/v1/players/{player_id}",
+                username=username,
+            ),
+        ),
     )
     mock_search.search.assert_awaited_once_with("games", "hello")
 
@@ -106,18 +125,27 @@ def test_create_game(
 
 
 def test_read_game(
-    client, mock_bridge_client, game_id, db_game, player_id, credentials
+    client, mock_bridge_client, game_id, db_game, player_id, username, credentials
 ):
     deal = models.Deal()
     api_deal = api.models.Deal(
         id=deal.id, self=f"http://testserver/api/v1/deals/{deal.id}"
     )
-    game = models.Game(id=game_id, deal=deal)
+    game = models.Game(
+        id=game_id, deal=deal, players=models.PlayersInGame(north=player_id)
+    )
     api_game = api.models.Game(
         id=game_id,
         self=f"http://testserver/api/v1/games/{game_id}",
         name=db_game,
         deal=api_deal,
+        players=api.models.PlayersInGame(
+            north=api.models.Player(
+                id=player_id,
+                self=f"http://testserver/api/v1/players/{player_id}",
+                username=username,
+            )
+        ),
     )
     mock_bridge_client.get_game.return_value = (game, 123)
     res = client.get(f"/api/v1/games/{game_id}", auth=credentials)
@@ -224,12 +252,18 @@ def test_read_results_should_fail_if_game_not_found(
     mock_bridge_client.get_results.assert_awaited_once()
 
 
-def test_read_players(client, mock_bridge_client, game_id, player_id, credentials):
+def test_read_players(
+    client, mock_bridge_client, game_id, player_id, username, credentials
+):
     players_in_game = models.PlayersInGame(north=player_id)
     mock_bridge_client.get_players.return_value = (players_in_game, 123)
     res = client.get(f"/api/v1/games/{game_id}/players", auth=credentials)
     assert res.json() == {
-        "north": f"http://testserver/api/v1/players/{player_id}",
+        "north": {
+            "id": str(player_id),
+            "self": f"http://testserver/api/v1/players/{player_id}",
+            "username": username,
+        },
         "east": None,
         "south": None,
         "west": None,
@@ -246,18 +280,34 @@ def test_read_players_should_fail_if_game_not_found(
     mock_bridge_client.get_players.assert_awaited_once()
 
 
-def test_add_player(client, mock_bridge_client, game_id, player_id, credentials):
+def test_add_player(
+    client, mock_bridge_client, game_id, player_id, username, credentials, mock_search
+):
+    mock_bridge_client.join.return_value = (game_id, models.Position.north)
     res = client.post(f"/api/v1/games/{game_id}/players", auth=credentials)
     assert res.status_code == fastapi.status.HTTP_204_NO_CONTENT
     mock_bridge_client.join.assert_awaited_once_with(
         game=game_id, player=player_id, position=None
     )
+    mock_search.update.assert_awaited_once_with(
+        "games",
+        game_id,
+        {"players": {"north": {"id": str(player_id), "username": username}}},
+    )
 
 
 @pytest.mark.parametrize("position", list(models.Position))
 def test_add_player_with_position(
-    client, mock_bridge_client, game_id, player_id, credentials, position,
+    client,
+    mock_bridge_client,
+    game_id,
+    player_id,
+    username,
+    credentials,
+    position,
+    mock_search,
 ):
+    mock_bridge_client.join.return_value = (game_id, position)
     res = client.post(
         f"/api/v1/games/{game_id}/players",
         params={"position": position.value},
@@ -266,6 +316,11 @@ def test_add_player_with_position(
     assert res.status_code == fastapi.status.HTTP_204_NO_CONTENT
     mock_bridge_client.join.assert_awaited_once_with(
         game=game_id, player=player_id, position=position
+    )
+    mock_search.update.assert_awaited_once_with(
+        "games",
+        game_id,
+        {"players": {position.value: {"id": str(player_id), "username": username}}},
     )
 
 
@@ -277,28 +332,47 @@ def test_add_player_with_position(
     ],
 )
 def test_add_player_should_fail_if_backend_fails(
-    client, mock_bridge_client, game_id, credentials, error
+    client, mock_bridge_client, game_id, credentials, error, mock_search
 ):
     exception_class, status_code = error
     mock_bridge_client.join.side_effect = exception_class
     res = client.post(f"/api/v1/games/{game_id}/players", auth=credentials)
     assert res.status_code == status_code
     mock_bridge_client.join.assert_awaited_once()
+    mock_search.update.assert_not_awaited()
 
 
-def test_remove_player(client, mock_bridge_client, game_id, player_id, credentials):
+def test_remove_player_not_in_game(
+    client, mock_bridge_client, game_id, player_id, credentials, mock_search
+):
+    mock_bridge_client.leave.return_value = None
     res = client.delete(f"/api/v1/games/{game_id}/players", auth=credentials)
     assert res.status_code == fastapi.status.HTTP_204_NO_CONTENT
     mock_bridge_client.leave.assert_awaited_once_with(game=game_id, player=player_id)
+    mock_search.remove.assert_not_awaited()
+
+
+@pytest.mark.parametrize("position", list(models.Position))
+def test_remove_player(
+    client, mock_bridge_client, game_id, player_id, credentials, mock_search, position
+):
+    mock_bridge_client.leave.return_value = position
+    res = client.delete(f"/api/v1/games/{game_id}/players", auth=credentials)
+    assert res.status_code == fastapi.status.HTTP_204_NO_CONTENT
+    mock_bridge_client.leave.assert_awaited_once_with(game=game_id, player=player_id)
+    mock_search.remove.assert_awaited_once_with(
+        "games", game_id, ["players", position.value]
+    )
 
 
 def test_remove_player_should_fail_if_backend_fails(
-    client, mock_bridge_client, game_id, credentials
+    client, mock_bridge_client, game_id, credentials, mock_search
 ):
     mock_bridge_client.leave.side_effect = bridgeprotocol.NotFoundError
     res = client.delete(f"/api/v1/games/{game_id}/players", auth=credentials)
     assert res.status_code == fastapi.status.HTTP_404_NOT_FOUND
     mock_bridge_client.leave.assert_awaited_once()
+    mock_search.remove.assert_not_awaited()
 
 
 def test_make_call(client, mock_bridge_client, game_id, player_id, credentials):

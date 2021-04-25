@@ -20,7 +20,9 @@ import flushPromises from "flush-promises"
 import _ from "lodash"
 
 const gameId = "6bac87b3-8e49-4675-bf69-8c0d6a351f40";
+const username = "username"
 const playerId = "313343df-3c97-42aa-a4f3-3abe10ced3b0";
+const otherUsername = "other"
 const otherPlayerId = "fb11eeae-7be2-41d6-a7f9-4dc126c2bf3c";
 
 describe("BridgeTable.vue", function() {
@@ -36,7 +38,7 @@ describe("BridgeTable.vue", function() {
         clock = sinon.useFakeTimers();
         game = new Game();
         game.deal = new Deal();
-        game.players.west = otherPlayerId;
+        game.players.west = { id: otherPlayerId, username: otherUsername };
         fakeApi = {
             getPlayer: sinon.fake.resolves({ id: playerId, username: "player" }),
             getGame: sinon.fake.resolves({ game, counter: 0 }),
@@ -104,7 +106,7 @@ describe("BridgeTable.vue", function() {
 
     describe("leave", function() {
         this.beforeEach(async function() {
-            game.players.north = playerId;
+            game.players.north = { id: playerId, username };
             game.me.position = Position.north;
             wrapper.setData({ me: game.me, players: game.players });
             await wrapper.vm.$nextTick();
@@ -211,7 +213,7 @@ describe("BridgeTable.vue", function() {
                 player: playerId,
                 counter: 1
             });
-            await wrapper.vm.$nextTick();
+            await flushPromises();
             expect(wrapper.find(".join-game.north").exists()).to.be.false;
         });
 

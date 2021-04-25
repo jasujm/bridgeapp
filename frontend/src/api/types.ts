@@ -131,11 +131,16 @@ export interface DealResult {
     result: DuplicateResult | null;
 }
 
+export interface Player {
+    id: string;
+    username: string;
+}
+
 export class PlayersInGame {
-    north: string | null = null;
-    east: string | null = null;
-    south: string | null = null;
-    west: string | null = null;
+    north: Player | null = null;
+    east: Player | null = null;
+    south: Player | null = null;
+    west: Player | null = null;
 }
 
 export class GameSummary {
@@ -224,11 +229,6 @@ export interface DealEndEvent extends Event {
     contract: Contract | null;
     tricksWon: number | null;
     result: DuplicateResult;
-}
-
-export interface Player {
-    id: string;
-    username: string;
 }
 
 export type AnyEvent = PlayerEvent | DealEvent | TurnEvent | CallEvent |

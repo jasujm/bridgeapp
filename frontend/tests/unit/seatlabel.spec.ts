@@ -1,8 +1,6 @@
 import { localVue, expect } from "./common"
-import { mount } from "@vue/test-utils"
+import { mount, Wrapper } from "@vue/test-utils"
 import SeatLabel from "@/components/SeatLabel.vue"
-import Vuex from "vuex"
-import sinon from "sinon"
 import { Position } from "@/api/types"
 
 const playerId = "313343df-3c97-42aa-a4f3-3abe10ced3b0";
@@ -11,25 +9,13 @@ const player = { id: playerId, username };
 const position = Position.north;
 
 describe("SeatLabel.vue", function() {
-    let api: any;
-    let store: any;
-    let wrapper: any;
+    let wrapper: Wrapper<SeatLabel>;
 
     this.beforeEach(async function() {
-        api = {
-            getPlayer: sinon.fake.resolves(player),
-        };
-        store = new Vuex.Store({
-            state: { api }
-        });
         wrapper = mount(
-            SeatLabel, { localVue, store, propsData: { player: playerId, position } }
+            SeatLabel, { localVue, propsData: { player, position } }
         )
         await wrapper.vm.$nextTick();
-    });
-
-    it("should fetch player info", function() {
-        expect(api.getPlayer).to.be.calledWith(playerId);
     });
 
     it("should display player name and position", function() {

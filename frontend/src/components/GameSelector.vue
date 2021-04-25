@@ -3,6 +3,8 @@
     <p>Use the following forms to create a new game or join an
     existing one. Once created, you can also access a game directly by
     sharing the URL of the page.</p>
+    <p><em>Hint!</em> Type your username in the game search to find
+    the tables you seated in.</p>
     <b-tabs content-class="mt-3">
         <b-tab title="Search games">
             <SearchGamesForm @game-selected="$emit('game-selected', $event)" />
