@@ -62,8 +62,7 @@ async def get_player_self(
     player: uuid.UUID = fastapi.Depends(auth.get_authenticated_player),
 ):
     """Handle getting authenticated player"""
-    player_url = request.url_for("player_details", player_id=player.id)
-    return models.Player(**player, self=player_url)
+    return models.Player.from_attributes(player.items(), request)
 
 
 @router.patch(
@@ -106,4 +105,4 @@ async def get_player_details(
     """Handle getting player details"""
     key = db.players.c.id if isinstance(player_id, uuid.UUID) else db.players.c.username
     player_attrs = await dbu.load(db.players, player_id, key=key)
-    return models.Player(**player_attrs, self=str(request.url))
+    return models.Player.from_attributes(player_attrs.items(), request)

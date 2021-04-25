@@ -32,4 +32,4 @@ async def get_deal_details(request: fastapi.Request, deal_id: uuid.UUID):
     """Handle getting deal details"""
     client = await utils.get_bridge_client()
     deal = await client.get_deal(deal=deal_id)
-    return models.Deal.from_base_model(deal, request)
+    return models.Deal.from_attributes(deal, request)

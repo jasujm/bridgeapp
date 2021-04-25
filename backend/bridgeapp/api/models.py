@@ -19,6 +19,21 @@ from bridgeapp.bridgeprotocol import models as base_models, events as base_event
 # fields of the base models into API URLs. Botched together with limited
 # knowledge about pydantic and if it could have been done more elegantly.
 
+GameUrl = typing.NewType("GameUrl", pydantic.AnyHttpUrl)
+"""Game URL"""
+
+PlayerUrl = typing.NewType("PlayerUrl", pydantic.AnyHttpUrl)
+"""Player URL"""
+
+DealUrl = typing.NewType("DealUrl", pydantic.AnyHttpUrl)
+"""Deal URL"""
+
+_UUID_TO_URL_MAP = {
+    base_models.GameUuid: GameUrl,
+    base_models.PlayerUuid: PlayerUrl,
+    base_models.DealUuid: DealUrl,
+}
+
 
 def _get_uuid_converter(handler: str, id_kwarg_name: str):
     # pylint: disable=redefined-builtin
@@ -28,29 +43,31 @@ def _get_uuid_converter(handler: str, id_kwarg_name: str):
     return _uuid_converter
 
 
-_UUID_TO_URL_CONVERTERS = {
-    base_models.GameUuid: _get_uuid_converter("game_details", "game_id"),
-    base_models.PlayerUuid: _get_uuid_converter("player_details", "player_id"),
-    base_models.DealUuid: _get_uuid_converter("deal_details", "deal_id"),
+_URL_CONVERTERS = {
+    GameUrl: _get_uuid_converter("game_details", "game_id"),
+    PlayerUrl: _get_uuid_converter("player_details", "player_id"),
+    DealUrl: _get_uuid_converter("deal_details", "deal_id"),
 }
 
 
-def _from_base_model(
+def _from_attributes(
     cls,
-    model: pydantic.BaseModel,
+    attrs: typing.Iterable[typing.Tuple[str, typing.Any]],
     request: typing.Union[fastapi.Request, fastapi.WebSocket],
 ):
     values = {}
-    for (name, field) in model.__fields__.items():
-        value = getattr(model, name, field.default)
-        if value and (
-            url_converter := (_UUID_TO_URL_CONVERTERS.get(field.outer_type_))
-        ):
-            if name == "id":
-                values["self"] = url_converter(request, value)
-            else:
+    obj_id = None
+    for (name, value) in attrs:
+        if name == "id":
+            obj_id = value
+        if field := cls.__fields__.get(name, None):
+            if value and (url_converter := (_URL_CONVERTERS.get(field.outer_type_))):
                 value = url_converter(request, value)
-        values[name] = value
+            values[name] = value
+    if obj_id and (self_field := cls.__fields__.get("self")) and (
+        url_converter := _URL_CONVERTERS.get(self_field.outer_type_)
+    ):
+        values["self"] = url_converter(request, obj_id)
     return cls(**values)
 
 
@@ -59,8 +76,8 @@ def _apify_field_type(outer_type_):
         return typing.Union[
             tuple(_apify_field_type(t) for t in typing.get_args(outer_type_))
         ]
-    if outer_type_ in _UUID_TO_URL_CONVERTERS:
-        return pydantic.AnyHttpUrl
+    if url_type := _UUID_TO_URL_MAP.get(outer_type_):
+        return url_type
     return outer_type_
 
 
@@ -87,7 +104,7 @@ def _apify_model(
         model.__name__, __config__=model.__config__, **new_fields
     )
     new_model.__doc__ = model.__doc__
-    new_model.from_base_model = classmethod(_from_base_model)
+    new_model.from_attributes = classmethod(_from_attributes)
     return new_model
 
 
@@ -102,11 +119,11 @@ class _PlayerBase(pydantic.BaseModel):
     username: Username
 
 
+@_apify_model
 class Player(_PlayerBase):
     """Player taking part in a bridge game"""
 
     id: base_models.PlayerUuid
-    self: pydantic.AnyHttpUrl
 
 
 class PlayerCreate(_PlayerBase):
@@ -130,6 +147,7 @@ class _GameBase(pydantic.BaseModel):
     name: pydantic.constr(min_length=2, max_length=63)
 
 
+@_apify_model
 class GameSummary(_GameBase):
     """Bridge game summary
 
@@ -137,7 +155,6 @@ class GameSummary(_GameBase):
     """
 
     id: base_models.GameUuid
-    self: pydantic.AnyHttpUrl
 
 
 class Game(GameSummary):

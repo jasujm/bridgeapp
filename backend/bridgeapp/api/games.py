@@ -78,9 +78,7 @@ async def get_games_list(request: fastapi.Request, q: str):
     """Handle listing games"""
     rows = await search_utils.search("games", q)
     return [
-        models.GameSummary(
-            id=game_id, self=request.url_for("game_details", game_id=game_id), **attrs
-        )
+        models.GameSummary.from_attributes(dict(id=game_id, **attrs).items(), request)
         for (game_id, attrs) in rows
     ]
 
@@ -109,13 +107,13 @@ async def get_game_details(
     return models.Game(
         **game_attrs,
         self=str(request.url),
-        deal=models.Deal.from_base_model(game.deal, request),
+        deal=models.Deal.from_attributes(game.deal, request),
         me=game.self,
         results=[
-            models.DealResult.from_base_model(result, request)
+            models.DealResult.from_attributes(result, request)
             for result in game.results
         ],
-        players=models.PlayersInGame.from_base_model(game.players, request),
+        players=models.PlayersInGame.from_attributes(game.players, request),
     )
 
 
@@ -139,7 +137,7 @@ async def get_game_deal(
     deal, request.state.counter_header_value = await client.get_game_deal(
         game=game_id, player=player.id
     )
-    return models.Deal.from_base_model(deal, request)
+    return models.Deal.from_attributes(deal, request)
 
 
 @router.get(
@@ -185,7 +183,7 @@ async def get_game_results(
         game=game_id
     )
     return [
-        models.DealResult.from_base_model(result, request) for result in deal_results
+        models.DealResult.from_attributes(result, request) for result in deal_results
     ]
 
 
@@ -208,7 +206,7 @@ async def get_game_players(
     players_in_game, request.state.counter_header_value = await client.get_players(
         game=game_id
     )
-    return models.PlayersInGame.from_base_model(players_in_game, request)
+    return models.PlayersInGame.from_attributes(players_in_game, request)
 
 
 @router.post(
@@ -329,7 +327,7 @@ async def games_websocket(
                 )
                 if event_task in done:
                     event = await event_task
-                    event = models.BridgeEvent.from_base_model(event, websocket)
+                    event = models.BridgeEvent.from_attributes(event, websocket)
                     await websocket.send_bytes(orjson.dumps(event, default=dict))
                     event_task = _create_event_task()
                     pending.add(event_task)
