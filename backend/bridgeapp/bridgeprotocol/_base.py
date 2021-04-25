@@ -155,9 +155,11 @@ class ClientBase(SocketBase):
     def _serialize(self, obj) -> bytes:
         """Serialize ``obj``"""
 
-    def _serialize_all(self, kwargs):
+    def _serialize_all(self, kwargs, *, include_nones=False):
         return {
-            k.encode(): self._serialize(v) for (k, v) in kwargs.items() if v is not None
+            k.encode(): self._serialize(v)
+            for (k, v) in kwargs.items()
+            if (include_nones or v is not None)
         }
 
     async def _receive_replies(self):

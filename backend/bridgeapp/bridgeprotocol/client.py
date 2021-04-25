@@ -113,17 +113,23 @@ class BridgeClient(_base.ClientBase):
         game: OptionalUuid = None,
         player: OptionalUuid = None,
         position: typing.Optional[models.Position] = None,
-    ) -> uuid.UUID:
+    ) -> typing.Tuple[uuid.UUID, models.Position]:
         """Send join command to the server"""
         reply = await self.command("join", game=game, player=player, position=position)
-        return self._convert_reply_safe(uuid.UUID, reply, "game", command="join")
+        return (
+            self._convert_reply_safe(uuid.UUID, reply, "game", command="join"),
+            self._convert_reply_safe(
+                models.Position, reply, "position", command="join"
+            ),
+        )
 
     @_retries_handshake
-    async def leave(
-        self, *, game: uuid.UUID, player: uuid.UUID,
-    ):
+    async def leave(self, *, game: uuid.UUID, player: uuid.UUID) -> models.Position:
         """Send leave command to the server"""
-        await self.command("leave", game=game, player=player)
+        reply = await self.command("leave", game=game, player=player)
+        return self._convert_reply_safe(
+            lambda p: p and models.Position(p), reply, "position", command="leave"
+        )
 
     @_retries_handshake
     async def get_game(

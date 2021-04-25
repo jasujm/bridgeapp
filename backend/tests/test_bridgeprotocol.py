@@ -128,7 +128,9 @@ async def _command_helper(
         expected_command,
         client._serialize_all(expected_command_args),
     )
-    await server.reply(tag, b"OK", client._serialize_all(reply_args))
+    await server.reply(
+        tag, b"OK", client._serialize_all(reply_args, include_nones=True)
+    )
     return await task
 
 
@@ -335,17 +337,14 @@ async def test_bridge_client_game_command_should_fail_if_reply_has_invalid_type(
 
 @pytest.mark.asyncio
 async def test_bridge_client_join_command(server, client, join_kwargs):
-    assert (
-        await _command_helper(
-            server,
-            client,
-            client.join(**join_kwargs),
-            expected_command=b"join",
-            expected_command_args=join_kwargs,
-            reply_args={"game": join_kwargs["game"]},
-        )
-        == join_kwargs["game"]
-    )
+    assert await _command_helper(
+        server,
+        client,
+        client.join(**join_kwargs),
+        expected_command=b"join",
+        expected_command_args=join_kwargs,
+        reply_args={"game": join_kwargs["game"], "position": join_kwargs["position"]},
+    ) == (join_kwargs["game"], join_kwargs["position"])
 
 
 @pytest.mark.asyncio
@@ -378,7 +377,8 @@ async def test_bridge_client_join_command_should_fail_if_reply_has_invalid_type(
 
 
 @pytest.mark.asyncio
-async def test_bridge_client_leave_command(server, client, game_and_player):
+@pytest.mark.parametrize("position", [_any_position(), None])
+async def test_bridge_client_leave_command(server, client, game_and_player, position):
     assert (
         await _command_helper(
             server,
@@ -386,9 +386,9 @@ async def test_bridge_client_leave_command(server, client, game_and_player):
             client.leave(**game_and_player),
             expected_command=b"leave",
             expected_command_args=game_and_player,
-            reply_args={},
+            reply_args={"position": position},
         )
-        is None
+        == position
     )
 
 
@@ -852,7 +852,7 @@ async def test_bridge_client_retry_handshake(server, client, join_kwargs):
     await server.reply(tag, b"OK", {})
     tag, server_command, server_command_arguments = await server.get_command()
     assert server_command == b"join"
-    reply_args = {"game": join_kwargs["game"]}
+    reply_args = {"game": join_kwargs["game"], "position": join_kwargs["position"]}
     await server.reply(tag, b"OK", client._serialize_all(reply_args))
     return await task
 
