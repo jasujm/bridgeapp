@@ -3,82 +3,83 @@ Search utilities
 ................
 """
 
-# TODO: This module should be redesigned with higher level of
-# abstraction, like consuming/producing pydantic models (instead of
-# native dicts and lists) for additional type safety.
+# Until elasticsearch_dsl supports asyncio, run everything in thread pool
 
 import typing
 import uuid
 
-import elasticsearch
+import fastapi.concurrency as fc
+import elasticsearch_dsl
+import elasticsearch_dsl.query as esq
 
-from bridgeapp.settings import settings
+DocType = typing.Type[elasticsearch_dsl.Document]
 
-
-_es = elasticsearch.AsyncElasticsearch(hosts=[settings.elasticsearch_host])
-
-
-# pylint: disable=redefined-outer-name
-async def index(index: str, obj_id: uuid.UUID, attrs: typing.Mapping[str, typing.Any]):
+async def index(doc: elasticsearch_dsl.Document, doc_id: uuid.UUID):
     """Index a document
 
     Parameters:
-        index: The name of the index
-        obj_id: The id of the object to index
-        attrs: The objet attributes
+        doc: The document to index
+        doc_id: The id of the document
     """
-    await _es.index(index, attrs, id=str(obj_id))
+    doc.meta.id = str(doc_id)
+    await fc.run_in_threadpool(doc.save)
 
 
-# pylint: disable=redefined-outer-name
-async def update(index: str, obj_id: uuid.UUID, attrs: typing.Mapping[str, typing.Any]):
+async def update(
+    doc: elasticsearch_dsl.Document,
+    doc_id: uuid.UUID,
+):
     """Update a document in the index
 
     Parameters:
-        index: The name of the index
-        obj_id: The index of the object to update
-        attrs: The attributes to replace the old ones
+        doc: The document updates
+        doc_id: The id of the document to update
     """
-    await _es.update(index, str(obj_id), {"doc": attrs})
+    doc_type = type(doc)
+    old_doc = await fc.run_in_threadpool(doc_type.get, id=str(doc_id))
+    await fc.run_in_threadpool(old_doc.update, **doc.to_dict())
 
 
-# pylint: disable=redefined-outer-name
-async def remove(index: str, obj_id: uuid.UUID, path: typing.List[str]):
-    """Remove an object or a field withing the objec
+async def remove(
+    doc_type: DocType,
+    doc_id: uuid.UUID,
+    path: typing.List[str] = None,
+):
+    """Remove an object or a field within an object from the index
 
     Parameters:
-        index: The name of the index
-        obj_id: The id of the object to (partially) remove
-        path: The path of the subobject, or empty list if the whole
+        doc_type: The type of the document to remove
+        doc_id: The id of the document to update
+        path: The path of the subdocument, or empty list if the whole
               object is removed
+
     """
-    # TODO: Do it atomically
-    obj_id = str(obj_id)
+    doc_id = str(doc_id)
+    doc = await fc.run_in_threadpool(doc_type.get, id=doc_id)
     if path:
-        source = await _es.get_source(index, obj_id)
-        subobj = source
+        # Can this be done atomically?
+        subdoc = doc
         for k in path[:-1]:
-            subobj = source.get(k, None)
-            if not subobj:
+            subdoc = getattr(subdoc, k, None)
+            if not subdoc:
                 return
-        subobj.pop(path[-1], None)
-    await _es.delete(index, obj_id)
-    if path:
-        await _es.create(index, obj_id, source)
+        subdoc[path[-1]] = None
+        await fc.run_in_threadpool(doc.save)
+    else:
+        await fc.run_in_threadpool(doc.delete)
 
 
-# pylint: disable=redefined-outer-name
 async def search(
-    index: str, q: str
-) -> typing.List[typing.Tuple[uuid.UUID, typing.Dict[str, typing.Any]]]:
+    doc_type: DocType, q: str
+) -> typing.List[elasticsearch_dsl.Document]:
     """Search for previously indexed documents
 
     Parameters:
-        index: The name of the index
+        doc_type: The type of the document to search
         q: The query string
 
     Returns:
         List of tuples containing index and attributes of the found objects
     """
-    res = await _es.search({"query": {"multi_match": {"query": q}}}, index)
-    return [(uuid.UUID(hits["_id"]), hits["_source"]) for hits in res["hits"]["hits"]]
+    s = doc_type.search().query(esq.MultiMatch(query=q))
+    return await fc.run_in_threadpool(s.execute)

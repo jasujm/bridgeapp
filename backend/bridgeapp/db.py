@@ -3,11 +3,15 @@ Database definitions
 ....................
 """
 
+import logging
+
 import databases
 import sqlalchemy
 import sqlalchemy_utils.types as sqlt
 
 from .settings import settings
+
+logger = logging.getLogger(__name__)
 
 
 def _get_database_url():
@@ -21,7 +25,6 @@ def _get_database_url():
 
 database = databases.Database(_get_database_url())
 
-engine = sqlalchemy.create_engine(settings.database_url)
 meta = sqlalchemy.MetaData()
 
 players = sqlalchemy.Table(
@@ -45,9 +48,13 @@ games = sqlalchemy.Table(
     sqlalchemy.Column("name", sqlalchemy.String(63), nullable=False, index=True),
 )
 
-meta.create_all(engine)
-
-
 def get_database():
     """Get database connection"""
     return database
+
+
+def init():
+    """Initializes databases"""
+    engine = sqlalchemy.create_engine(settings.database_url)
+    meta.create_all(engine)
+    logger.info("Database tables created")

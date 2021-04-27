@@ -11,7 +11,7 @@ import fastapi
 import fastapi.testclient
 import pytest
 
-from bridgeapp import api, bridgeprotocol, db
+from bridgeapp import api, bridgeprotocol, db, search
 from bridgeapp.api import db_utils as dbu
 
 from bridgeapp.bridgeprotocol import models, events
@@ -72,19 +72,19 @@ def test_list_games_no_result(client, credentials, mock_search):
     res = client.get("/api/v1/games", auth=credentials, params={"q": "nothing"})
     assert res.status_code == fastapi.status.HTTP_200_OK
     assert res.json() == []
-    mock_search.search.assert_awaited_once_with("games", "nothing")
+    mock_search.search.assert_awaited_once_with(search.GameSummary, "nothing")
 
 
 def test_list_games_with_result(
     client, game_id, player_id, username, credentials, mock_search
 ):
     mock_search.search.return_value = [
-        (
-            game_id,
-            {
-                "name": "hello",
-                "players": {"north": {"id": player_id, "username": username}},
-            },
+        search.GameSummary(
+            id=game_id,
+            name="hello",
+            players=search.PlayersInGame(
+                north=search.Player(id=player_id, username=username,),
+            ),
         )
     ]
     res = client.get("/api/v1/games", auth=credentials, params={"q": "hello"})
@@ -103,7 +103,7 @@ def test_list_games_with_result(
             ),
         ),
     )
-    mock_search.search.assert_awaited_once_with("games", "hello")
+    mock_search.search.assert_awaited_once_with(search.GameSummary, "hello")
 
 
 @pytest.mark.parametrize("name", ["my game", "other game"])
@@ -121,7 +121,9 @@ def test_create_game(
     )
     game_in_db = asyncio.run(dbu.load(db.games, game_id, database=database))
     assert game_in_db.name == name
-    mock_search.index.assert_awaited_once_with("games", game_id, {"name": name})
+    mock_search.index.assert_awaited_once_with(
+        search.GameSummary(id=game_id, name=name), game_id
+    )
 
 
 def test_read_game(
@@ -290,9 +292,12 @@ def test_add_player(
         game=game_id, player=player_id, position=None
     )
     mock_search.update.assert_awaited_once_with(
-        "games",
+        search.GameSummary(
+            players=search.PlayersInGame(
+                north=search.Player(id=str(player_id), username=username),
+            )
+        ),
         game_id,
-        {"players": {"north": {"id": str(player_id), "username": username}}},
     )
 
 
@@ -318,9 +323,12 @@ def test_add_player_with_position(
         game=game_id, player=player_id, position=position
     )
     mock_search.update.assert_awaited_once_with(
-        "games",
+        search.GameSummary(
+            players=search.PlayersInGame(
+                **{position.value: search.Player(id=str(player_id), username=username)},
+            )
+        ),
         game_id,
-        {"players": {position.value: {"id": str(player_id), "username": username}}},
     )
 
 
@@ -361,7 +369,7 @@ def test_remove_player(
     assert res.status_code == fastapi.status.HTTP_204_NO_CONTENT
     mock_bridge_client.leave.assert_awaited_once_with(game=game_id, player=player_id)
     mock_search.remove.assert_awaited_once_with(
-        "games", game_id, ["players", position.value]
+        search.GameSummary, game_id, ["players", position.value]
     )
 
 

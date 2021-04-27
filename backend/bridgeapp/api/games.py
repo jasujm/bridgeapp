@@ -11,7 +11,7 @@ import fastapi
 import orjson
 import sqlalchemy
 
-from bridgeapp import db
+from bridgeapp import db, search
 from bridgeapp.bridgeprotocol import models as base_models
 
 from . import auth, db_utils, models, search_utils, utils
@@ -85,7 +85,7 @@ async def post_games(
     game_id = await client.game()
     game_attrs = game.dict()
     await db_utils.create(db.games, game_id, game_attrs)
-    await search_utils.index("games", game_id, game_attrs)
+    await search_utils.index(search.GameSummary(id=game_id, **game_attrs), game_id)
     game_url = request.url_for("game_details", game_id=game_id)
     response.headers["Location"] = game_url
     return models.Game(id=game_id, self=game_url, **game_attrs)
@@ -100,15 +100,18 @@ async def post_games(
 )
 async def get_games_list(request: fastapi.Request, q: str):
     """Handle listing games"""
+    games = await search_utils.search(search.GameSummary, q)
     # Inject `self` object to each player coming from the index
-    games = await search_utils.search("games", q)
-    for _, game in games:
+    games_attrs = []
+    for game in games:
+        game = game.to_dict()
         for player in game.get("players", {}).values():
             if player_id := player.get("id"):
                 player["self"] = request.url_for("player_details", player_id=player_id)
+        games_attrs.append(game)
     return [
-        models.GameSummary.from_attributes(dict(id=game_id, **attrs).items(), request)
-        for (game_id, attrs) in games
+        models.GameSummary.from_attributes(attrs.items(), request)
+        for attrs in games_attrs
     ]
 
 
@@ -262,13 +265,14 @@ async def post_game_players(
         game=game_id, player=player.id, position=position
     )
     await search_utils.update(
-        "games",
+        search.GameSummary(
+            players=search.PlayersInGame(
+                **{
+                    position.value: search.Player(id=str(player.id), username=player.username)
+                }
+            )
+        ),
         game_id,
-        {
-            "players": {
-                position.value: {"id": str(player.id), "username": player.username}
-            }
-        },
     )
 
 
@@ -288,7 +292,9 @@ async def delete_game_players(
     client = await utils.get_bridge_client()
     position = await client.leave(game=game_id, player=player.id)
     if position:
-        await search_utils.remove("games", game_id, ["players", position.value])
+        await search_utils.remove(
+            search.GameSummary, game_id, ["players", position.value]
+        )
 
 
 @router.post(
