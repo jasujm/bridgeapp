@@ -48,6 +48,7 @@ games = sqlalchemy.Table(
     sqlalchemy.Column("name", sqlalchemy.String(63), nullable=False, index=True),
 )
 
+
 def get_database():
     """Get database connection"""
     return database

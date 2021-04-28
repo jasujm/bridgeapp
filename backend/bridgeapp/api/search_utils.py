@@ -14,6 +14,7 @@ import elasticsearch_dsl.query as esq
 
 DocType = typing.Type[elasticsearch_dsl.Document]
 
+
 async def index(doc: elasticsearch_dsl.Document, doc_id: uuid.UUID):
     """Index a document
 
@@ -25,10 +26,7 @@ async def index(doc: elasticsearch_dsl.Document, doc_id: uuid.UUID):
     await fc.run_in_threadpool(doc.save)
 
 
-async def update(
-    doc: elasticsearch_dsl.Document,
-    doc_id: uuid.UUID,
-):
+async def update(doc: elasticsearch_dsl.Document, doc_id: uuid.UUID):
     """Update a document in the index
 
     Parameters:
@@ -40,11 +38,7 @@ async def update(
     await fc.run_in_threadpool(old_doc.update, **doc.to_dict())
 
 
-async def remove(
-    doc_type: DocType,
-    doc_id: uuid.UUID,
-    path: typing.List[str] = None,
-):
+async def remove(doc_type: DocType, doc_id: uuid.UUID, path: typing.List[str] = None):
     """Remove an object or a field within an object from the index
 
     Parameters:
@@ -69,9 +63,7 @@ async def remove(
         await fc.run_in_threadpool(doc.delete)
 
 
-async def search(
-    doc_type: DocType, q: str
-) -> typing.List[elasticsearch_dsl.Document]:
+async def search(doc_type: DocType, q: str) -> typing.List[elasticsearch_dsl.Document]:
     """Search for previously indexed documents
 
     Parameters:
