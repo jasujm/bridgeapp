@@ -1,5 +1,6 @@
 **
 !Dockerfile
+!start.sh
 !pyproject.toml
 !poetry.lock
 !bridgeapp/**

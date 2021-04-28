@@ -36,6 +36,9 @@ coverage = "^5.1"
 click-log = "^0.3.2"
 aiosqlite = "^0.17.0"
 
+[tool.poetry.scripts]
+bridgeapp = "bridgeapp.__main__:cli"
+
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
