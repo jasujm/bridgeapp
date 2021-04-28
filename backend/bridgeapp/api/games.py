@@ -265,13 +265,11 @@ async def post_game_players(
     game_id, position = await client.join(
         game=game_id, player=player.id, position=position
     )
+    player = dict(**player)
+    del player["password"]
     await search_utils.update(
         search.GameSummary(
-            players=search.PlayersInGame(
-                **{
-                    position.value: search.Player(id=player.id, username=player.username)
-                }
-            )
+            players=search.PlayersInGame(**{position.value: search.Player(**player)})
         ),
         game_id,
     )
