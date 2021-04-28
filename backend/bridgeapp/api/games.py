@@ -101,13 +101,14 @@ async def post_games(
 async def get_games_list(request: fastapi.Request, q: str):
     """Handle listing games"""
     games = await search_utils.search(search.GameSummary, q)
-    # Inject `self` object to each player coming from the index
     games_attrs = []
     for game in games:
         game = game.to_dict()
-        for player in game.get("players", {}).values():
-            if player_id := player.get("id"):
-                player["self"] = request.url_for("player_details", player_id=player_id)
+        players = game.get("players", {})
+        for position in list(players.keys()):
+            players[position] = models.Player.from_attributes(
+                players[position].items(), request
+            )
         games_attrs.append(game)
     return [
         models.GameSummary.from_attributes(attrs.items(), request)
