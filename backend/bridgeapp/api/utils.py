@@ -73,12 +73,14 @@ def autocancel_tasks():
     before ``task2`` completes, the context manager ensures that
     ``task2`` will be canceled.
     """
-    tasks: List[asyncio.Task] = []
+    tasks = []
+
     def _create_autocancelling_task(task):
         if asyncio.iscoroutine(task):
             task = asyncio.create_task(task)
         tasks.append(task)
         return task
+
     try:
         yield _create_autocancelling_task
     finally:

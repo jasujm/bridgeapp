@@ -85,9 +85,7 @@ async def post_games(
     game_id = await client.game()
     game_attrs = game.dict()
     with utils.autocancel_tasks() as create_task:
-        game_db_create = create_task(
-            db_utils.create(db.games, game_id, game_attrs)
-        )
+        game_db_create = create_task(db_utils.create(db.games, game_id, game_attrs))
         game_index = create_task(
             search_utils.index(search.GameSummary(id=game_id, **game_attrs), game_id)
         )
@@ -144,9 +142,7 @@ async def get_game_details(
         game, request.state.counter_header_value = await client.get_game(
             game=game_id, player=player.id
         )
-        players_load = create_task(
-            _apify_players_in_game(game.players, request)
-        )
+        players_load = create_task(_apify_players_in_game(game.players, request))
         game_attrs, players = await asyncio.gather(game_attrs_load, players_load)
     return models.Game(
         **game_attrs,
