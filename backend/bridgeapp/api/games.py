@@ -269,7 +269,7 @@ async def post_game_players(
         search.GameSummary(
             players=search.PlayersInGame(
                 **{
-                    position.value: search.Player(id=str(player.id), username=player.username)
+                    position.value: search.Player(id=player.id, username=player.username)
                 }
             )
         ),

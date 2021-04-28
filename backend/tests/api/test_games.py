@@ -294,7 +294,7 @@ def test_add_player(
     mock_search.update.assert_awaited_once_with(
         search.GameSummary(
             players=search.PlayersInGame(
-                north=search.Player(id=str(player_id), username=username),
+                north=search.Player(id=player_id, username=username),
             )
         ),
         game_id,
@@ -325,7 +325,7 @@ def test_add_player_with_position(
     mock_search.update.assert_awaited_once_with(
         search.GameSummary(
             players=search.PlayersInGame(
-                **{position.value: search.Player(id=str(player_id), username=username)},
+                **{position.value: search.Player(id=player_id, username=username)},
             )
         ),
         game_id,

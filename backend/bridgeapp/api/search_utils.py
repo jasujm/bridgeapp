@@ -22,7 +22,7 @@ async def index(doc: elasticsearch_dsl.Document, doc_id: uuid.UUID):
         doc: The document to index
         doc_id: The id of the document
     """
-    doc.meta.id = str(doc_id)
+    doc.meta.id = doc_id
     await fc.run_in_threadpool(doc.save)
 
 
@@ -34,7 +34,7 @@ async def update(doc: elasticsearch_dsl.Document, doc_id: uuid.UUID):
         doc_id: The id of the document to update
     """
     doc_type = type(doc)
-    old_doc = await fc.run_in_threadpool(doc_type.get, id=str(doc_id))
+    old_doc = await fc.run_in_threadpool(doc_type.get, id=doc_id)
     await fc.run_in_threadpool(old_doc.update, **doc.to_dict())
 
 
@@ -48,7 +48,6 @@ async def remove(doc_type: DocType, doc_id: uuid.UUID, path: typing.List[str] = 
               object is removed
 
     """
-    doc_id = str(doc_id)
     doc = await fc.run_in_threadpool(doc_type.get, id=doc_id)
     if path:
         # Can this be done atomically?
