@@ -3,6 +3,7 @@ API utilities
 .............
 """
 
+import asyncio
 import contextlib
 import uuid
 
@@ -51,3 +52,35 @@ def subscribe_events(game_id: uuid.UUID):
         yield producer
     finally:
         event_demultiplexer.unsubscribe(producer)
+
+
+@contextlib.contextmanager
+def autocancel_tasks():
+    """Create asynchronous tasks that are guaranteed to be canceled
+
+    This function returns a context manager that can be used to create
+    tasks that are automatically canceled when the context manager
+    exists. For example:
+
+    .. code-block:: python
+
+       with create_autocanceling_tasks() as create_task:
+           task1 = create_task(coro1())
+           task2 = create_task(coro2())
+           await asyncio.gather(task1, task2)
+
+    In the above example, even if ``task1`` would raise exception
+    before ``task2`` completes, the context manager ensures that
+    ``task2`` will be canceled.
+    """
+    tasks: List[asyncio.Task] = []
+    def _create_autocancelling_task(task):
+        if asyncio.iscoroutine(task):
+            task = asyncio.create_task(task)
+        tasks.append(task)
+        return task
+    try:
+        yield _create_autocancelling_task
+    finally:
+        for task in tasks:
+            task.cancel()

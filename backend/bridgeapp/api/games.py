@@ -84,8 +84,14 @@ async def post_games(
     client = await utils.get_bridge_client()
     game_id = await client.game()
     game_attrs = game.dict()
-    await db_utils.create(db.games, game_id, game_attrs)
-    await search_utils.index(search.GameSummary(id=game_id, **game_attrs), game_id)
+    with utils.autocancel_tasks() as create_task:
+        game_db_create = create_task(
+            db_utils.create(db.games, game_id, game_attrs)
+        )
+        game_index = create_task(
+            search_utils.index(search.GameSummary(id=game_id, **game_attrs), game_id)
+        )
+        await asyncio.gather(game_db_create, game_index)
     game_url = request.url_for("game_details", game_id=game_id)
     response.headers["Location"] = game_url
     return models.Game(id=game_id, self=game_url, **game_attrs)
@@ -132,12 +138,16 @@ async def get_game_details(
     player: uuid.UUID = fastapi.Depends(auth.get_authenticated_player),
 ):
     """Handle getting game details"""
-    client = await utils.get_bridge_client()
-    (game, request.state.counter_header_value) = await client.get_game(
-        game=game_id, player=player.id
-    )
-    game_attrs = await db_utils.load(db.games, game_id)
-    players = await _apify_players_in_game(game.players, request)
+    with utils.autocancel_tasks() as create_task:
+        game_attrs_load = create_task(db_utils.load(db.games, game_id))
+        client = await utils.get_bridge_client()
+        game, request.state.counter_header_value = await client.get_game(
+            game=game_id, player=player.id
+        )
+        players_load = create_task(
+            _apify_players_in_game(game.players, request)
+        )
+        game_attrs, players = await asyncio.gather(game_attrs_load, players_load)
     return models.Game(
         **game_attrs,
         self=str(request.url),
