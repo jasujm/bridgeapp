@@ -1,35 +1,38 @@
 <template>
-<svg class="card-display" :class="cardClasses" @mousedown="playCard">
+  <svg class="card-display" :class="cardClasses" @mousedown="playCard">
     <rect x="0" y="0" rx="4" ry="4" width="100%" height="100%" />
     <text x="4" y="35%" :class="suit">{{ rankText }}</text>
     <text x="4" y="70%" :class="suit" v-html="suitText"></text>
-</svg>
+  </svg>
 </template>
 
 <script lang="ts">
-import Component, { mixins } from "vue-class-component"
+import Component, { mixins } from "vue-class-component";
 import { Prop } from "vue-property-decorator";
-import RankDisplayMixin from "./rankdisplaymixin"
-import SuitDisplayMixin from "./suitdisplaymixin"
+import RankDisplayMixin from "./rankdisplaymixin";
+import SuitDisplayMixin from "./suitdisplaymixin";
 
 @Component
-export default class CardDisplay extends mixins(RankDisplayMixin, SuitDisplayMixin) {
-    @Prop({ default: () => false }) private readonly allowed!: boolean;
+export default class CardDisplay extends mixins(
+  RankDisplayMixin,
+  SuitDisplayMixin
+) {
+  @Prop({ default: () => false }) private readonly allowed!: boolean;
 
-    private get cardClasses() {
-        const classes = [`rank-${this.rank}`, `suit-${this.suit}`];
-        if (this.allowed) {
-            classes.push("allowed");
-        }
-        return classes;
+  private get cardClasses() {
+    const classes = [`rank-${this.rank}`, `suit-${this.suit}`];
+    if (this.allowed) {
+      classes.push("allowed");
     }
+    return classes;
+  }
 
-    private playCard() {
-        if (this.allowed) {
-            const card = { rank: this.rank, suit: this.suit };
-            this.$emit("play", card);
-        }
+  private playCard() {
+    if (this.allowed) {
+      const card = { rank: this.rank, suit: this.suit };
+      this.$emit("play", card);
     }
+  }
 }
 </script>
 
@@ -39,8 +42,8 @@ export default class CardDisplay extends mixins(RankDisplayMixin, SuitDisplayMix
 .card-display {
   cursor: default;
   height: $card-height;
-  width: 0.72*$card-height;
-  font: bold 0.45*$card-height sans-serif;
+  width: 0.72 * $card-height;
+  font: bold 0.45 * $card-height sans-serif;
 
   rect {
     fill: $body-bg;
@@ -49,8 +52,14 @@ export default class CardDisplay extends mixins(RankDisplayMixin, SuitDisplayMix
   }
 
   text {
-    &.diamonds, &.hearts { fill: $red-suit-color; }
-    &.clubs, &.spades { fill: $black-suit-color; }
+    &.diamonds,
+    &.hearts {
+      fill: $red-suit-color;
+    }
+    &.clubs,
+    &.spades {
+      fill: $black-suit-color;
+    }
   }
 
   &.allowed {

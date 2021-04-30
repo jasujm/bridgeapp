@@ -1,18 +1,18 @@
-import { Vue, Component, Prop } from "vue-property-decorator"
-import { Suit } from "@/api/types"
+import { Vue, Component, Prop } from "vue-property-decorator";
+import { Suit } from "@/api/types";
 
 const suitTexts = {
-    clubs: "&clubs;",
-    diamonds: "&diams;",
-    hearts: "&hearts;",
-    spades: "&spades;",
+  clubs: "&clubs;",
+  diamonds: "&diams;",
+  hearts: "&hearts;",
+  spades: "&spades;",
 };
 
 @Component
 export default class SuitDisplayMixin extends Vue {
-    @Prop() protected readonly suit!: Suit;
+  @Prop() protected readonly suit!: Suit;
 
-    protected get suitText() {
-        return suitTexts[this.suit] || "?";
-    }
+  protected get suitText() {
+    return suitTexts[this.suit] || "?";
+  }
 }
