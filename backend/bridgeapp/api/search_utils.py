@@ -62,15 +62,22 @@ async def remove(doc_type: DocType, doc_id: uuid.UUID, path: typing.List[str] = 
         await fc.run_in_threadpool(doc.delete)
 
 
-async def search(doc_type: DocType, q: str) -> typing.List[elasticsearch_dsl.Document]:
+async def search(
+    doc_type: DocType, q: esq.Q, *, limit=None
+) -> typing.List[elasticsearch_dsl.Document]:
     """Search for previously indexed documents
 
     Parameters:
         doc_type: The type of the document to search
-        q: The query string
+        q: The ``elasticsearch-dsl`` query to search by
+
+    Keyword Arguments:
+        limit: The maximum size of the result set
 
     Returns:
-        List of tuples containing index and attributes of the found objects
+        List of tuples containing the matched documents
     """
-    s = doc_type.search().query(esq.MultiMatch(query=q))
+    s = doc_type.search().query(q)
+    if limit is not None:
+        s = s[:limit]
     return await fc.run_in_threadpool(s.execute)

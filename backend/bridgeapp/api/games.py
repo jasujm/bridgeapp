@@ -4,11 +4,15 @@ Games endpoints
 """
 
 import asyncio
+import functools
+import operator
 import uuid
 import typing
 
 import fastapi
+import elasticsearch_dsl.query as esq
 import orjson
+import pydantic
 import sqlalchemy
 
 from bridgeapp import db, search
@@ -61,6 +65,23 @@ async def _apify_players_in_game(
     )
 
 
+_ALL_SEATS_FILLED_QUERY = functools.reduce(
+    operator.and_,
+    (
+        esq.Exists(field=f"players.{position.value}.id")
+        for position in base_models.Position
+    ),
+)
+
+
+def _get_games_search_query(q: str) -> esq.Q:
+    return esq.Boosting(
+        positive=esq.MultiMatch(query=q),
+        negative=_ALL_SEATS_FILLED_QUERY,
+        negative_boost=0.5,
+    )
+
+
 router = fastapi.APIRouter()
 
 
@@ -99,12 +120,18 @@ async def post_games(
     "",
     name="games_list",
     summary="List games",
-    description="""List all games matching the query parameter ``q``.""",
+    description="""Search games by a query string, and return summaries of the matched games.""",
     response_model=typing.List[models.GameSummary],
 )
-async def get_games_list(request: fastapi.Request, q: str):
+async def get_games_list(
+    request: fastapi.Request,
+    q: str = fastapi.Query(..., title="Query string"),
+    limit: pydantic.conint(ge=1, le=1000) = fastapi.Query(10, title="Result limit"),
+):
     """Handle listing games"""
-    games = await search_utils.search(search.GameSummary, q)
+    games = await search_utils.search(
+        search.GameSummary, _get_games_search_query(q), limit=limit
+    )
     games_attrs = []
     for game in games:
         game = game.to_dict()

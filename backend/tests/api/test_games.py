@@ -72,22 +72,27 @@ def test_list_games_no_result(client, credentials, mock_search):
     res = client.get("/api/v1/games", auth=credentials, params={"q": "nothing"})
     assert res.status_code == fastapi.status.HTTP_200_OK
     assert res.json() == []
-    mock_search.search.assert_awaited_once_with(search.GameSummary, "nothing")
+    mock_search.search.assert_awaited_once_with(
+        search.GameSummary, unittest.mock.ANY, limit=10
+    )
 
 
+@pytest.mark.parametrize("limit", [1, 1000])
 def test_list_games_with_result(
-    client, game_id, player_id, username, credentials, mock_search
+    client, game_id, player_id, username, credentials, mock_search, limit
 ):
     mock_search.search.return_value = [
         search.GameSummary(
             id=game_id,
             name="hello",
             players=search.PlayersInGame(
-                north=search.Player(id=player_id, username=username,),
+                north=search.Player(id=player_id, username=username),
             ),
         )
     ]
-    res = client.get("/api/v1/games", auth=credentials, params={"q": "hello"})
+    res = client.get(
+        "/api/v1/games", auth=credentials, params={"q": "hello", "limit": limit}
+    )
     assert res.status_code == fastapi.status.HTTP_200_OK
     j = res.json()
     assert len(j) == 1
@@ -103,7 +108,9 @@ def test_list_games_with_result(
             ),
         ),
     )
-    mock_search.search.assert_awaited_once_with(search.GameSummary, "hello")
+    mock_search.search.assert_awaited_once_with(
+        search.GameSummary, unittest.mock.ANY, limit=limit
+    )
 
 
 @pytest.mark.parametrize("name", ["my game", "other game"])
