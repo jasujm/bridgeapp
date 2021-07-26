@@ -5,7 +5,7 @@ description = "A lightweight web application for playing contract bridge"
 authors = ["Jaakko Moisio <jaakko@moisio.fi>"]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.9"
 pyzmq = "^19.0.1"
 more-itertools = "^8.3.0"
 pydantic = "^1.5.1,<1.8"  # TODO: unit tests failing with 1.8, investigate

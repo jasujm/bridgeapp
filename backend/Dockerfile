@@ -1,4 +1,4 @@
-FROM python:3.8 AS base
+FROM python:3.9 AS base
 
 ENV PYTHONUNBUFFERED=1
 

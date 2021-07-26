@@ -34,7 +34,7 @@ services:
     env_file:
     - "./.env.postgres"
   elasticsearch:
-    image: "docker.elastic.co/elasticsearch/elasticsearch:7.12.0"
+    image: "docker.elastic.co/elasticsearch/elasticsearch:7.13.4"
     environment:
     - "discovery.type=single-node"
     volumes:
