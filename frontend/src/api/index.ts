@@ -15,6 +15,7 @@ import {
   DealResult,
   Position,
   PlayersInGame,
+  GameCreate,
 } from "./types";
 
 export interface BasicAuth {
@@ -128,11 +129,11 @@ export default class {
     return response.data as Array<GameSummary>;
   }
 
-  async createGame(name: string) {
+  async createGame(game: GameCreate) {
     const response = await this.request({
       method: "post",
       url: "/games",
-      data: { name },
+      data: game,
     });
     return response.data as Game;
   }

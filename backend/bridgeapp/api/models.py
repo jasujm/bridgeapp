@@ -165,6 +165,7 @@ class GameSummary(_GameBase):
     """
 
     id: base_models.GameUuid
+    isPublic: bool
     players: PlayersInGame = PlayersInGame()
 
 
@@ -182,6 +183,8 @@ class Game(GameSummary):
 
 class GameCreate(_GameBase):
     """Model for creating a bridge game"""
+
+    isPublic: bool = True
 
 
 class Error(pydantic.BaseModel):

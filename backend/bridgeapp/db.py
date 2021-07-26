@@ -46,6 +46,7 @@ games = sqlalchemy.Table(
     meta,
     sqlalchemy.Column("id", sqlt.uuid.UUIDType, primary_key=True),
     sqlalchemy.Column("name", sqlalchemy.String(63), nullable=False, index=True),
+    sqlalchemy.Column("isPublic", sqlalchemy.Boolean, nullable=False),
 )
 
 

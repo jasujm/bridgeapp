@@ -149,6 +149,11 @@ export class GameSummary {
   name = "";
 }
 
+export class GameCreate {
+  name = "";
+  isPublic = true;
+}
+
 export class Game {
   id = "";
   self = "";

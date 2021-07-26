@@ -76,7 +76,7 @@ _ALL_SEATS_FILLED_QUERY = functools.reduce(
 
 def _get_games_search_query(q: str) -> esq.Q:
     return esq.Boosting(
-        positive=esq.MultiMatch(query=q),
+        positive=esq.MultiMatch(query=q) & esq.Match(isPublic=True),
         negative=_ALL_SEATS_FILLED_QUERY,
         negative_boost=0.5,
     )

@@ -41,6 +41,7 @@ class GameSummary(elasticsearch_dsl.Document):
 
     id = elasticsearch_dsl.Text()
     name = elasticsearch_dsl.Text()
+    isPublic = elasticsearch_dsl.Boolean()
     players = elasticsearch_dsl.Object(PlayersInGame)
 
     class Index:  # pylint: disable=missing-class-docstring

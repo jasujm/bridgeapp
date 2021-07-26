@@ -113,23 +113,30 @@ def test_list_games_with_result(
     )
 
 
-@pytest.mark.parametrize("name", ["my game", "other game"])
+@pytest.mark.parametrize("name,public", [("my game", True), ("other game", False)])
 def test_create_game(
-    client, mock_bridge_client, game_id, name, credentials, database, mock_search
+    client,
+    mock_bridge_client,
+    game_id,
+    name,
+    public,
+    credentials,
+    database,
+    mock_search,
 ):
     mock_bridge_client.game.return_value = game_id
-    game_create = api.models.GameCreate(name=name)
+    game_create = api.models.GameCreate(name=name, isPublic=public)
     res = client.post("/api/v1/games", auth=credentials, json=game_create.dict())
     assert res.status_code == fastapi.status.HTTP_201_CREATED
     game_url = f"http://testserver/api/v1/games/{game_id}"
     assert res.headers["Location"] == game_url
     assert api.models.Game(**res.json()) == api.models.Game(
-        id=game_id, self=game_url, name=name
+        id=game_id, self=game_url, name=name, isPublic=public
     )
     game_in_db = asyncio.run(dbu.load(db.games, game_id, database=database))
     assert game_in_db.name == name
     mock_search.index.assert_awaited_once_with(
-        search.GameSummary(id=game_id, name=name), game_id
+        search.GameSummary(id=game_id, name=name, isPublic=public), game_id
     )
 
 
@@ -145,6 +152,7 @@ def test_read_game(
     )
     api_game = api.models.Game(
         id=game_id,
+        isPublic=True,
         self=f"http://testserver/api/v1/games/{game_id}",
         name=db_game,
         deal=api_deal,
