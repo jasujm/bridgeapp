@@ -1,5 +1,12 @@
 <template>
-  <svg class="card-display" :class="cardClasses" @mousedown="playCard">
+  <svg
+    role="button"
+    class="card-display"
+    :class="cardClasses"
+    :tabindex="allowed ? 0 : undefined"
+    @mousedown="playCard"
+    @keydown.space="playCard"
+  >
     <rect x="0" y="0" rx="4" ry="4" width="100%" height="100%" />
     <text x="4" y="35%" :class="suit">{{ rankText }}</text>
     <text x="4" y="70%" :class="suit" v-html="suitText"></text>
