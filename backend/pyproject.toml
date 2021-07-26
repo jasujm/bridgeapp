@@ -10,7 +10,7 @@ pyzmq = "^19.0.1"
 more-itertools = "^8.3.0"
 pydantic = "^1.5.1,<1.8"  # TODO: unit tests failing with 1.8, investigate
 orjson = ">=3.3,<3.4"
-fastapi = {extras = ["uvicorn", "orjson"], version = "^0.58.0"}
+fastapi = {extras = ["uvicorn", "orjson"], version = "^0.65.2"}
 gunicorn = "^20.0.4"
 SQLAlchemy = "^1.3.23"
 SQLAlchemy-Utils = "^0.36.8"
