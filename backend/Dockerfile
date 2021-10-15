@@ -6,10 +6,10 @@ WORKDIR /usr/src/bridgeapp
 
 FROM base AS builder
 
-RUN set -ex; pip install poetry==1.1.3; python -m venv /usr/venv/bridgeapp
+RUN set -ex; pip install poetry==1.1.11; python -m venv /usr/venv/bridgeapp
 
 COPY pyproject.toml poetry.lock ./
-RUN poetry export -f requirements.txt | /usr/venv/bridgeapp/bin/pip install -r /dev/stdin
+RUN poetry export | /usr/venv/bridgeapp/bin/pip install -r /dev/stdin
 
 COPY . .
 RUN set -ex; poetry build; /usr/venv/bridgeapp/bin/pip install dist/*.whl
