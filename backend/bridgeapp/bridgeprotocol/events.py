@@ -11,7 +11,33 @@ import pydantic
 
 from . import _base, models
 
-_EVENT_CLASSES: typing.Dict[str, typing.Type["BridgeEvent"]] = {}
+
+class EventType(enum.Enum):
+    """Event type"""
+
+    player = "player"
+    deal = "deal"
+    turn = "turn"
+    call = "call"
+    bidding = "bidding"
+    play = "play"
+    dummy = "dummy"
+    trick = "trick"
+    dealend = "dealend"
+
+
+class BridgeEvent(pydantic.BaseModel):
+    """Bridge event"""
+
+    game: models.GameUuid
+    type: typing.Union[EventType, str]
+    counter: int = 0
+
+    class Config:  # pylint: disable=all
+        extra = "allow"
+
+
+_EVENT_CLASSES: typing.Dict[str, typing.Type[BridgeEvent]] = {}
 
 
 def _register_event(type: str):
@@ -20,17 +46,6 @@ def _register_event(type: str):
         return cls
 
     return decorator
-
-
-class BridgeEvent(pydantic.BaseModel):
-    """Bridge event"""
-
-    game: models.GameUuid
-    type: typing.Union[typing.ForwardRef("EventType"), str]
-    counter: int = 0
-
-    class Config:  # pylint: disable=all
-        extra = "allow"
 
 
 @_register_event("player")
@@ -134,10 +149,9 @@ class DealEndEvent(BridgeEvent):
     result: models.DuplicateResult
 
 
-EventType = enum.Enum("EventType", {type: type for type in _EVENT_CLASSES})
-EventType.__doc__ = "Event type"
-
-BridgeEvent.update_forward_refs()
+assert set(type.name for type in EventType) == set(
+    _EVENT_CLASSES.keys()
+), "an expected event was not registered"
 
 
 class BridgeEventReceiver(_base.EventReceiverBase):
