@@ -8,7 +8,7 @@ authors = ["Jaakko Moisio <jaakko@moisio.fi>"]
 python = "^3.9"
 pyzmq = "^22.3"
 more-itertools = "^8.3.0"
-pydantic = "^1.5.1,<1.8"  # TODO: upgrade to 1.8 failing
+pydantic = "^1.8.2"
 orjson = "^3.6"
 fastapi = {version = "^0.70", extras = ["uvicorn", "orjson"]}
 gunicorn = "^20.0.4"
