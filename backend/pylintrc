@@ -141,6 +141,7 @@ disable=print-statement,
         exception-escape,
         comprehension-escape,
         duplicate-code,
+        consider-using-from-import,
         format  # black takes care of formatting
 
 # Enable the message, report, category or checker with the given id(s). You can
@@ -215,6 +216,9 @@ init-import=no
 # List of qualified module names which can have objects that can redefine
 # builtins.
 redefining-builtins-modules=six.moves,past.builtins,future.builtins,builtins,io
+
+# List of names allowed to shadow builtins
+allowed-redefined-builtins=id
 
 
 [LOGGING]
@@ -313,7 +317,8 @@ good-names=i,
            m,
            s,
            id,
-           q
+           q,
+           ws
 
 # Good variable names regexes, separated by a comma. If names match any regex,
 # they will always be accepted

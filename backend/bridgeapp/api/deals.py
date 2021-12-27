@@ -13,7 +13,7 @@ router = fastapi.APIRouter()
 
 
 @router.get(
-    "/{deal_id}",
+    "/{id}",
     name="deal_details",
     summary="Get infomation about a deal",
     description="""The response contains the representation of the deal. If the deal is ongoing,
@@ -28,8 +28,7 @@ router = fastapi.APIRouter()
         }
     },
 )
-async def get_deal_details(request: fastapi.Request, deal_id: uuid.UUID):
+async def get_deal_details(id: uuid.UUID):
     """Handle getting deal details"""
     client = await utils.get_bridge_client()
-    deal = await client.get_deal(deal=deal_id)
-    return models.Deal.from_attributes(deal, request)
+    return await client.get_deal(deal=id)

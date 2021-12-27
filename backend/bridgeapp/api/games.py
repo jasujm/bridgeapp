@@ -43,9 +43,7 @@ _GAME_RESPONSES = {
 }
 
 
-async def _apify_players_in_game(
-    players: base_models.PlayersInGame, request: fastapi.Request
-):
+async def _apify_players_in_game(players: base_models.PlayersInGame):
     # This funky piece of code takes PlayersInGame (mapping between
     # positions and UUIDs) into apified PlayersInGameModel (mapping
     # between positions and actual player models)
@@ -54,15 +52,13 @@ async def _apify_players_in_game(
         sqlalchemy.select([db.players]).where(db.players.c.id.in_(ids))
     )
     attrs_map = {attrs.id: attrs for attrs in attrs}
-    return models.PlayersInGame(
-        **{
-            position.name: (
-                (player := getattr(players, position.name, None))
-                and models.Player.from_attributes(attrs_map[player].items(), request)
-            )
-            for position in base_models.Position
-        },
-    )
+    return {
+        position.name: (
+            (player := getattr(players, position.name, None))
+            and models.Player.parse_obj(attrs_map[player])
+        )
+        for position in base_models.Position
+    }
 
 
 _ALL_SEATS_FILLED_QUERY = functools.reduce(
@@ -111,9 +107,8 @@ async def post_games(
             search_utils.index(search.GameSummary(id=game_id, **game_attrs), game_id)
         )
         await asyncio.gather(game_db_create, game_index)
-    game_url = request.url_for("game_details", game_id=game_id)
-    response.headers["Location"] = game_url
-    return models.Game(id=game_id, self=game_url, **game_attrs)
+    response.headers["Location"] = request.url_for("game_details", id=game_id)
+    return {"id": game_id, **game_attrs}
 
 
 @router.get(
@@ -124,7 +119,6 @@ async def post_games(
     response_model=typing.List[models.GameSummary],
 )
 async def get_games_list(
-    request: fastapi.Request,
     q: str = fastapi.Query(..., title="Query string"),
     limit: pydantic.conint(ge=1, le=1000) = fastapi.Query(10, title="Result limit"),
 ):
@@ -137,18 +131,13 @@ async def get_games_list(
         game = game.to_dict()
         players = game.get("players", {})
         for position in list(players.keys()):
-            players[position] = models.Player.from_attributes(
-                players[position].items(), request
-            )
+            players[position] = models.Player.parse_obj(players[position])
         games_attrs.append(game)
-    return [
-        models.GameSummary.from_attributes(attrs.items(), request)
-        for attrs in games_attrs
-    ]
+    return games_attrs
 
 
 @router.get(
-    "/{game_id}",
+    "/{id}",
     name="game_details",
     summary="Get information about a game",
     description="""The response contains a representation of the game from the point of view of
@@ -159,29 +148,25 @@ async def get_games_list(
 )
 async def get_game_details(
     request: fastapi.Request,
-    game_id: uuid.UUID,
+    id: uuid.UUID,
     player: uuid.UUID = fastapi.Depends(auth.get_authenticated_player),
 ):
     """Handle getting game details"""
     with utils.autocancel_tasks() as create_task:
-        game_attrs_load = create_task(db_utils.load(db.games, game_id))
+        game_attrs_load = create_task(db_utils.load(db.games, id))
         client = await utils.get_bridge_client()
         game, request.state.counter_header_value = await client.get_game(
-            game=game_id, player=player.id
+            game=id, player=player.id
         )
-        players_load = create_task(_apify_players_in_game(game.players, request))
+        players_load = create_task(_apify_players_in_game(game.players))
         game_attrs, players = await asyncio.gather(game_attrs_load, players_load)
-    return models.Game(
+    return {
         **game_attrs,
-        self=str(request.url),
-        deal=models.Deal.from_attributes(game.deal, request),
-        me=game.self,
-        results=[
-            models.DealResult.from_attributes(result, request)
-            for result in game.results
-        ],
-        players=players,
-    )
+        "deal": game.deal,
+        "me": game.self,
+        "results": game.results,
+        "players": players,
+    }
 
 
 @router.get(
@@ -204,7 +189,7 @@ async def get_game_deal(
     deal, request.state.counter_header_value = await client.get_game_deal(
         game=game_id, player=player.id
     )
-    return models.Deal.from_attributes(deal, request)
+    return deal
 
 
 @router.get(
@@ -249,9 +234,7 @@ async def get_game_results(
     deal_results, request.state.counter_header_value = await client.get_results(
         game=game_id
     )
-    return [
-        models.DealResult.from_attributes(result, request) for result in deal_results
-    ]
+    return deal_results
 
 
 @router.get(
@@ -271,7 +254,7 @@ async def get_game_players(
     del player
     client = await utils.get_bridge_client()
     players, request.state.counter_header_value = await client.get_players(game=game_id)
-    return await _apify_players_in_game(players, request)
+    return await _apify_players_in_game(players)
 
 
 @router.post(
@@ -406,7 +389,7 @@ async def games_websocket(
                 )
                 if event_task in done:
                     event = await event_task
-                    event = models.BridgeEvent.from_attributes(event, websocket)
+                    event = models.BridgeEvent.from_base(event, websocket)
                     await websocket.send_bytes(orjson.dumps(event, default=dict))
                     event_task = _create_event_task()
                     pending.add(event_task)

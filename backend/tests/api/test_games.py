@@ -9,6 +9,7 @@ import uuid
 
 import fastapi
 import fastapi.testclient
+import hrefs
 import pytest
 
 from bridgeapp import api, bridgeprotocol, db, search
@@ -94,20 +95,24 @@ def test_list_games_with_result(
         "/api/v1/games", auth=credentials, params={"q": "hello", "limit": limit}
     )
     assert res.status_code == fastapi.status.HTTP_200_OK
-    j = res.json()
-    assert len(j) == 1
-    assert api.models.Game(**j[0]) == api.models.Game(
-        id=game_id,
-        self=f"http://testserver/api/v1/games/{game_id}",
-        name="hello",
-        players=api.models.PlayersInGame(
-            north=api.models.Player(
-                id=player_id,
-                self=f"http://testserver/api/v1/players/{player_id}",
-                username=username,
-            ),
-        ),
-    )
+    assert res.json() == [
+        {
+            "id": str(game_id),
+            "self": f"http://testserver/api/v1/games/{game_id}",
+            "name": "hello",
+            "isPublic": True,
+            "players": {
+                "north": {
+                    "id": str(player_id),
+                    "self": f"http://testserver/api/v1/players/{player_id}",
+                    "username": username,
+                },
+                "east": None,
+                "south": None,
+                "west": None,
+            },
+        }
+    ]
     mock_search.search.assert_awaited_once_with(
         search.GameSummary, unittest.mock.ANY, limit=limit
     )
@@ -130,9 +135,16 @@ def test_create_game(
     assert res.status_code == fastapi.status.HTTP_201_CREATED
     game_url = f"http://testserver/api/v1/games/{game_id}"
     assert res.headers["Location"] == game_url
-    assert api.models.Game(**res.json()) == api.models.Game(
-        id=game_id, self=game_url, name=name, isPublic=public
-    )
+    assert res.json() == {
+        "id": str(game_id),
+        "self": game_url,
+        "name": name,
+        "isPublic": public,
+        "deal": None,
+        "me": {"allowedCalls": [], "allowedCards": [], "position": None},
+        "players": {"north": None, "east": None, "south": None, "west": None},
+        "results": [],
+    }
     game_in_db = asyncio.run(dbu.load(db.games, game_id, database=database))
     assert game_in_db.name == name
     mock_search.index.assert_awaited_once_with(
@@ -144,30 +156,42 @@ def test_read_game(
     client, mock_bridge_client, game_id, db_game, player_id, username, credentials
 ):
     deal = models.Deal()
-    api_deal = api.models.Deal(
-        id=deal.id, self=f"http://testserver/api/v1/deals/{deal.id}"
-    )
     game = models.Game(
         id=game_id, deal=deal, players=models.PlayersInGame(north=player_id)
-    )
-    api_game = api.models.Game(
-        id=game_id,
-        isPublic=True,
-        self=f"http://testserver/api/v1/games/{game_id}",
-        name=db_game,
-        deal=api_deal,
-        players=api.models.PlayersInGame(
-            north=api.models.Player(
-                id=player_id,
-                self=f"http://testserver/api/v1/players/{player_id}",
-                username=username,
-            )
-        ),
     )
     mock_bridge_client.get_game.return_value = (game, 123)
     res = client.get(f"/api/v1/games/{game_id}", auth=credentials)
     assert res.headers[api.games.COUNTER_HEADER] == "123"
-    assert api.models.Game(**res.json()) == api_game
+    assert res.json() == {
+        "id": str(game_id),
+        "self": f"http://testserver/api/v1/games/{game_id}",
+        "isPublic": True,
+        "name": db_game,
+        "players": {
+            "north": {
+                "id": str(player_id),
+                "self": f"http://testserver/api/v1/players/{player_id}",
+                "username": username,
+            },
+            "east": None,
+            "south": None,
+            "west": None,
+        },
+        "deal": {
+            "id": str(deal.id),
+            "self": f"http://testserver/api/v1/deals/{deal.id}",
+            "phase": "dealing",
+            "positionInTurn": None,
+            "calls": [],
+            "declarer": None,
+            "contract": None,
+            "cards": {"north": [], "east": [], "south": [], "west": []},
+            "tricks": [],
+            "vulnerability": {"northSouth": False, "eastWest": False},
+        },
+        "me": {"allowedCalls": [], "allowedCards": [], "position": None},
+        "results": [],
+    }
     mock_bridge_client.get_game.assert_awaited_once_with(game=game_id, player=player_id)
 
 
@@ -184,13 +208,21 @@ def test_read_game_deal(
     client, mock_bridge_client, game_id, db_game, player_id, credentials
 ):
     deal = models.Deal()
-    api_deal = api.models.Deal(
-        id=deal.id, self=f"http://testserver/api/v1/deals/{deal.id}"
-    )
     mock_bridge_client.get_game_deal.return_value = (deal, 123)
     res = client.get(f"/api/v1/games/{game_id}/deal", auth=credentials)
     assert res.headers[api.games.COUNTER_HEADER] == "123"
-    assert api.models.Deal(**res.json()) == api_deal
+    assert res.json() == {
+        "id": str(deal.id),
+        "self": f"http://testserver/api/v1/deals/{deal.id}",
+        "phase": "dealing",
+        "positionInTurn": None,
+        "declarer": None,
+        "contract": None,
+        "calls": [],
+        "cards": {"north": [], "east": [], "south": [], "west": []},
+        "tricks": [],
+        "vulnerability": {"northSouth": False, "eastWest": False},
+    }
     mock_bridge_client.get_game_deal.assert_awaited_once_with(
         game=game_id, player=player_id
     )
@@ -207,12 +239,20 @@ def test_read_game_deal_should_fail_if_game_not_found(
 
 def test_read_deal(client, mock_bridge_client):
     deal = models.Deal()
-    api_deal = api.models.Deal(
-        id=deal.id, self=f"http://testserver/api/v1/deals/{deal.id}"
-    )
     mock_bridge_client.get_deal.return_value = deal
     res = client.get(f"/api/v1/deals/{deal.id}")
-    assert api.models.Deal(**res.json()) == api_deal
+    assert res.json() == {
+        "id": str(deal.id),
+        "self": f"http://testserver/api/v1/deals/{deal.id}",
+        "phase": "dealing",
+        "positionInTurn": None,
+        "calls": [],
+        "declarer": None,
+        "contract": None,
+        "cards": {"north": [], "east": [], "south": [], "west": []},
+        "tricks": [],
+        "vulnerability": {"northSouth": False, "eastWest": False},
+    }
     mock_bridge_client.get_deal.assert_awaited_once_with(deal=deal.id)
 
 

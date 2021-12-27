@@ -36,7 +36,7 @@ async def post_players(
 ):
     """Handle creating a new player"""
     player_id = uuid.uuid4()
-    player_url = request.url_for("player_details", player_id=player_id)
+    player_url = request.url_for("player_details", id=player_id)
     player_attrs = player.dict()
     player_attrs["password"] = player.password.get_secret_value()
     try:
@@ -47,7 +47,7 @@ async def post_players(
             detail="Player already exists",
         ) from ex
     response.headers["Location"] = player_url
-    return models.Player(id=player_id, self=player_url, **player_attrs)
+    return {"id": player_id, **player_attrs}
 
 
 @router.get(
@@ -58,11 +58,10 @@ async def post_players(
     response_model=models.Player,
 )
 async def get_player_self(
-    request: fastapi.Request,
     player: uuid.UUID = fastapi.Depends(auth.get_authenticated_player),
 ):
     """Handle getting authenticated player"""
-    return models.Player.from_attributes(player.items(), request)
+    return player
 
 
 @router.patch(
@@ -86,10 +85,10 @@ async def patch_player_self(
 
 
 @router.get(
-    "/{player_id}",
+    "/{id}",
     name="player_details",
     summary="Get infomation about a player",
-    description="""Returns information about the player identified by ``player_id``. The
+    description="""Returns information about the player identified by ``id``. The
     parameter is either the ID or the username of the player.""",
     response_model=models.Player,
     responses={
@@ -99,10 +98,8 @@ async def patch_player_self(
         },
     },
 )
-async def get_player_details(
-    request: fastapi.Request, player_id: typing.Union[uuid.UUID, models.Username]
-):
+async def get_player_details(id: typing.Union[uuid.UUID, models.Username]):
     """Handle getting player details"""
-    key = db.players.c.id if isinstance(player_id, uuid.UUID) else db.players.c.username
-    player_attrs = await dbu.load(db.players, player_id, key=key)
-    return models.Player.from_attributes(player_attrs.items(), request)
+    key = db.players.c.id if isinstance(id, uuid.UUID) else db.players.c.username
+    player_attrs = await dbu.load(db.players, id, key=key)
+    return player_attrs

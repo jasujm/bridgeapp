@@ -6,7 +6,7 @@ import asyncio
 import dataclasses
 import unittest.mock
 
-import fastapi
+import fastapi.testclient
 import pytest
 
 from bridgeapp import application, db

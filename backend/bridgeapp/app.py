@@ -5,6 +5,7 @@ Entry point to the ASGI app
 
 import fastapi
 import fastapi.middleware.cors
+import hrefs.starlette
 
 from . import api
 from .settings import settings
@@ -27,6 +28,8 @@ application.add_middleware(
     allow_headers=["*"],
     expose_headers=[api.games.COUNTER_HEADER],
 )
+
+application.add_middleware(hrefs.starlette.HrefMiddleware)
 
 application.mount(settings.api_v1_prefix, api.subapp)
 
