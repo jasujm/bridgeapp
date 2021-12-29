@@ -33,6 +33,14 @@ _URL_CONVERTERS = {
 }
 
 
+def _get_url_converter(field_type: typing.Type):
+    if typing.get_origin(field_type) is typing.Union:
+        for type_arg in typing.get_args(field_type):
+            if url_converter := _get_url_converter(type_arg):
+                return url_converter
+    return _URL_CONVERTERS.get(field_type)
+
+
 def _populate_self_validator():
     def _populate_self(cls, values):
         del cls
@@ -161,9 +169,7 @@ class BridgeEvent(base_events.BridgeEvent):
             if field := (
                 source_fields.get(name, None) or cls.__fields__.get(name, None)
             ):
-                if value and (
-                    url_converter := (_URL_CONVERTERS.get(field.outer_type_))
-                ):
+                if value and (url_converter := _get_url_converter(field.outer_type_)):
                     value = url_converter(ws, value)
             values[name] = value
         return cls(**values)
