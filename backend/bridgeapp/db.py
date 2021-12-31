@@ -64,7 +64,7 @@ games = sqlalchemy.Table(
     "games",
     meta,
     sqlalchemy.Column("id", sqlt.uuid.UUIDType, primary_key=True),
-    sqlalchemy.Column("name", sqlalchemy.String(63), nullable=False, index=True),
+    sqlalchemy.Column("name", sqlalchemy.String(63), nullable=False),
     sqlalchemy.Column("isPublic", sqlalchemy.Boolean, nullable=False),
     *_get_timestamp_columns(),
 )
