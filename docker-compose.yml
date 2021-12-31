@@ -7,6 +7,7 @@ services:
       /bin/bash -c 'cp -rf dist/* /var/www/frontend'
     volumes:
     - "frontendwww:/var/www/frontend"
+    restart: always
   backend:
     image: "jasujm/bridgeapp-backend"
     build: "backend/"
@@ -16,6 +17,7 @@ services:
     - "bridgeapp_elasticsearch_host=elasticsearch:9200"
     env_file:
     - "./.env.backend"
+    restart: always
   bridge:
     image: "jasujm/bridge"
     entrypoint: >-
@@ -27,18 +29,21 @@ services:
     - "bridge_data_dir=/var/lib/bridge"
     env_file:
     - "./.env.bridge"
+    restart: always
   db:
     image: "postgres:13"
     volumes:
     - "dbdata:/var/lib/postgresql/data:rw"
     env_file:
     - "./.env.postgres"
+    restart: always
   elasticsearch:
     image: "docker.elastic.co/elasticsearch/elasticsearch:7.16.2"
     environment:
     - "discovery.type=single-node"
     volumes:
     - "elasticsearchdata:/usr/share/elasticsearch/data:rw"
+    restart: always
   nginx:
     image: "jasujm/bridgeapp-nginx"
     build: "nginx/"
@@ -53,6 +58,7 @@ services:
     - "certbotwww:/var/www/certbot:ro"
     - "./nginx/conf.d.in:/etc/nginx/conf.d.in:ro"
     - "./nginx/inc.d:/etc/nginx/inc.d:ro"
+    restart: always
   certbot:
     image: "certbot/certbot"
     entrypoint: >-
@@ -66,6 +72,7 @@ services:
     - "certbotwww:/var/www/certbot"
     depends_on:
     - "nginx"
+    restart: always
 volumes:
   bridgedata:
   frontendwww:
