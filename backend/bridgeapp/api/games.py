@@ -282,7 +282,8 @@ async def post_game_players(
         game=game_id, player=player.id, position=position
     )
     player = dict(**player)
-    del player["password"]
+    for key in "password", "createdAt", "updatedAt":
+        del player[key]
     await search_utils.update(
         search.GameSummary(
             players=search.PlayersInGame(**{position.value: search.Player(**player)})
