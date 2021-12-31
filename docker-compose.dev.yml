@@ -5,3 +5,4 @@ services:
     - "./.env/ssl:/etc/letsencrypt:ro"
   certbot:
     entrypoint: "true"
+    restart: "no"
