@@ -145,7 +145,7 @@ def test_create_game(
         "players": {"north": None, "east": None, "south": None, "west": None},
         "results": [],
     }
-    game_in_db = asyncio.run(dbu.load(db.games, game_id, database=database))
+    game_in_db = asyncio.run(dbu.load(db.games, game_id))
     assert game_in_db.name == name
     mock_search.index.assert_awaited_once_with(
         search.GameSummary(id=game_id, name=name, isPublic=public), game_id

@@ -37,10 +37,7 @@ def password(username):
 def db_player(player_id, username, password, database):
     asyncio.run(
         db_utils.create(
-            db.players,
-            player_id,
-            {"username": username, "password": password},
-            database=database,
+            db.players, player_id, {"username": username, "password": password}
         )
     )
 
@@ -54,11 +51,7 @@ def credentials(username, password, db_player):
 @pytest.fixture(params=["my game", "other game"])
 def db_game(request, game_id, database):
     name = request.param
-    asyncio.run(
-        db_utils.create(
-            db.games, game_id, {"name": name, "isPublic": True}, database=database
-        )
-    )
+    asyncio.run(db_utils.create(db.games, game_id, {"name": name, "isPublic": True}))
     return name
 
 

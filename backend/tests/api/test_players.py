@@ -59,7 +59,7 @@ def test_create_player(database, client, username, password):
         "self": player_url,
         "username": username,
     }
-    player_in_db = asyncio.run(dbu.load(db.players, player_id, database=database))
+    player_in_db = asyncio.run(dbu.load(db.players, player_id))
     assert (player_in_db.id, player_in_db.username) == (player_id, username)
 
 

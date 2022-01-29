@@ -4,10 +4,8 @@ Database utilities
 """
 
 import uuid
-import sqlite3
 import typing
 
-import psycopg2
 import sqlalchemy
 import sqlalchemy.exc as sqlexc
 
@@ -22,11 +20,7 @@ class AlreadyExistsError(Exception):
     """Trying to create object that already exists"""
 
 
-def _get_database(database):
-    return database if database else db.get_database()
-
-
-async def load(table: sqlalchemy.Table, obj_id: uuid.UUID, *, key=None, database=None):
+async def load(table: sqlalchemy.Table, obj_id: uuid.UUID, *, key=None):
     """Load attributes of an object from database
 
     This is a thin wrapper over selecting a row from a database table by ID.
@@ -35,8 +29,6 @@ async def load(table: sqlalchemy.Table, obj_id: uuid.UUID, *, key=None, database
         table: The database table
         obj_id: The id to access
         key: The column used as key (defaults to ``id``)
-        database: The database connection to use, or ``None`` to use the
-                  default database
 
     Returns:
         Attributes of the object
@@ -44,16 +36,19 @@ async def load(table: sqlalchemy.Table, obj_id: uuid.UUID, *, key=None, database
     Raises:
         :exc:`NotFoundError`: If the object is not found in the database
     """
-    database = _get_database(database)
+    engine = db.get_engine()
     key_col = key if key is not None else table.c.id
-    if obj := await database.fetch_one(
-        query=sqlalchemy.select([table]).where(key_col == obj_id)
-    ):
-        return obj
-    raise NotFoundError(f"{obj_id} not found")
+    async with engine.begin() as conn:
+        try:
+            result = await conn.execute(
+                sqlalchemy.select([table]).where(key_col == obj_id)
+            )
+            return result.one()
+        except sqlexc.NoResultFound as ex:
+            raise NotFoundError(f"{obj_id} not found") from ex
 
 
-async def select(expression: sqlalchemy.sql.Select, *, database=None):
+async def select(expression: sqlalchemy.sql.Select):
     """Execute general SELECT expression
 
     This is a very thin wrapper over selecting rows from a
@@ -65,22 +60,17 @@ async def select(expression: sqlalchemy.sql.Select, *, database=None):
 
     Parameters:
         expression: The SELECT expression
-        database: The database connection to use, or ``None`` to use the
-                  default database
 
     Returns:
         The selected rows
     """
-    database = _get_database(database)
-    return await database.fetch_all(expression)
+    engine = db.get_engine()
+    async with engine.begin() as conn:
+        return await conn.execute(expression)
 
 
 async def create(
-    table: sqlalchemy.Table,
-    obj_id: uuid.UUID,
-    attrs: typing.Mapping[str, typing.Any],
-    *,
-    database=None,
+    table: sqlalchemy.Table, obj_id: uuid.UUID, attrs: typing.Mapping[str, typing.Any]
 ):
     """Create object with given attributes in database
 
@@ -90,28 +80,17 @@ async def create(
         table: The database table
         obj_id: The id of the object to create
         attrs: The attributes to insert
-        database: The database connection to use, or ``None`` to use the
-                  default database
     """
-    database = _get_database(database)
-    try:
-        await database.execute(query=table.insert(), values={"id": obj_id, **attrs})
-    except (
-        sqlexc.IntegrityError,
-        sqlite3.IntegrityError,
-        psycopg2.IntegrityError,
-    ) as ex:
-        # ^ TODO: Does the databases library use common wrapper for different
-        # drivers?
-        raise AlreadyExistsError(f"{obj_id} already exists") from ex
+    engine = db.get_engine()
+    async with engine.begin() as conn:
+        try:
+            await conn.execute(table.insert(), {"id": obj_id, **attrs})
+        except sqlexc.IntegrityError as ex:
+            raise AlreadyExistsError(f"{obj_id} already exists") from ex
 
 
 async def update(
-    table: sqlalchemy.Table,
-    obj_id: uuid.UUID,
-    attrs: typing.Mapping[str, typing.Any],
-    *,
-    database=None,
+    table: sqlalchemy.Table, obj_id: uuid.UUID, attrs: typing.Mapping[str, typing.Any],
 ):
     """Update object in a database
 
@@ -121,10 +100,9 @@ async def update(
         table: The database table
         obj_id: The id of the object to modify
         attrs: The new attributes
-        database: The database connection to use, or ``None`` to use the
-                  default database
     """
-    database = _get_database(database)
-    await database.execute(
-        query=sqlalchemy.update(table).where(table.c.id == obj_id).values(**attrs)
-    )
+    engine = db.get_engine()
+    async with engine.begin() as conn:
+        await conn.execute(
+            sqlalchemy.update(table).where(table.c.id == obj_id).values(**attrs)
+        )

@@ -9,7 +9,6 @@ import hrefs.starlette
 
 from . import api
 from .settings import settings
-from .db import database
 
 application = fastapi.FastAPI()
 
@@ -32,15 +31,3 @@ application.add_middleware(
 application.add_middleware(hrefs.starlette.HrefMiddleware)
 
 application.mount(settings.api_v1_prefix, api.subapp)
-
-
-@application.on_event("startup")
-async def startup():
-    """Startup task"""
-    await database.connect()
-
-
-@application.on_event("shutdown")
-async def shutdown():
-    """Shutdown task"""
-    await database.disconnect()

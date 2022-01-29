@@ -14,9 +14,7 @@ fastapi = {version = "^0.70", extras = ["uvicorn", "orjson"]}
 gunicorn = "^20.0.4"
 SQLAlchemy = "^1.4.29"
 SQLAlchemy-Utils = "^0.38.2"
-databases = {extras = ["postgresql"], version = "^0.5.3"}
 psycopg2-binary = "^2.8.6"
-aiopg = "^1.1.0"
 passlib = "^1.7.4"
 fastpbkdf2 = "^0.2"
 uvicorn = {extras = ["standard"], version = "^0.15.0"}
@@ -26,6 +24,7 @@ click = "^7.1.2"
 cffi = "^1.15"  # Required so poetry will pin this for cpython
 pycparser = "^2.20"  # Required so poetry will pin this for cpython
 hrefs = "^0.3"
+asyncpg = "^0.25.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

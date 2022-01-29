@@ -6,9 +6,9 @@ import asyncio
 import uuid
 import random
 
-import databases
 import pytest
 import sqlalchemy
+from sqlalchemy.ext.asyncio import create_async_engine
 
 from bridgeapp import db
 
@@ -22,16 +22,11 @@ from bridgeapp import db
 @pytest.fixture
 def database(monkeypatch, tmpdir):
     """Yield database connection with empty tables created"""
-    dbfile = f"sqlite:///{tmpdir}/test.db"
-    engine = sqlalchemy.create_engine(dbfile)
-    db.meta.create_all(engine)
-    try:
-        database = databases.Database(dbfile)
-        asyncio.run(database.connect())
-        monkeypatch.setattr(db, "get_database", lambda: database)
-        yield database
-    finally:
-        asyncio.run(database.disconnect())
+    dbfile = f"sqlite+aiosqlite:///{tmpdir}/test.db"
+    engine = create_async_engine(dbfile)
+    asyncio.run(db._init(engine))
+    monkeypatch.setattr(db, "get_engine", lambda: engine)
+    yield engine
 
 
 @pytest.fixture

@@ -3,24 +3,16 @@ Database definitions
 ....................
 """
 
+import asyncio
 import logging
 
-import databases
 import sqlalchemy
+import sqlalchemy.ext.asyncio as sqlaio
 import sqlalchemy_utils.types as sqlt
 
 from .settings import settings
 
 logger = logging.getLogger(__name__)
-
-
-def _get_database_url():
-    # TODO: Using aiopg since the default (asyncpg) doesn't work with
-    # sqlalchemy_utils UUID type. Needs to be investigated.
-    url = databases.DatabaseURL(settings.database_url)
-    if url.dialect == "postgresql":
-        url = url.replace(dialect="postgresql+aiopg")
-    return url
 
 
 def _get_timestamp_columns():
@@ -41,7 +33,7 @@ def _get_timestamp_columns():
     ]
 
 
-database = databases.Database(_get_database_url())
+engine = sqlaio.create_async_engine(settings.database_url)
 
 meta = sqlalchemy.MetaData()
 
@@ -70,13 +62,17 @@ games = sqlalchemy.Table(
 )
 
 
-def get_database():
-    """Get database connection"""
-    return database
+def get_engine() -> sqlaio.AsyncEngine:
+    """Get database engine"""
+    return engine
+
+
+async def _init(_engine):
+    async with _engine.begin() as conn:
+        await conn.run_sync(meta.create_all)
 
 
 def init():
     """Initializes databases"""
-    engine = sqlalchemy.create_engine(settings.database_url)
-    meta.create_all(engine)
+    asyncio.run(_init(engine))
     logger.info("Database tables created")
