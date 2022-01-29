@@ -5,7 +5,7 @@ description = "A lightweight web application for playing contract bridge"
 authors = ["Jaakko Moisio <jaakko@moisio.fi>"]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.10"
 pyzmq = "^22.3"
 more-itertools = "^8.3.0"
 pydantic = "^1.8.2"
@@ -27,8 +27,8 @@ hrefs = "^0.3"
 asyncpg = "^0.25.0"
 
 [tool.poetry.dev-dependencies]
-pytest = "^5.2"
-pytest-asyncio = "^0.12.0"
+pytest = "^6.2"
+pytest-asyncio = "^0.17.2"
 black = "^19.10b0"
 pylint = "^2.5.2"
 sphinx = "^3.0.4"
