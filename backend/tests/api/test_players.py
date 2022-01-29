@@ -8,7 +8,6 @@ from bridgeapp import api, db
 from bridgeapp.api import db_utils as dbu
 
 
-@pytest.mark.asyncio
 def test_get_player(database, client, player_id, username, db_player):
     res = client.get(f"/api/v1/players/{player_id}")
     assert res.json() == {
@@ -61,6 +60,14 @@ def test_create_player(database, client, username, password):
     }
     player_in_db = asyncio.run(dbu.load(db.players, player_id))
     assert (player_in_db.id, player_in_db.username) == (player_id, username)
+
+
+def test_create_player_username_conflict(
+    database, client, player_id, username, password, db_player
+):
+    player_create = api.models.PlayerCreate(username=username, password=password)
+    res = client.post("/api/v1/players", data=player_create.json())
+    assert res.status_code == fastapi.status.HTTP_409_CONFLICT
 
 
 def test_change_password(client, credentials):
