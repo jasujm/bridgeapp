@@ -3,11 +3,13 @@ Database utilities
 ..................
 """
 
+import contextlib
 import uuid
 import typing
 
 import sqlalchemy
 import sqlalchemy.exc as sqlexc
+import sqlalchemy.ext.asyncio as sqlaio
 
 from .. import db
 
@@ -20,7 +22,21 @@ class AlreadyExistsError(Exception):
     """Trying to create object that already exists"""
 
 
-async def load(table: sqlalchemy.Table, obj_id: uuid.UUID, *, key=None):
+def _begin_connection(
+    connection: typing.Optional[sqlaio.AsyncConnection] = None,
+) -> typing.AsyncContextManager[sqlaio.AsyncConnection]:
+    if connection:
+        return contextlib.nullcontext(connection)
+    return db.get_connection()
+
+
+async def load(
+    table: sqlalchemy.Table,
+    obj_id: uuid.UUID,
+    *,
+    key=None,
+    connection: typing.Optional[sqlaio.AsyncConnection] = None,
+):
     """Load attributes of an object from database
 
     This is a thin wrapper over selecting a row from a database table by ID.
@@ -36,9 +52,8 @@ async def load(table: sqlalchemy.Table, obj_id: uuid.UUID, *, key=None):
     Raises:
         :exc:`NotFoundError`: If the object is not found in the database
     """
-    engine = db.get_engine()
     key_col = key if key is not None else table.c.id
-    async with engine.begin() as conn:
+    async with _begin_connection(connection) as conn:
         try:
             result = await conn.execute(
                 sqlalchemy.select([table]).where(key_col == obj_id)
@@ -48,7 +63,11 @@ async def load(table: sqlalchemy.Table, obj_id: uuid.UUID, *, key=None):
             raise NotFoundError(f"{obj_id} not found") from ex
 
 
-async def select(expression: sqlalchemy.sql.Select):
+async def select(
+    expression: sqlalchemy.sql.Select,
+    *,
+    connection: typing.Optional[sqlaio.AsyncConnection] = None,
+):
     """Execute general SELECT expression
 
     This is a very thin wrapper over selecting rows from a
@@ -64,13 +83,16 @@ async def select(expression: sqlalchemy.sql.Select):
     Returns:
         The selected rows
     """
-    engine = db.get_engine()
-    async with engine.begin() as conn:
+    async with _begin_connection(connection) as conn:
         return await conn.execute(expression)
 
 
 async def create(
-    table: sqlalchemy.Table, obj_id: uuid.UUID, attrs: typing.Mapping[str, typing.Any]
+    table: sqlalchemy.Table,
+    obj_id: uuid.UUID,
+    attrs: typing.Mapping[str, typing.Any],
+    *,
+    connection: typing.Optional[sqlaio.AsyncConnection] = None,
 ):
     """Create object with given attributes in database
 
@@ -81,8 +103,7 @@ async def create(
         obj_id: The id of the object to create
         attrs: The attributes to insert
     """
-    engine = db.get_engine()
-    async with engine.begin() as conn:
+    async with _begin_connection(connection) as conn:
         try:
             await conn.execute(table.insert(), {"id": obj_id, **attrs})
         except sqlexc.IntegrityError as ex:
@@ -90,7 +111,11 @@ async def create(
 
 
 async def update(
-    table: sqlalchemy.Table, obj_id: uuid.UUID, attrs: typing.Mapping[str, typing.Any],
+    table: sqlalchemy.Table,
+    obj_id: uuid.UUID,
+    attrs: typing.Mapping[str, typing.Any],
+    *,
+    connection: typing.Optional[sqlaio.AsyncConnection] = None,
 ):
     """Update object in a database
 
@@ -101,8 +126,7 @@ async def update(
         obj_id: The id of the object to modify
         attrs: The new attributes
     """
-    engine = db.get_engine()
-    async with engine.begin() as conn:
+    async with _begin_connection(connection) as conn:
         await conn.execute(
             sqlalchemy.update(table).where(table.c.id == obj_id).values(**attrs)
         )

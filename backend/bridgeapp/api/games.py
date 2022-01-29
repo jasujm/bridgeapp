@@ -43,13 +43,16 @@ _GAME_RESPONSES = {
 }
 
 
-async def _apify_players_in_game(players: base_models.PlayersInGame):
+async def _apify_players_in_game(
+    players: base_models.PlayersInGame, *, connection=None
+):
     # This funky piece of code takes PlayersInGame (mapping between
     # positions and UUIDs) into apified PlayersInGameModel (mapping
     # between positions and actual player models)
     ids = [getattr(players, position.name) for position in base_models.Position]
     attrs = await db_utils.select(
-        sqlalchemy.select([db.players]).where(db.players.c.id.in_(ids))
+        sqlalchemy.select([db.players]).where(db.players.c.id.in_(ids)),
+        connection=connection,
     )
     attrs_map = {attrs.id: attrs for attrs in attrs}
     return {
@@ -152,14 +155,19 @@ async def get_game_details(
     player: uuid.UUID = fastapi.Depends(auth.get_authenticated_player),
 ):
     """Handle getting game details"""
-    with utils.autocancel_tasks() as create_task:
-        game_attrs_load = create_task(db_utils.load(db.games, id))
-        client = await utils.get_bridge_client()
-        game, request.state.counter_header_value = await client.get_game(
-            game=id, player=player.id
-        )
-        players_load = create_task(_apify_players_in_game(game.players))
-        game_attrs, players = await asyncio.gather(game_attrs_load, players_load)
+    async with db.get_connection() as connection:
+        with utils.autocancel_tasks() as create_task:
+            game_attrs_load = create_task(
+                db_utils.load(db.games, id, connection=connection)
+            )
+            client = await utils.get_bridge_client()
+            game, request.state.counter_header_value = await client.get_game(
+                game=id, player=player.id
+            )
+            players_load = create_task(
+                _apify_players_in_game(game.players, connection=connection)
+            )
+            game_attrs, players = await asyncio.gather(game_attrs_load, players_load)
     return {
         **game_attrs,
         "deal": game.deal,

@@ -5,6 +5,7 @@ Database definitions
 
 import asyncio
 import logging
+import typing
 
 import sqlalchemy
 import sqlalchemy.ext.asyncio as sqlaio
@@ -65,6 +66,11 @@ games = sqlalchemy.Table(
 def get_engine() -> sqlaio.AsyncEngine:
     """Get database engine"""
     return engine
+
+
+def get_connection() -> typing.AsyncContextManager[sqlaio.AsyncConnection]:
+    """Get database connection"""
+    return get_engine().begin()
 
 
 async def _init(_engine):
