@@ -268,12 +268,10 @@ class BridgeClient(_base.ClientBase):
         """Send play command to the server"""
         await self.command("play", game=game, player=player, card=card)
 
-    @classmethod
-    def _serialize(cls, obj):
+    def _serialize(self, obj):
         return orjson.dumps(obj, default=dict)
 
-    @staticmethod
-    def _deserialize(obj):
+    def _deserialize(self, obj):
         return orjson.loads(obj)
 
     @classmethod

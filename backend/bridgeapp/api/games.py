@@ -51,10 +51,10 @@ async def _apify_players_in_game(
     # between positions and actual player models)
     ids = [getattr(players, position.name) for position in base_models.Position]
     attrs = await db_utils.select(
-        sqlalchemy.select([db.players]).where(db.players.c.id.in_(ids)),
+        sqlalchemy.select(db.players).where(db.players.c.id.in_(ids)),
         connection=connection,
     )
-    attrs_map = {attrs.id: attrs for attrs in attrs}
+    attrs_map = {attr.id: attr._mapping for attr in attrs}
     return {
         position.name: (
             (player := getattr(players, position.name, None))
@@ -169,7 +169,7 @@ async def get_game_details(
             )
             game_attrs, players = await asyncio.gather(game_attrs_load, players_load)
     return {
-        **game_attrs,
+        **game_attrs._mapping,
         "deal": game.deal,
         "me": game.self,
         "results": game.results,
@@ -281,7 +281,7 @@ async def get_game_players(
 )
 async def post_game_players(
     game_id: uuid.UUID,
-    player: uuid.UUID = fastapi.Depends(auth.get_authenticated_player),
+    player=fastapi.Depends(auth.get_authenticated_player),
     position: typing.Optional[base_models.Position] = None,
 ):
     """Handle adding player to a game"""
@@ -289,7 +289,7 @@ async def post_game_players(
     game_id, position = await client.join(
         game=game_id, player=player.id, position=position
     )
-    player = dict(**player)
+    player = {**player}
     for key in "password", "createdAt", "updatedAt":
         del player[key]
     await search_utils.update(
@@ -306,7 +306,9 @@ async def post_game_players(
     summary="Remove a player from a game",
     description="""Make the authenticated player leave the game.""",
     status_code=fastapi.status.HTTP_204_NO_CONTENT,
-    responses={fastapi.status.HTTP_404_NOT_FOUND: _GAME_NOT_FOUND_RESPONSE,},
+    responses={
+        fastapi.status.HTTP_404_NOT_FOUND: _GAME_NOT_FOUND_RESPONSE,
+    },
 )
 async def delete_game_players(
     game_id: uuid.UUID,
@@ -375,7 +377,8 @@ async def post_game_trick(
 
 @router.websocket("/{game_id}/ws")
 async def games_websocket(
-    game_id: uuid.UUID, websocket: fastapi.WebSocket,
+    game_id: uuid.UUID,
+    websocket: fastapi.WebSocket,
 ):
     """Open a websocket publishing events about a game"""
     loop = asyncio.get_running_loop()

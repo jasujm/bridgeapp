@@ -1,4 +1,4 @@
-FROM python:3.10 AS base
+FROM python:3.11 AS base
 
 ENV PYTHONUNBUFFERED=1
 
@@ -6,7 +6,7 @@ WORKDIR /usr/src/bridgeapp
 
 FROM base AS builder
 
-RUN set -ex; pip install poetry==1.1.12; python -m venv /usr/venv/bridgeapp
+RUN set -ex; pip install poetry==1.4.0; python -m venv /usr/venv/bridgeapp
 
 COPY pyproject.toml poetry.lock ./
 RUN poetry export | /usr/venv/bridgeapp/bin/pip install -r /dev/stdin

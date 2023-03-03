@@ -6,37 +6,34 @@ authors = ["Jaakko Moisio <jaakko@moisio.fi>"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-pyzmq = "^22.3"
-more-itertools = "^8.3.0"
-pydantic = "^1.8.2"
-orjson = "^3.6"
-fastapi = {version = "^0.70", extras = ["uvicorn", "orjson"]}
-gunicorn = "^20.0.4"
-SQLAlchemy = "^1.4.29"
-SQLAlchemy-Utils = "^0.38.2"
-psycopg2-binary = "^2.8.6"
+pyzmq = "^25.0"
+more-itertools = "^9.1"
+pydantic = "^1.10"
+orjson = "^3.8"
+fastapi = "^0.92"
+gunicorn = "^20.1"
+SQLAlchemy = "^2.0"
+SQLAlchemy-Utils = "^0.40"
+psycopg2-binary = "^2.9"
 passlib = "^1.7.4"
 fastpbkdf2 = "^0.2"
-uvicorn = {extras = ["standard"], version = "^0.15.0"}
-elasticsearch-dsl = "^7.3.0"
-click-log = "^0.3.2"
-click = "^7.1.2"
-cffi = "^1.15"  # Required so poetry will pin this for cpython
-pycparser = "^2.20"  # Required so poetry will pin this for cpython
-hrefs = "^0.3"
-asyncpg = "^0.25.0"
+uvicorn = {extras = ["standard"], version = "^0.20.0"}
+elasticsearch-dsl = "^7.4"
+click-log = "^0.4"
+click = "^8.0"
+hrefs = "^0.8"
+asyncpg = "^0.27"
 
 [tool.poetry.dev-dependencies]
-pytest = "^6.2"
-pytest-asyncio = "^0.17.2"
-black = "^19.10b0"
-pylint = "^2.5.2"
-sphinx = "^3.0.4"
-sphinx-rtd-theme = "^0.4.3"
-click = "^7.1.2"
-coverage = "^5.1"
-click-log = "^0.3.2"
-aiosqlite = "^0.17.0"
+pytest = "^7.2"
+pytest-asyncio = "^0.20"
+black = "^23.1"
+pylint = "^2.16"
+sphinx = "^6.1"
+sphinx-rtd-theme = "^1.2"
+coverage = "^7.2"
+aiosqlite = "^0.18"
+httpx = "^0.23"
 
 [tool.poetry.scripts]
 bridgeapp = "bridgeapp.__main__:cli"

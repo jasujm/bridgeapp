@@ -10,7 +10,7 @@ import uuid
 import pydantic
 
 # Don't care about warning related to pydantic conventions
-# pylint: disable=no-self-argument,no-self-use,too-few-public-methods,missing-class-docstring,no-member,invalid-name
+# pylint: disable=no-self-argument,too-few-public-methods,missing-class-docstring,no-member,invalid-name
 
 GameUuid = typing.NewType("GameUuid", uuid.UUID)
 """Game UUID"""

@@ -14,10 +14,6 @@
         <b-nav-item v-else right><Login /></b-nav-item>
       </b-navbar-nav>
     </b-navbar>
-    <b-alert show variant="warning">
-      This app is still work in progress. Although playable, there are obvious
-      quirks. I may also reset the app and data without a prior warning.
-    </b-alert>
     <div class="container">
       <main>
         <RouterView />
@@ -26,7 +22,7 @@
         <small>
           Copyright &copy;
           <a href="https://www.jmoisio.eu/about/">Jaakko Moisio</a>
-          2020&ndash;2021. The application is open source and available in
+          2020&ndash;2023. The application is open source and available in
           <a href="https://github.com/jasujm/bridgeapp">GitHub</a>. By using
           this website you agree to our
           <a href="https://www.websitepolicies.com/policies/view/RTZfOT2W"

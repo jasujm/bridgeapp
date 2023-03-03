@@ -13,7 +13,6 @@ import uuid
 
 import fastapi
 import hrefs
-import hrefs.starlette
 import pydantic
 
 from bridgeapp.bridgeprotocol import models as base_models, events as base_events
@@ -51,7 +50,7 @@ def _populate_self_validator():
     return pydantic.root_validator(pre=True, allow_reuse=True)(_populate_self)
 
 
-class Deal(base_models.Deal, hrefs.starlette.ReferrableModel):
+class Deal(base_models.Deal, hrefs.BaseReferrableModel):
     id: uuid.UUID
     self: hrefs.Href["Deal"]
 
@@ -69,7 +68,7 @@ class _PlayerBase(pydantic.BaseModel):
     username: Username
 
 
-class Player(_PlayerBase, hrefs.starlette.ReferrableModel):
+class Player(_PlayerBase, hrefs.BaseReferrableModel):
     """Player taking part in a bridge game"""
 
     id: uuid.UUID
@@ -108,7 +107,7 @@ class _GameBase(pydantic.BaseModel):
     name: pydantic.constr(min_length=2, max_length=63)
 
 
-class GameSummary(_GameBase, hrefs.starlette.ReferrableModel):
+class GameSummary(_GameBase, hrefs.BaseReferrableModel):
     """Bridge game summary
 
     Contains static information about a game, excluding any game state.
@@ -149,7 +148,9 @@ class BridgeEvent(base_events.BridgeEvent):
 
     @classmethod
     def from_base(
-        cls, base_model: base_events.BridgeEvent, ws: fastapi.WebSocket,
+        cls,
+        base_model: base_events.BridgeEvent,
+        ws: fastapi.WebSocket,
     ):
         """Create API :class:`BridgeEvent` from :class:`bridgeapp.bridgeprotocol.BridgeEvent`
 
@@ -165,7 +166,7 @@ class BridgeEvent(base_events.BridgeEvent):
         """
         values = {}
         source_fields = base_model.__fields__
-        for (name, value) in base_model:
+        for name, value in base_model:
             if field := (
                 source_fields.get(name, None) or cls.__fields__.get(name, None)
             ):

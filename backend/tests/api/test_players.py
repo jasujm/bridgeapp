@@ -47,7 +47,7 @@ def test_get_player_not_found(database, client, player_id):
 
 def test_create_player(database, client, username, password):
     player_create = api.models.PlayerCreate(username=username, password=password)
-    res = client.post("/api/v1/players", data=player_create.json())
+    res = client.post("/api/v1/players", content=player_create.json())
     assert res.status_code == fastapi.status.HTTP_201_CREATED
     player_in_response = res.json()
     player_id = uuid.UUID(player_in_response["id"])
@@ -66,7 +66,7 @@ def test_create_player_username_conflict(
     database, client, player_id, username, password, db_player
 ):
     player_create = api.models.PlayerCreate(username=username, password=password)
-    res = client.post("/api/v1/players", data=player_create.json())
+    res = client.post("/api/v1/players", content=player_create.json())
     assert res.status_code == fastapi.status.HTTP_409_CONFLICT
 
 

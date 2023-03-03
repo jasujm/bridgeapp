@@ -1,4 +1,4 @@
-FROM nginx:1.21
+FROM nginx:1.23
 
 COPY start.sh /usr/bin
 

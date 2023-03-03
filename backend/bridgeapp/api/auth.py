@@ -30,4 +30,4 @@ async def get_authenticated_player(
         )
     if not player or player.password != credentials.password:
         raise fastapi.HTTPException(status_code=fastapi.status.HTTP_401_UNAUTHORIZED)
-    return player
+    return player._mapping

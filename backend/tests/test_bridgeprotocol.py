@@ -140,13 +140,15 @@ def _any_position():
 
 def _any_card():
     return models.CardType(
-        rank=random.choice(list(models.Rank)), suit=random.choice(list(models.Suit)),
+        rank=random.choice(list(models.Rank)),
+        suit=random.choice(list(models.Suit)),
     )
 
 
 def _any_bid():
     return models.Bid(
-        level=random.randint(1, 7), strain=random.choice(list(models.Strain)),
+        level=random.randint(1, 7),
+        strain=random.choice(list(models.Strain)),
     )
 
 
@@ -161,7 +163,8 @@ def _any_deal():
                 call=models.Call(type=models.CallType.bid, bid=_any_bid()),
             ),
             models.PositionCallPair(
-                position=_any_position(), call=models.Call(type=models.CallType.pass_),
+                position=_any_position(),
+                call=models.Call(type=models.CallType.pass_),
             ),
         ],
         declarer=_any_position(),
@@ -485,7 +488,11 @@ async def test_get_game_success(server, client, game_and_player):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("pubstate", [_any_deal(), _any_deal()])
 @pytest.mark.parametrize(
-    "privstate", [{"cards": {}}, {"cards": {"east": [_any_card(), _any_card()]}},],
+    "privstate",
+    [
+        {"cards": {}},
+        {"cards": {"east": [_any_card(), _any_card()]}},
+    ],
 )
 class TestBridgeClientGetGameDealCommand:
     async def test_success(self, server, client, game_and_player, pubstate, privstate):

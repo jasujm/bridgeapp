@@ -13,7 +13,7 @@ from bridgeapp.settings import settings
 
 logger = logging.getLogger(__name__)
 
-_ctx = zmq.asyncio.Context()
+_ctx = zmq.asyncio.Context()  # pylint: disable=abstract-class-instantiated
 _threadlocal = threading.local()
 
 

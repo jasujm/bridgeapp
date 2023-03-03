@@ -56,7 +56,7 @@ async def load(
     async with _begin_connection(connection) as conn:
         try:
             result = await conn.execute(
-                sqlalchemy.select([table]).where(key_col == obj_id)
+                sqlalchemy.select(table).where(key_col == obj_id)
             )
             return result.one()
         except sqlexc.NoResultFound as ex:

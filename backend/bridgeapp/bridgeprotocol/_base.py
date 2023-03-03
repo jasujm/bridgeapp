@@ -214,8 +214,7 @@ class ClientBase(SocketBase):
                 f"Unexpected reply to {command}: {reply!r}"
             ) from ex
 
-    @staticmethod
-    def _create_command_failure_exception(status: bytes):
+    def _create_command_failure_exception(self, status: bytes):
         """Create exception object for command failure
 
         The exception returned will be raised by the :meth:`command()` method on

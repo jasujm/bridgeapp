@@ -22,14 +22,14 @@ def _get_timestamp_columns():
             "createdAt",
             sqlalchemy.DateTime(timezone=True),
             nullable=False,
-            default=sqlalchemy.func.now(),
+            default=sqlalchemy.func.now(),  # pylint: disable=not-callable
         ),
         sqlalchemy.Column(
             "updatedAt",
             sqlalchemy.DateTime(timezone=True),
             nullable=False,
-            default=sqlalchemy.func.now(),
-            onupdate=sqlalchemy.func.now(),
+            default=sqlalchemy.func.now(),  # pylint: disable=not-callable
+            onupdate=sqlalchemy.func.now(),  # pylint: disable=not-callable
         ),
     ]
 

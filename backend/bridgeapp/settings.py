@@ -4,7 +4,7 @@ Bridgeapp settings
 """
 
 # Don't care about warning related to pydantic conventions
-# pylint: disable=no-self-argument,no-self-use,too-few-public-methods
+# pylint: disable=no-self-argument,too-few-public-methods
 
 
 import functools
