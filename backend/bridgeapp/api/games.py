@@ -17,6 +17,7 @@ import sqlalchemy
 
 from bridgeapp import db, search
 from bridgeapp.bridgeprotocol import models as base_models
+from bridgeapp.bridgeprotocol.client import _orjson_default
 
 from . import auth, db_utils, models, search_utils, utils
 
@@ -402,7 +403,9 @@ async def games_websocket(
                 if event_task in done:
                     event = await event_task
                     event = models.BridgeEvent.from_base(event, websocket)
-                    await websocket.send_bytes(orjson.dumps(event, default=dict))
+                    await websocket.send_bytes(
+                        orjson.dumps(event, default=_orjson_default)
+                    )
                     event_task = _create_event_task()
                     pending.add(event_task)
                 if recv_task in done:

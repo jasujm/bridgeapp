@@ -10,6 +10,18 @@ import zmq.asyncio
 
 from . import _base, models, utils, exceptions
 
+# monkey patch orjson to be compatible with asyncpg
+try:
+    import asyncpg.pgproto.pgproto
+except ImportError:
+    _orjson_default = dict  # pylint: disable=invalid-name
+else:
+
+    def _orjson_default(val):
+        if isinstance(val, asyncpg.pgproto.pgproto.UUID):
+            return str(val)
+        return dict(val)
+
 
 OptionalUuid = typing.Optional[uuid.UUID]
 
@@ -269,7 +281,7 @@ class BridgeClient(_base.ClientBase):
         await self.command("play", game=game, player=player, card=card)
 
     def _serialize(self, obj):
-        return orjson.dumps(obj, default=dict)
+        return orjson.dumps(obj, default=_orjson_default)
 
     def _deserialize(self, obj):
         return orjson.loads(obj)

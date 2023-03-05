@@ -13,6 +13,16 @@ import sqlalchemy_utils.types as sqlt
 
 from .settings import settings
 
+# monkey patch pydantic to be compatible with asyncpg
+try:
+    from pydantic.json import ENCODERS_BY_TYPE
+    import asyncpg.pgproto.pgproto
+except ImportError:
+    pass
+else:
+    ENCODERS_BY_TYPE[asyncpg.pgproto.pgproto.UUID] = str
+
+
 logger = logging.getLogger(__name__)
 
 
